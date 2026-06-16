@@ -30,7 +30,9 @@ following gaps should become backlog issues before mentee implementation starts.
 
 ## Local Services
 
-- Docker Compose still needs to be validated against the current mediator,
-  cloud-agent, and neo-prism image tags and their in-memory settings.
-- Health checks and seed data should be added once the service images and ports
-  are confirmed.
+- The compose helper uses upstream image defaults and should be smoke-tested in
+  CI once image pulls are acceptable for the repository.
+- Cloud Agent support for NeoPRISM should be validated against a pinned released
+  image tag before replacing `latest`.
+- Health checks exist, but seed data and example DID/credential flows are not
+  wired into the local stack yet.

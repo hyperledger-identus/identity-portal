@@ -72,10 +72,10 @@ Important variables:
 
 ## Local Identus Services
 
-This repository includes Docker Compose helpers for local mediator,
-cloud-agent, and neo-prism development. The first implementation is intended for
-developer convenience and should evolve with the upstream Identus deployment
-images.
+This repository includes Docker Compose helpers for local Mediator,
+Cloud Agent, and NeoPRISM development. The default stack is disposable:
+NeoPRISM runs in documented in-memory dev mode, while PostgreSQL and MongoDB use
+container tmpfs storage.
 
 ```sh
 docker compose up -d
@@ -88,6 +88,14 @@ If `just` is installed, equivalent recipes are available:
 just up
 just down
 ```
+
+Default local service ports:
+
+- Portal: <http://localhost:5173>
+- Mediator: <http://localhost:8080>
+- NeoPRISM: <http://localhost:8081>
+- Cloud Agent REST API: <http://localhost:8085>
+- Cloud Agent DIDComm endpoint: <http://localhost:8090>
 
 ## Development Commands
 
