@@ -17,6 +17,14 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
+      "@hyperledger/identus-react": ["packages/identus-react/src/index.tsx"],
+      "@hyperledger/identus-react/context": [
+        "packages/identus-react/src/context/index.ts"
+      ],
+      "@hyperledger/identus-react/hooks": ["packages/identus-react/src/hooks/index.ts"],
+      "@hyperledger/identus-react/provider": [
+        "packages/identus-react/src/provider/index.tsx"
+      ],
       "@identity-portal/ssi-core": ["packages/ssi-core/src/index.ts"],
       "@identity-portal/cloud-agent-client": ["packages/cloud-agent-client/src/index.ts"]
     }
