@@ -1,0 +1,15 @@
+node_modules/
+.nx/
+dist/
+build/
+coverage/
+.DS_Store
+*.log
+
+.env
+.env.*
+!.env.example
+
+apps/**/dist/
+packages/**/dist/
+packages/**/build/

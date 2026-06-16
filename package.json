@@ -1,0 +1,63 @@
+{
+  "name": "identity-portal",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Hyperledger Identus Identity Portal",
+  "license": "Apache-2.0",
+  "type": "module",
+  "packageManager": "npm@11.9.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "nx serve portal",
+    "build": "nx run-many --target=build",
+    "lint": "nx run-many --target=lint",
+    "typecheck": "nx run-many --target=typecheck",
+    "test": "nx run-many --target=test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down --remove-orphans",
+    "docker:logs": "docker compose logs -f"
+  },
+  "dependencies": {
+    "@hyperledger/identus-sdk": "^8.0.0",
+    "@meshsdk/core": "^1.9.0",
+    "@meshsdk/react": "^2.0.0-beta.2",
+    "@reduxjs/toolkit": "^2.12.0",
+    "@types/elliptic": "^6.4.18",
+    "buffer": "^6.0.3",
+    "core-js": "^3.47.0",
+    "elliptic": "^6.6.1",
+    "jsdom": "^24.1.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-redux": "^9.2.0"
+  },
+  "devDependencies": {
+    "@nx/js": "^22.4.4",
+    "@nx/vite": "^22.4.4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^22.18.0",
+    "@types/react": "^18.3.25",
+    "@types/react-dom": "^18.3.7",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.45.0",
+    "@vitejs/plugin-react": "^6.0.2",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "nx": "^22.4.4",
+    "postcss": "^8.5.6",
+    "prettier": "^3.7.4",
+    "tailwindcss": "^3.4.18",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.45.0",
+    "vite": "^8.0.16",
+    "vitest": "^4.0.15"
+  }
+}

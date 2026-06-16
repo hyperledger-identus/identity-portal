@@ -1,0 +1,37 @@
+{
+  "name": "ssi-core",
+  "projectType": "library",
+  "sourceRoot": "packages/ssi-core/src",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "command": "tsc -p tsconfig.json --outDir dist",
+        "cwd": "packages/ssi-core"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit -p tsconfig.json",
+        "cwd": "packages/ssi-core"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "eslint .",
+        "cwd": "packages/ssi-core"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "vitest run --passWithNoTests",
+        "cwd": "packages/ssi-core"
+      }
+    }
+  },
+  "tags": ["scope:core", "type:library"]
+}
