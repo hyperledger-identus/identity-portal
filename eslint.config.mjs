@@ -10,6 +10,7 @@ export default [
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     rules: {
+      "@typescript-eslint/no-empty-object-type":"off",
       '@nx/enforce-module-boundaries': [
         'error',
         {

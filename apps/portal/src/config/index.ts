@@ -10,3 +10,6 @@ export const VITE_CONFIG =
 
 export const UI_DIST =
   process.env.UI_DIST ?? path.resolve(process.cwd(), "dist/apps/portal/src/ui");
+
+
+  export const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/identus';

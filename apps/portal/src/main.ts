@@ -22,6 +22,7 @@ import dotenv from "dotenv";
 
 import { PORT } from "./config";
 import { HttpServer } from "./utils/http";
+import { getAgent } from "./utils/agent";
 
 dotenv.config();
 
@@ -32,7 +33,10 @@ async function onClose() {
 }
 
 async function start() {
-  const server = new HttpServer({ onClose });
+  const agent = await getAgent()
+  const server = new HttpServer({ onClose, agent });
+  
+  await agent.start()
   await server.start();
  
   console.log(`Server running on port ${PORT}`);

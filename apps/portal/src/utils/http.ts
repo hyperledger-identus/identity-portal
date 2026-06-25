@@ -4,10 +4,10 @@ import { createAPIRouter } from "../api";
 import { PORT } from "../config";
 import {  createUIRouter } from "./ui";
 import { type Server } from "node:http";
-// import type SDK from "@hyperledger/identus-sdk";
+import {type Agent } from "@hyperledger/identus-sdk";
 
 type Options = {
-    //  readonly agent: SDK.Agent,
+     readonly agent: Agent,
      onClose: () => Promise<void>,
 }
 
@@ -20,7 +20,7 @@ export class HttpServer {
 
     get context() {
         return {
-            // agent: this.options.agent
+          agent: this.options.agent,
         }
     }
 
@@ -32,21 +32,16 @@ export class HttpServer {
         app.use(express.urlencoded({ extended: true }));
 
         // Mount the REST API under /api (plus /docs and /openapi.json in development).
+        // createAPIRouter already namespaces its routes under /api, so it must be
+        // mounted at the root. It also has to come before the UI router: the Vite
+        // dev SPA fallback serves index.html for every GET request, which would
+        // otherwise swallow /api/* calls before they reach the API.
         const apiRouter = await createAPIRouter(this.context);
+        const uiRouter = await createUIRouter();
+
         app.use(apiRouter);
-
-        // 404 for unmatched API routes - return JSON instead of falling through to the UI.
-        app.use('/api', (_req: Request, res: Response) => {
-            res.status(404).json({
-                success: false,
-                error: 'Not found',
-            });
-        });
-
-        // Serve the React UI at / (Vite dev middleware in development, static build in production).
-        // Registered after the API so /api/* always wins; everything else is handled by the SPA.
-        const ui = await createUIRouter(app);
-        this.uiClose = ui.close;
+        app.use(uiRouter);
+       
 
         // Global error handler - always return JSON
         app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {

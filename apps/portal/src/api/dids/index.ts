@@ -29,8 +29,13 @@ export default function createIssuerRouter(context: Context) {
           tags: ['dids'],
         },
         handler: async ({ input, ctx }) => {
-          return { success: true, error: '' };
+          await ctx.agent.createPeerDID([], true)
+          const dids = await ctx.agent.pluto.getAllPeerDIDs();
+          return { success: dids.length > 0, error: '' };
         },
       })
   }
+  
+
+
   

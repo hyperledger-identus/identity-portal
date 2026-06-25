@@ -10,7 +10,7 @@ services:
     tmpfs:
       - /var/lib/postgresql/data
     volumes:
-      - ./docker/postgres-init-script.sh:/docker-entrypoint-initdb.d/init-script.sh:ro
+      - ./docker/postgres-init-script.sql:/docker-entrypoint-initdb.d/init-script.sql:ro
       - ./docker/postgres-max-conns.sql:/docker-entrypoint-initdb.d/max-conns.sql:ro
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres", "-d", "postgres"]
@@ -125,3 +125,34 @@ services:
       start_period: 30s
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  mongo-identus:
+    image: mongo:6.0
+    command: ["--auth"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: identus
+    ports:
+      - "27019:27019"
+    tmpfs:
+      - /data/db
+    volumes:
+      - ./docker/mongo-initdb-identus.js:/docker-entrypoint-initdb.d/initdb.js:ro
+
+  mongo-express:
+      image: mongo-express
+      environment:
+          - PORT=4004
+          - ME_CONFIG_MONGODB_SERVER=mongo-identus
+          - ME_CONFIG_MONGODB_PORT=27019
+          - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+          - ME_CONFIG_MONGODB_AUTH_DATABASE=admin
+          - ME_CONFIG_MONGODB_AUTH_USERNAME=admin
+          - ME_CONFIG_MONGODB_AUTH_PASSWORD=admin
+          - ME_CONFIG_BASICAUTH_USERNAME=admin
+          - ME_CONFIG_BASICAUTH_PASSWORD=admin
+      depends_on:
+          - mongo
+      ports:
+        - "8888:4004"

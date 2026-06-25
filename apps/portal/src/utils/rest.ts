@@ -29,13 +29,15 @@
  */
 import { type Request, type Response, Router, type NextFunction } from 'express';
 import { type ZodSchema, ZodError } from 'zod';
-// import type SDK from "@hyperledger/identus-sdk";
+import {type Agent} from "@hyperledger/identus-sdk";
 
 /**
  * Lightweight REST validation framework.
  * Provides type-safe, validated endpoints with a clean builder API.
  */
-export type Context = any;
+export type Context = {
+  agent: Agent;
+};
 
 export type OpenAPIConfig = {
   /** Human-readable name for the operation (used as summary) */
