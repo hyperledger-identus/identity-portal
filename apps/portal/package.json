@@ -1,6 +1,22 @@
 {
   "name": "@identity-portal/portal",
+  "description": "Hyperledger Identus Identity Portal",
   "version": "0.0.0",
   "private": true,
-  "type": "module"
+  "type": "commonjs",
+  "dependencies": {
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.25.1",
+    "@zodyac/zod-mongoose": "^4.2.2",
+    "express": "^5.1.0",
+    "mongoose": "^8.2.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.2",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/swagger-ui-express": "^4.1.8"
+  }
 }
