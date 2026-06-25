@@ -1,44 +1,84 @@
 {
   "name": "portal",
-  "projectType": "application",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/portal/src",
+  "projectType": "application",
+  "tags": [],
   "targets": {
-    "serve": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "vite --host 0.0.0.0",
-        "cwd": "apps/portal"
-      }
-    },
     "build": {
-      "executor": "nx:run-commands",
-      "outputs": ["{projectRoot}/dist"],
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
       "options": {
-        "command": "vite build",
-        "cwd": "apps/portal"
+        "platform": "node",
+        "outputPath": "dist/apps/portal",
+        "format": ["cjs"],
+        "bundle": true,
+        "main": "apps/portal/src/main.ts",
+        "tsConfig": "apps/portal/tsconfig.app.json",
+        "assets": ["apps/portal/src/assets"],
+        "generatePackageJson": true,
+        "esbuildOptions": {
+          "sourcemap": true,
+          "outExtension": {
+            ".js": ".js"
+          }
+        }
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "esbuildOptions": {
+            "sourcemap": false,
+            "outExtension": {
+              ".js": ".js"
+            }
+          }
+        }
       }
     },
-    "typecheck": {
-      "executor": "nx:run-commands",
+    "prune-lockfile": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "executor": "@nx/js:prune-lockfile",
+      "outputs": [
+        "{workspaceRoot}/dist/apps/portal/package.json",
+        "{workspaceRoot}/dist/apps/portal/package-lock.json"
+      ],
       "options": {
-        "command": "tsc --noEmit -p tsconfig.json",
-        "cwd": "apps/portal"
+        "buildTarget": "build"
       }
     },
-    "lint": {
-      "executor": "nx:run-commands",
+    "copy-workspace-modules": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "outputs": ["{workspaceRoot}/dist/apps/portal/workspace_modules"],
+      "executor": "@nx/js:copy-workspace-modules",
       "options": {
-        "command": "eslint .",
-        "cwd": "apps/portal"
+        "buildTarget": "build"
       }
     },
-    "test": {
-      "executor": "nx:run-commands",
+    "prune": {
+      "dependsOn": ["prune-lockfile", "copy-workspace-modules"],
+      "executor": "nx:noop"
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
       "options": {
-        "command": "vitest run --passWithNoTests",
-        "cwd": "apps/portal"
+        "buildTarget": "portal:build",
+        "runBuildTargetDependencies": false
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "portal:build:development"
+        },
+        "production": {
+          "buildTarget": "portal:build:production"
+        }
       }
     }
-  },
-  "tags": ["scope:app", "type:react"]
+  }
 }

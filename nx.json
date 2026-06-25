@@ -7,7 +7,9 @@
       "!{projectRoot}/**/*.test.ts",
       "!{projectRoot}/**/*.test.tsx",
       "!{projectRoot}/**/*.spec.ts",
-      "!{projectRoot}/**/*.spec.tsx"
+      "!{projectRoot}/**/*.spec.tsx",
+      "!{projectRoot}/.eslintrc.json",
+      "!{projectRoot}/eslint.config.mjs"
     ],
     "sharedGlobals": []
   },
@@ -24,6 +26,27 @@
     },
     "test": {
       "inputs": ["default", "^production"]
+    },
+    "@nx/esbuild:esbuild": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": [
+        "production",
+        "^production",
+        {
+          "json": "{workspaceRoot}/tsconfig.json",
+          "fields": ["extends", "files", "include"]
+        }
+      ]
     }
-  }
+  },
+  "plugins": [
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "lint"
+      }
+    }
+  ],
+  "analytics": false
 }
