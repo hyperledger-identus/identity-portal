@@ -38,7 +38,7 @@
  */
 import pafh from 'node:path';
 import fs from 'node:fs';
-import { Router } from 'express';
+import { Request, Response, Router } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import { type Context,type RouterWithRoutes, restErrorHandler } from '../utils/rest';
 import { generateOpenApiSpec, type RouterMount } from '../utils/openapi';
@@ -84,7 +84,7 @@ export async function createAPIRouter(context: Context) {
       .map(([basePath, router]) => ({ basePath, router }));
 
     const openApiSpec = generateOpenApiSpec(openAPIRoutes, {
-      title: 'Lace KYC API',
+      title: 'Identus Portal API',
       version: packageJson.version,
       description: packageJson.description,
       servers: [
@@ -101,6 +101,14 @@ export async function createAPIRouter(context: Context) {
 
   //Add all apiRoutes to the main router
   router.use('/api', apiRouter);
+
+  router.use('/api', (_req: Request, res: Response) => {
+    res.status(404).json({
+        success: false,
+        error: 'Not found',
+    });
+});
+
 
   return router;
 }

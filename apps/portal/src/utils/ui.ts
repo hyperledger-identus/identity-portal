@@ -1,6 +1,6 @@
 import path from "node:path";
 import fs from "node:fs/promises";
-import express, { type Express, type Request, type Response, type NextFunction } from "express";
+import express, { type Express, type Request, type Response, type NextFunction, Router } from "express";
 import type { ViteDevServer } from "vite";
 import { IS_PRODUCTION, UI_DIST, VITE_CONFIG } from "../config";
 
@@ -9,11 +9,12 @@ export type UiHandle = {
   close: () => Promise<void>;
 };
 
-export async function createUIRouter(app: Express): Promise<UiHandle> {
-  return IS_PRODUCTION ? attachStaticUi(app) : attachViteDevUi(app);
+export async function createUIRouter(): Promise<Router> {
+  return IS_PRODUCTION ? attachStaticUi() : attachViteDevUi();
 }
 
-async function attachViteDevUi(app: Express): Promise<UiHandle> {
+async function attachViteDevUi(): Promise<Router> {
+  const router = Router();
   const { createServer } = await import("vite");
 
   const vite: ViteDevServer = await createServer({
@@ -24,11 +25,11 @@ async function attachViteDevUi(app: Express): Promise<UiHandle> {
     server: { middlewareMode: true },
   });
 
-  app.use(vite.middlewares);
+  router.use(vite.middlewares);
 
   // SPA fallback: serve the Vite-transformed index.html for any GET navigation
   // request that wasn't handled by Vite's asset/HMR middlewares above.
-  app.use(async (req: Request, res: Response, next: NextFunction) => {
+  router.use(async (req: Request, res: Response, next: NextFunction) => {
     if (req.method !== "GET") {
       return next();
     }
@@ -44,18 +45,19 @@ async function attachViteDevUi(app: Express): Promise<UiHandle> {
     }
   });
 
-  return { close: () => vite.close() };
+  return router
 }
 
-async function attachStaticUi(app: Express): Promise<UiHandle> {
-  app.use(express.static(UI_DIST));
+async function attachStaticUi(): Promise<Router> {
+  const router = Router();
+  router.use(express.static(UI_DIST));
 
-  app.use((req: Request, res: Response, next: NextFunction) => {
+  router.use((req: Request, res: Response, next: NextFunction) => {
     if (req.method !== "GET" || req.path.startsWith("/api")) {
       return next();
     }
     res.sendFile(path.join(UI_DIST, "index.html"));
   });
 
-  return { close: async () => undefined };
+  return router;
 }

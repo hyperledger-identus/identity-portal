@@ -10,7 +10,7 @@ services:
     tmpfs:
       - /var/lib/postgresql/data
     volumes:
-      - ./docker/postgres-init-script.sh:/docker-entrypoint-initdb.d/init-script.sh:ro
+      - ./docker/postgres-init-script.sql:/docker-entrypoint-initdb.d/init-script.sql:ro
       - ./docker/postgres-max-conns.sql:/docker-entrypoint-initdb.d/max-conns.sql:ro
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres", "-d", "postgres"]
@@ -84,7 +84,7 @@ services:
       retries: 5
       start_period: 60s
 
-  mongo:
+  mongo-mediator:
     image: mongo:6.0
     command: ["--auth"]
     environment:
@@ -112,11 +112,11 @@ services:
       MONGODB_USER: admin
       MONGODB_PASSWORD: admin
       MONGODB_PROTOCOL: mongodb
-      MONGODB_HOST: mongo
+      MONGODB_HOST: mongo-mediator
       MONGODB_PORT: 27017
       MONGODB_DB_NAME: mediator
     depends_on:
-      - mongo
+      - mongo-mediator
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
       interval: 30s

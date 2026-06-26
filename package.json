@@ -21,9 +21,12 @@
     "test": "nx run-many --target=test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down --remove-orphans",
-    "docker:logs": "docker compose logs -f"
+    "local:up": "docker compose -f docker.local.compose.yml up -d",
+    "local:down": "docker compose -f docker.local.compose.yml down --remove-orphans",
+    "local:logs": "docker compose -f docker.local.compose.yml logs -f",
+    "cloud-agent:up": "docker compose -f docker.cloud.compose.yml up -d",
+    "cloud-agent:down": "docker compose -f docker.cloud.compose.yml down --remove-orphans",
+    "cloud-agent:logs": "docker compose -f docker.cloud.compose.yml logs -f"
   },
   "dependencies": {
     "@hyperledger/identus-sdk": "^8.0.0",
