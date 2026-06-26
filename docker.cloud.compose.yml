@@ -1,0 +1,127 @@
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_MULTIPLE_DATABASES: "pollux,connect,agent,node_db"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    volumes:
+      - ./docker/postgres-init-script.sql:/docker-entrypoint-initdb.d/init-script.sql:ro
+      - ./docker/postgres-max-conns.sql:/docker-entrypoint-initdb.d/max-conns.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  neoprism:
+    image: docker.io/hyperledgeridentus/identus-neoprism:${NEOPRISM_VERSION:-0.13.0}
+    pull_policy: if_not_present
+    command: ["dev"]
+    ports:
+      - "${NEOPRISM_PORT:-8081}:8080"
+    environment:
+      NPRISM_CARDANO_NETWORK: custom
+      NPRISM_CONFIRMATION_BLOCKS: "0"
+      NPRISM_DB_URL: "sqlite::memory:"
+      NPRISM_INDEX_INTERVAL: "1"
+      RUST_LOG: info,oura=warn,tower_http::trace=debug
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/_system/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  cloud-agent:
+    image: docker.io/hyperledgeridentus/identus-cloud-agent:${CLOUD_AGENT_VERSION:-latest}
+    pull_policy: if_not_present
+    ports:
+      - "${CLOUD_AGENT_HTTP_PORT:-8085}:8085"
+      - "${CLOUD_AGENT_DIDCOMM_PORT:-8090}:8090"
+    environment:
+      POLLUX_DB_HOST: postgres
+      POLLUX_DB_PORT: 5432
+      POLLUX_DB_NAME: pollux
+      POLLUX_DB_USER: postgres
+      POLLUX_DB_PASSWORD: postgres
+      CONNECT_DB_HOST: postgres
+      CONNECT_DB_PORT: 5432
+      CONNECT_DB_NAME: connect
+      CONNECT_DB_USER: postgres
+      CONNECT_DB_PASSWORD: postgres
+      AGENT_DB_HOST: postgres
+      AGENT_DB_PORT: 5432
+      AGENT_DB_NAME: agent
+      AGENT_DB_USER: postgres
+      AGENT_DB_PASSWORD: postgres
+      SECRET_STORAGE_BACKEND: postgres
+      DEV_MODE: "true"
+      API_KEY_ENABLED: "false"
+      DIDCOMM_SERVICE_URL: http://localhost:${CLOUD_AGENT_DIDCOMM_PORT:-8090}
+      REST_SERVICE_URL: http://localhost:${CLOUD_AGENT_HTTP_PORT:-8085}
+      POLLUX_STATUS_LIST_REGISTRY_PUBLIC_URL: http://localhost:${CLOUD_AGENT_HTTP_PORT:-8085}
+      NEOPRISM_BASE_URL: http://neoprism:8080
+      VDR_MEMORY_DRIVER_ENABLED: "true"
+      VDR_DATABASE_DRIVER_ENABLED: "true"
+      VDR_PRISM_DRIVER_ENABLED: "false"
+      VDR_PRISM_NODE_DRIVER_ENABLED: "false"
+      VDR_NEOPRISM_DRIVER_ENABLED: "true"
+      VDR_LEDGER_DRIVER: neoprism
+    depends_on:
+      postgres:
+        condition: service_healthy
+      neoprism:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/_system/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  mongo-mediator:
+    image: mongo:6.0
+    command: ["--auth"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: mediator
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    tmpfs:
+      - /data/db
+    volumes:
+      - ./docker/mongo-initdb.js:/docker-entrypoint-initdb.d/initdb.js:ro
+
+  mediator:
+    image: docker.io/hyperledgeridentus/identus-mediator:${MEDIATOR_VERSION:-latest}
+    pull_policy: if_not_present
+    ports:
+      - "${MEDIATOR_PORT:-8080}:8080"
+    environment:
+      KEY_AGREEMENT_D: Z6D8LduZgZ6LnrOHPrMTS6uU2u5Btsrk1SGs4fn8M7c
+      KEY_AGREEMENT_X: Sr4SkIskjN_VdKTn0zkjYbhGTWArdUNE4j_DmUpnQGw
+      KEY_AUTHENTICATION_D: INXCnxFEl0atLIIQYruHzGd5sUivMRyQOzu87qVerug
+      KEY_AUTHENTICATION_X: MBjnXZxkMcoQVVL21hahWAw43RuAG-i64ipbeKKqwoA
+      SERVICE_ENDPOINTS: http://localhost:${MEDIATOR_PORT:-8080};ws://localhost:${MEDIATOR_PORT:-8080}/ws
+      MONGODB_USER: admin
+      MONGODB_PASSWORD: admin
+      MONGODB_PROTOCOL: mongodb
+      MONGODB_HOST: mongo-mediator
+      MONGODB_PORT: 27017
+      MONGODB_DB_NAME: mediator
+    depends_on:
+      - mongo-mediator
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 8s
+      retries: 5
+      start_period: 30s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

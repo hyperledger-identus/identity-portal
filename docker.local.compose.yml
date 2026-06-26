@@ -1,22 +1,4 @@
 services:
-  postgres:
-    image: postgres:13
-    environment:
-      POSTGRES_MULTIPLE_DATABASES: "pollux,connect,agent,node_db"
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
-    tmpfs:
-      - /var/lib/postgresql/data
-    volumes:
-      - ./docker/postgres-init-script.sql:/docker-entrypoint-initdb.d/init-script.sql:ro
-      - ./docker/postgres-max-conns.sql:/docker-entrypoint-initdb.d/max-conns.sql:ro
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
 
   neoprism:
     image: docker.io/hyperledgeridentus/identus-neoprism:${NEOPRISM_VERSION:-0.13.0}
@@ -37,54 +19,7 @@ services:
       retries: 10
       start_period: 30s
 
-  cloud-agent:
-    image: docker.io/hyperledgeridentus/identus-cloud-agent:${CLOUD_AGENT_VERSION:-latest}
-    pull_policy: if_not_present
-    ports:
-      - "${CLOUD_AGENT_HTTP_PORT:-8085}:8085"
-      - "${CLOUD_AGENT_DIDCOMM_PORT:-8090}:8090"
-    environment:
-      POLLUX_DB_HOST: postgres
-      POLLUX_DB_PORT: 5432
-      POLLUX_DB_NAME: pollux
-      POLLUX_DB_USER: postgres
-      POLLUX_DB_PASSWORD: postgres
-      CONNECT_DB_HOST: postgres
-      CONNECT_DB_PORT: 5432
-      CONNECT_DB_NAME: connect
-      CONNECT_DB_USER: postgres
-      CONNECT_DB_PASSWORD: postgres
-      AGENT_DB_HOST: postgres
-      AGENT_DB_PORT: 5432
-      AGENT_DB_NAME: agent
-      AGENT_DB_USER: postgres
-      AGENT_DB_PASSWORD: postgres
-      SECRET_STORAGE_BACKEND: postgres
-      DEV_MODE: "true"
-      API_KEY_ENABLED: "false"
-      DIDCOMM_SERVICE_URL: http://localhost:${CLOUD_AGENT_DIDCOMM_PORT:-8090}
-      REST_SERVICE_URL: http://localhost:${CLOUD_AGENT_HTTP_PORT:-8085}
-      POLLUX_STATUS_LIST_REGISTRY_PUBLIC_URL: http://localhost:${CLOUD_AGENT_HTTP_PORT:-8085}
-      NEOPRISM_BASE_URL: http://neoprism:8080
-      VDR_MEMORY_DRIVER_ENABLED: "true"
-      VDR_DATABASE_DRIVER_ENABLED: "true"
-      VDR_PRISM_DRIVER_ENABLED: "false"
-      VDR_PRISM_NODE_DRIVER_ENABLED: "false"
-      VDR_NEOPRISM_DRIVER_ENABLED: "true"
-      VDR_LEDGER_DRIVER: neoprism
-    depends_on:
-      postgres:
-        condition: service_healthy
-      neoprism:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8085/_system/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
-
-  mongo:
+  mongo-mediator:
     image: mongo:6.0
     command: ["--auth"]
     environment:
@@ -112,11 +47,11 @@ services:
       MONGODB_USER: admin
       MONGODB_PASSWORD: admin
       MONGODB_PROTOCOL: mongodb
-      MONGODB_HOST: mongo
+      MONGODB_HOST: mongo-mediator
       MONGODB_PORT: 27017
       MONGODB_DB_NAME: mediator
     depends_on:
-      - mongo
+      - mongo-mediator
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
       interval: 30s

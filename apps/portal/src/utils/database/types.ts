@@ -14,3 +14,9 @@ export type RIDBCollection = {
     update(doc: unknown): Promise<void>;
     delete(id: string): Promise<void>;
 };
+
+export type PlutoOptions = {
+    dbName: string, 
+    password: string
+  }
+  
