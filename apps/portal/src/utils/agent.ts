@@ -52,9 +52,6 @@ async function CreateLocalAgent() {
       return Buffer.from(settings[0].value, "hex");
     },
   });
-
-  agent.apollo.createPrivateKey({,
-  })
   return agent;
 }
   
