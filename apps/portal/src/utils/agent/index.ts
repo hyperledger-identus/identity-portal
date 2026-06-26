@@ -1,4 +1,5 @@
-import {  MONGODB_URI } from "../../config";
+import {  AGENT_MODE, MONGODB_URI } from "../../config";
+import { createCloudAgentClient } from "./cloud-agent";
 import { CreateLocalAgent } from "./local";
 import { Agent } from "./types";
 
@@ -6,6 +7,8 @@ import { Agent } from "./types";
 process.env.MONGODB_URL = MONGODB_URI;
 
 let agent: Agent | null = null;
+
+
 
 export async function getAgent(): Promise<Agent> {
   /**
@@ -15,6 +18,6 @@ export async function getAgent(): Promise<Agent> {
    * The Agent will ALWAYS have the same interface no matter what, 
    * So we always call and get the same responses, making it easier to integrate
    */
-  agent ??= await CreateLocalAgent();
+  agent ??= await (AGENT_MODE === 'local' ? CreateLocalAgent() : createCloudAgentClient())
   return agent;
 }

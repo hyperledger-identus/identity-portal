@@ -1,4 +1,4 @@
-import { Agent as LocalAgent } from "@hyperledger/identus-sdk";
+import { Domain, } from "@hyperledger/identus-sdk";
 
 
 /**
@@ -9,6 +9,15 @@ import { Agent as LocalAgent } from "@hyperledger/identus-sdk";
  * the cloudAgent one is just an API Client.
  * 
  * This interface needs to be replaced with a common, unified interface for both modes
- * 
  */
-export type Agent = LocalAgent;
+export type Agent = {
+    start: () => Promise<void>;
+    stop: () => Promise<void>;
+    dids: {
+        resolveDID: (did: string) => ReturnType<Domain.DIDResolver['resolve']>;
+        // We need to add create prism did methods, create, publish
+    },
+    // WE also need to extend these types in order to support additional functionality
+    // Credential issuance flows
+    // Credential verification flows
+};
