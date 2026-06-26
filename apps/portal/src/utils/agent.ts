@@ -1,39 +1,77 @@
-import * as SDK from "@hyperledger/identus-sdk";
+import {
+  Apollo,
+  Castor,
+  Pluto,
+  Agent,
+} from "@hyperledger/identus-sdk";
 import { createMongoDB } from "@trust0/ridb-mongodb";
-import { MONGODB_URI } from "../config";
+import { DB_ENCRYPTION_KEY, MONGODB_URI } from "../config";
+import { createExtendedStore } from "./database";
+import { randomUUID } from "node:crypto";
 
 // The RIDB MongoDB backend reads its connection string from MONGODB_URL.
 process.env.MONGODB_URL = MONGODB_URI;
 
-let agent: SDK.Agent | null = null;
+let agent: Agent | null = null;
 
-/**
- * Lazily create a single Identus agent backed by a MongoDB-backed Pluto store.
- * Subsequent calls reuse the cached instance.
- */
-export async function getAgent(): Promise<SDK.Agent> {
-  if (agent) return agent;
-
-  const apollo = new SDK.Apollo();
-  const castor = new SDK.Castor(apollo);
-  const MongoDB = await createMongoDB()
-
-  const pluto = await SDK.Pluto.create({
+async function CreateLocalAgent() {
+  const apollo = new Apollo();
+  const castor = new Castor(apollo);
+  const storageType = await createMongoDB();
+  const { 
+    store, 
+  } = await createExtendedStore("portal", {
+    storageType,
+    password: DB_ENCRYPTION_KEY,
+  });
+  const pluto = await Pluto.create({
     keyRestoration: apollo,
-    dbName: "portal",
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    startOptions: { storageType: MongoDB }
+    store,
   });
 
-  const seed = apollo.createSeed(apollo.createRandomMnemonics(), "");
-
-  agent = await SDK.Agent.initialize({
+  
+  agent = await Agent.initialize({
     apollo,
     castor,
     pluto,
-    seed: async () => seed.value,
+    seed: async () => {
+      const settings = await store.query("settings", {
+        selector: {
+          key: "seed",
+        },
+      })
+      if (settings.length === 0) {
+        const seed = apollo.createSeed(apollo.createRandomMnemonics(), "");
+        await store.insert("settings", {
+          value: Buffer.from(seed.value).toString("hex"),
+          key: "seed",
+          uuid: randomUUID(),
+          id: randomUUID(),
+        })
+      }
+      return Buffer.from(settings[0].value, "hex");
+    },
   });
 
+  agent.apollo.createPrivateKey({,
+  })
+  return agent;
+}
+  
+export async function getAgent(): Promise<Agent> {
+  /**
+   * This function should be modified:
+   * 1. Change the return type of this function and add specific methods
+   * createDID, updateDID, publishDID, resolveDID.
+   * 
+   * This interface will be then extended to support other flows
+   * issue credentials, 
+   * send didcomm message
+   * verify digital credentials.
+   * 
+   * 
+   * This is the place where we will connect with cloud-agent or the local-agent
+   */
+  agent ??= await CreateLocalAgent();
   return agent;
 }

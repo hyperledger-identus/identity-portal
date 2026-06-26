@@ -14,9 +14,7 @@ type Options = {
 export class HttpServer {
     private server!: Server;
     private uiClose?: () => Promise<void>;
-    constructor(
-        private readonly options: Options,
-    ) {}
+    constructor(private readonly options: Options ) {}
 
     get context() {
         return {
@@ -31,18 +29,12 @@ export class HttpServer {
         app.use(express.json());
         app.use(express.urlencoded({ extended: true }));
 
-        // Mount the REST API under /api (plus /docs and /openapi.json in development).
-        // createAPIRouter already namespaces its routes under /api, so it must be
-        // mounted at the root. It also has to come before the UI router: the Vite
-        // dev SPA fallback serves index.html for every GET request, which would
-        // otherwise swallow /api/* calls before they reach the API.
         const apiRouter = await createAPIRouter(this.context);
         const uiRouter = await createUIRouter();
 
         app.use(apiRouter);
         app.use(uiRouter);
        
-
         // Global error handler - always return JSON
         app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
             console.error('Unhandled error:', err);

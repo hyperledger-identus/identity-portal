@@ -134,7 +134,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: admin
       MONGO_INITDB_DATABASE: identus
     ports:
-      - "27019:27019"
+      - "27019:27017"
     tmpfs:
       - /data/db
     volumes:
@@ -145,7 +145,7 @@ services:
       environment:
           - PORT=4004
           - ME_CONFIG_MONGODB_SERVER=mongo-identus
-          - ME_CONFIG_MONGODB_PORT=27019
+          - ME_CONFIG_MONGODB_PORT=27017
           - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
           - ME_CONFIG_MONGODB_AUTH_DATABASE=admin
           - ME_CONFIG_MONGODB_AUTH_USERNAME=admin
@@ -153,6 +153,6 @@ services:
           - ME_CONFIG_BASICAUTH_USERNAME=admin
           - ME_CONFIG_BASICAUTH_PASSWORD=admin
       depends_on:
-          - mongo
+          - mongo-identus
       ports:
         - "8888:4004"

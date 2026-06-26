@@ -273,17 +273,3 @@ export function restErrorHandler(
     error: error.message || 'Internal server error',
   });
 }
-
-/**
- * Helper to define input schemas with type inference
- */
-export function defineInput<T extends ZodSchema>(schema: T) {
-  return schema;
-}
-
-/**
- * Helper to define output schemas with type inference
- */
-export function defineOutput<T extends ZodSchema>(schema: T) {
-  return schema;
-}

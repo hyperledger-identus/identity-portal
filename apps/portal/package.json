@@ -6,7 +6,7 @@
   "type": "commonjs",
   "dependencies": {
     "@hyperledger/identus-sdk": "^8.0.0",
-    "@trust0/ridb-mongodb": "^0.0.14",
+    "@trust0/ridb-mongodb": "^0.0.15",
     "@zodyac/zod-mongoose": "^4.2.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
