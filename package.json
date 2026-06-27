@@ -21,6 +21,7 @@
     "test": "nx run-many --target=test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "docs:api": "typedoc",
     "local:up": "docker compose -f docker.local.compose.yml up -d",
     "local:down": "docker compose -f docker.local.compose.yml down --remove-orphans",
     "local:logs": "docker compose -f docker.local.compose.yml logs -f",

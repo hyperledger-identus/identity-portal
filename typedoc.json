@@ -1,0 +1,19 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "Identity Portal API",
+  "entryPoints": ["apps/portal/src"],
+  "entryPointStrategy": "expand",
+  "tsconfig": "apps/portal/tsconfig.app.json",
+  "out": "docs/api",
+  "exclude": [
+    "**/node_modules/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/cloud-agent/client.ts",
+    "**/cloud-agent/spec.ts"
+  ],
+  "excludeExternals": true,
+  "skipErrorChecking": true,
+  "readme": "none"
+}
