@@ -41,7 +41,7 @@ import swaggerUi from 'swagger-ui-express';
 import { type Context, restErrorHandler } from '../utils/rest';
 import { generateOpenApiSpec, type RouterMount } from '../utils/openapi';
 import { routeGroups } from './registry';
-import { PORT } from '../config';
+import { NODE_ENV, PORT } from '../config';
 
 import packageJson from '../../package.json';
 
@@ -79,7 +79,7 @@ export async function createAPIRouter(context: Context) {
   }
 
   // Serve Swagger UI in development mode
-  if (process.env.NODE_ENV === 'development') {
+  if (NODE_ENV === 'development') {
     const openApiSpec = generateOpenApiSpec(mounts, {
       title: 'Identus Portal API',
       version: packageJson.version,
