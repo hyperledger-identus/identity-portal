@@ -8,6 +8,14 @@ dashboard.
 The project comes from the LF Decentralized Trust mentorship proposal
 [Hyperledger Identus - Identity Portal](https://github.com/LF-Decentralized-Trust-Mentorships/mentorship-program/issues/77).
 
+## Documentation
+
+- [Architecture](./docs/architecture.md) — how the project is structured and why.
+- [Local development](./docs/local-development.md) — setup, run modes, scripts, troubleshooting.
+- [Architecture Decision Records](./docs/adr/) — the reasoning behind key decisions.
+
+While running in development, the live API reference is the Swagger UI at `/api/docs`.
+
 ## Instructions
 
 Install this workspace with ```npm i```
