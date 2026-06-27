@@ -10,3 +10,48 @@ export const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://admin:admin@loc
 
 
 export const AGENT_MODE = process.env.AGENT_MODE ?? "local";
+
+/**
+ * OIDC / Keycloak authentication gateway settings.
+ *
+ * Defaults target the local Keycloak from `docker.local.compose.yml` or the cloud-agent one.
+ * (realm `atala-demo`, port `9980`) and the `identity-portal` client
+ * registered by `docker/keycloak-init.sh`.
+ */
+export const KEYCLOAK_ISSUER_URL = process.env.KEYCLOAK_ISSUER_URL ?? "http://localhost:9980/realms/atala-demo";
+// Browser-facing Keycloak origin (used in docs / external provider setup). In the
+// local/dev setup the server and browser both reach Keycloak at the same origin.
+export const KEYCLOAK_PUBLIC_URL = process.env.KEYCLOAK_PUBLIC_URL ?? "http://localhost:9980";
+export const OIDC_CLIENT_ID = process.env.OIDC_CLIENT_ID ?? "identity-portal";
+export const OIDC_CLIENT_SECRET = process.env.OIDC_CLIENT_SECRET ?? "identity-portal-ui-secret";
+export const OIDC_BASE_URL = process.env.OIDC_BASE_URL ?? `http://localhost:${PORT}`;
+// Where Keycloak redirects back after the authorization code flow.
+export const OIDC_REDIRECT_URI = process.env.OIDC_REDIRECT_URI ?? `${OIDC_BASE_URL}/auth/callback`;
+// Used to encrypt the session cookie. Must be at least 32 characters. Override in any non-local environment.
+export const SESSION_SECRET = process.env.SESSION_SECRET ?? "dev-only-session-secret-change-me-0123456789abcdef0123456789abcdef";
+export const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME ?? "portal_session";
+// Session lifetime in seconds (default 8h).
+export const SESSION_TTL = Number(process.env.SESSION_TTL ?? String(60 * 60 * 8));
+
+/**
+ * Social identity providers. A provider is considered enabled when its OAuth
+ * app credentials are present (the same vars the Keycloak init script reads), or
+ * when explicitly toggled via `AUTH_<PROVIDER>_ENABLED`. The SPA only renders a
+ * social button when the provider is enabled here.
+ */
+function hasValue(...values: (string | undefined)[]): boolean {
+  return values.every((value) => typeof value === "string" && value.trim().length > 0);
+}
+export const AUTH_GOOGLE_ENABLED = process.env.AUTH_GOOGLE_ENABLED
+  ? process.env.AUTH_GOOGLE_ENABLED === "true"
+  : hasValue(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
+export const AUTH_GITHUB_ENABLED = process.env.AUTH_GITHUB_ENABLED
+  ? process.env.AUTH_GITHUB_ENABLED === "true"
+  : hasValue(process.env.GITHUB_CLIENT_ID, process.env.GITHUB_CLIENT_SECRET);
+
+/**
+ * Backend rate limiting for the native (ROPC) login endpoint. This is defense in
+ * depth on top of Keycloak's own brute-force protection.
+ */
+export const LOGIN_RATE_LIMIT_WINDOW_MS = Number(process.env.LOGIN_RATE_LIMIT_WINDOW_MS ?? String(15 * 60 * 1000));
+export const LOGIN_RATE_LIMIT_MAX = Number(process.env.LOGIN_RATE_LIMIT_MAX ?? "10");
