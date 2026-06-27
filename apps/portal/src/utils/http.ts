@@ -3,6 +3,7 @@ import cors from 'cors';
 import { createAPIRouter } from "../api";
 import { PORT } from "../config";
 import {  createUIRouter } from "./ui";
+import { createProtectedAuthRouter, createPublicAuthRouter, guardUi, requireApiAuth } from "./auth";
 import { type Server } from "node:http";
 import { Agent } from "./agent/types";
 
@@ -32,7 +33,20 @@ export class HttpServer {
         const apiRouter = await createAPIRouter(this.context);
         const uiRouter = await createUIRouter();
 
+        // Public auth endpoints (no session required): native ROPC login, social /
+        // interactive redirects, the OIDC callback, logout, and the providers probe
+        // used by the login page. Must be registered before the API guard below.
+        app.use(createPublicAuthRouter());
+
+        // Everything else under /api requires a valid session (JSON 401 otherwise).
+        app.use('/api', requireApiAuth);
+        app.use(createProtectedAuthRouter());
         app.use(apiRouter);
+
+        // Enforce the login redirect: unauthenticated page loads are 302'd to
+        // /login (public pages /login and /logged-out pass through). The SPA shell
+        // is then served by uiRouter; the API guard above protects the data.
+        app.use(guardUi);
         app.use(uiRouter);
        
         // Global error handler - always return JSON

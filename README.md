@@ -16,6 +16,27 @@ The project comes from the LF Decentralized Trust mentorship proposal
 
 While running in development, the live API reference is the Swagger UI at `/api/docs`.
 
+## Authentication
+
+The portal authenticates through Keycloak using a Backend-for-Frontend (BFF) gateway:
+the Express server performs the OIDC exchanges and keeps tokens in an encrypted,
+httpOnly session cookie (tokens never reach the browser). The React UI renders a
+branded login page that supports:
+
+- Native username/password (Keycloak Direct Access Grant), and
+- Social sign-in with Google and/or GitHub when configured.
+
+Copy [.env.example](./.env.example) to `.env` to configure it. With an empty `.env`,
+`npm run local:up` provisions Keycloak (realm `atala-demo`, the `identity-portal`
+client, brute-force protection, and sample users `alice` / `bob`, password `1234`).
+
+To enable social login, create an OAuth app in the provider and point its callback
+at Keycloak's broker endpoint, then set the credentials in `.env` before running
+`local:up` / `cloud-agent:up`:
+
+- Google: `http://localhost:9980/realms/atala-demo/broker/google/endpoint`
+- GitHub: `http://localhost:9980/realms/atala-demo/broker/github/endpoint`
+
 ## Instructions
 
 Install this workspace with ```npm i```

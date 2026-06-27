@@ -1,4 +1,46 @@
 services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.7
+    ports:
+      - "9980:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    command: start-dev --hostname-url=http://localhost:9980 --health-enabled=true
+
+  keycloak-wait:
+    image: badouralix/curl-jq:ubuntu
+    command:
+      - /bin/bash
+      - -c
+      - until curl http://keycloak:8080/health; do sleep 1; done && echo "Keycloak is ready."
+    depends_on:
+      keycloak:
+        condition: service_started
+
+  keycloak-init:
+    image: badouralix/curl-jq:ubuntu
+    command: ["/bin/bash", "/workspace/init-script.sh"]
+    environment:
+      KEYCLOAK_BASE_URL: http://keycloak:8080
+      KEYCLOAK_ADMIN_USER: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      REALM_NAME: atala-demo
+      PRISM_AGENT_CLIENT_SECRET: prism-agent-demo-secret
+      PORTAL_CLIENT_SECRET: identity-portal-ui-secret
+      PORTAL_BASE_URL: ${PORTAL_BASE_URL:-http://localhost:3000}
+      # Optional social login. Set these in your shell/.env to provision the
+      # matching Keycloak identity provider; left empty they are skipped.
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+    volumes:
+      - ./docker/keycloak-init.sh:/workspace/init-script.sh
+    depends_on:
+      keycloak-wait:
+        condition: service_completed_successfully
+
   postgres:
     image: postgres:13
     environment:
@@ -61,7 +103,6 @@ services:
       AGENT_DB_PASSWORD: postgres
       SECRET_STORAGE_BACKEND: postgres
       DEV_MODE: "true"
-      API_KEY_ENABLED: "false"
       DIDCOMM_SERVICE_URL: http://localhost:${CLOUD_AGENT_DIDCOMM_PORT:-8090}
       REST_SERVICE_URL: http://localhost:${CLOUD_AGENT_HTTP_PORT:-8085}
       POLLUX_STATUS_LIST_REGISTRY_PUBLIC_URL: http://localhost:${CLOUD_AGENT_HTTP_PORT:-8085}
@@ -72,6 +113,15 @@ services:
       VDR_PRISM_NODE_DRIVER_ENABLED: "false"
       VDR_NEOPRISM_DRIVER_ENABLED: "true"
       VDR_LEDGER_DRIVER: neoprism
+      API_KEY_ENABLED: true
+      API_KEY_AUTHENTICATE_AS_DEFAULT_USER: false
+      API_KEY_AUTO_PROVISIONING:
+      KEYCLOAK_ENABLED: true
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: atala-demo
+      KEYCLOAK_CLIENT_ID: prism-agent # TODO: Fix this later
+      KEYCLOAK_CLIENT_SECRET: prism-agent-demo-secret
+      KEYCLOAK_UMA_AUTO_UPGRADE_RPT: true
     depends_on:
       postgres:
         condition: service_healthy
