@@ -115,9 +115,62 @@ export type RouterWithRoutes = {
 };
 
 /**
+ * Compile-time description of a single endpoint's validated input and output.
+ * These are the *inferred* TypeScript types, not the Zod schemas themselves.
+ */
+export type EndpointType<TInput = unknown, TOutput = unknown> = {
+  input: TInput;
+  output: TOutput;
+};
+
+/** Adds one route to the accumulated route map, keyed by `"<method> <path>"`. */
+type AddRoute<
+  TRoutes,
+  M extends HttpMethod,
+  P extends string,
+  TInput,
+  TOutput,
+> = TRoutes & { [K in `${M} ${P}`]: EndpointType<TInput, TOutput> };
+
+/**
+ * The fluent router builder. Its `TRoutes` type parameter accumulates the
+ * input/output types of every route added via the builder, so the full API
+ * shape can be recovered purely at the type level (see {@link InferRoutes}).
+ */
+export interface RestRouter<TRoutes = unknown> {
+  get<P extends string, TInput = void, TOutput = unknown>(
+    path: P,
+    config: RouteConfig<TInput, TOutput>,
+  ): RestRouter<AddRoute<TRoutes, 'get', P, TInput, TOutput>>;
+  post<P extends string, TInput = void, TOutput = unknown>(
+    path: P,
+    config: RouteConfig<TInput, TOutput>,
+  ): RestRouter<AddRoute<TRoutes, 'post', P, TInput, TOutput>>;
+  put<P extends string, TInput = void, TOutput = unknown>(
+    path: P,
+    config: RouteConfig<TInput, TOutput>,
+  ): RestRouter<AddRoute<TRoutes, 'put', P, TInput, TOutput>>;
+  patch<P extends string, TInput = void, TOutput = unknown>(
+    path: P,
+    config: RouteConfig<TInput, TOutput>,
+  ): RestRouter<AddRoute<TRoutes, 'patch', P, TInput, TOutput>>;
+  delete<P extends string, TInput = void, TOutput = unknown>(
+    path: P,
+    config: RouteConfig<TInput, TOutput>,
+  ): RestRouter<AddRoute<TRoutes, 'delete', P, TInput, TOutput>>;
+  readonly router: ReturnType<typeof Router>;
+  readonly routes: RouteDefinition[];
+  /** Phantom carrier for the accumulated route types (compile-time only). */
+  readonly _routes?: TRoutes;
+}
+
+/** Recovers the accumulated route map from a {@link RestRouter} instance. */
+export type InferRoutes<T> = T extends RestRouter<infer R> ? R : never;
+
+/**
  * Creates a validated REST router with automatic input/output validation
  */
-export function createRestRouter(options: CreateRouterOptions) {
+export function createRestRouter(options: CreateRouterOptions): RestRouter {
   const routes: RouteDefinition[] = [];
   const router = Router();
 
@@ -222,7 +275,9 @@ export function createRestRouter(options: CreateRouterOptions) {
     routes,
   };
 
-  return routeBuilder;
+  // The runtime object returns itself from each method for chaining; the
+  // accumulating types live entirely in the RestRouter interface above.
+  return routeBuilder as unknown as RestRouter;
 }
 
 /**

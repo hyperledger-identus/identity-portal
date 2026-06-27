@@ -36,15 +36,29 @@
  * 
  * @module API
  */
-import pafh from 'node:path';
-import fs from 'node:fs';
 import { Request, Response, Router } from 'express';
 import swaggerUi from 'swagger-ui-express';
-import { type Context,type RouterWithRoutes, restErrorHandler } from '../utils/rest';
+import { type Context, restErrorHandler } from '../utils/rest';
 import { generateOpenApiSpec, type RouterMount } from '../utils/openapi';
+import { routeGroups } from './registry';
 import { PORT } from '../config';
 
 import packageJson from '../../package.json';
+
+/**
+ * Builds every route group's router for a given context.
+ *
+ * Shared by the runtime API server and the OpenAPI/client generator so both
+ * see exactly the same routes.
+ *
+ * @category API
+ */
+export function buildRouterMounts(context: Context): RouterMount[] {
+  return Object.entries(routeGroups).map(([basePath, factory]) => ({
+    basePath,
+    router: factory(context),
+  }));
+}
 
 /**
  * Creates the main API router with all route groups mounted.
@@ -55,35 +69,18 @@ import packageJson from '../../package.json';
  * @category API
  */
 export async function createAPIRouter(context: Context) {
-  const routers = new Map<string, RouterWithRoutes>();
   const apiRouter = Router();
   const router = Router();
 
-  // Mount route groups
-  const routes = fs
-    .readdirSync(pafh.join(__dirname))
-    .filter(file => !file.includes("."));
-
-  for (const folder of routes) {
-    const {
-      default: {
-        default: routerFn,
-      },
-    } = await import(pafh.join(__dirname, folder, 'index.js'));
-    const routerWithContext = routerFn(context);
-    //Add to the routers map for OpenAPI generation
-    routers.set(`/${folder}`, routerWithContext);
-    //Load API Routes
-    apiRouter.use(`/${folder}`, routerWithContext.router);
+  // Mount route groups from the registry (single source of truth)
+  const mounts = buildRouterMounts(context);
+  for (const { basePath, router: routerWithContext } of mounts) {
+    apiRouter.use(basePath, routerWithContext.router);
   }
 
   // Serve Swagger UI in development mode
   if (process.env.NODE_ENV === 'development') {
-    const openAPIRoutes: RouterMount[] = Array
-      .from(routers.entries())
-      .map(([basePath, router]) => ({ basePath, router }));
-
-    const openApiSpec = generateOpenApiSpec(openAPIRoutes, {
+    const openApiSpec = generateOpenApiSpec(mounts, {
       title: 'Identus Portal API',
       version: packageJson.version,
       description: packageJson.description,
