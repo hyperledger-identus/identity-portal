@@ -4,7 +4,7 @@ import { createAPIRouter } from "../api";
 import { PORT } from "../config";
 import {  createUIRouter } from "./ui";
 import { type Server } from "node:http";
-import {type Agent } from "@hyperledger/identus-sdk";
+import { Agent } from "./agent/types";
 
 type Options = {
      readonly agent: Agent,

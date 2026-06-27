@@ -29,7 +29,7 @@
  */
 import { type Request, type Response, Router, type NextFunction } from 'express';
 import { type ZodSchema, ZodError } from 'zod';
-import {type Agent} from "@hyperledger/identus-sdk";
+import { Agent } from './agent/types';
 
 /**
  * Lightweight REST validation framework.
