@@ -1,14 +1,13 @@
 import express, { type Request, type Response, type NextFunction } from "express";
 import cors from 'cors';
 import { createAPIRouter } from "../api";
+import { createRequestContext } from "../api/context";
 import { PORT } from "../config";
 import {  createUIRouter } from "./ui";
 import { createProtectedAuthRouter, createPublicAuthRouter, guardUi, requireApiAuth } from "./auth";
 import { type Server } from "node:http";
-import { Agent } from "./agent/types";
 
 type Options = {
-     readonly agent: Agent,
      onClose: () => Promise<void>,
 }
 
@@ -17,12 +16,6 @@ export class HttpServer {
     private uiClose?: () => Promise<void>;
     constructor(private readonly options: Options ) {}
 
-    get context() {
-        return {
-          agent: this.options.agent,
-        }
-    }
-
     async start() {
         const app = express();
 
@@ -30,7 +23,9 @@ export class HttpServer {
         app.use(express.json());
         app.use(express.urlencoded({ extended: true }));
 
-        const apiRouter = await createAPIRouter(this.context);
+        // Each API request builds its own context (resolves the authenticated
+        // agent for the caller), so the remote agent is always used as the user.
+        const apiRouter = await createAPIRouter(createRequestContext);
         const uiRouter = await createUIRouter();
 
         // Public auth endpoints (no session required): native ROPC login, social /

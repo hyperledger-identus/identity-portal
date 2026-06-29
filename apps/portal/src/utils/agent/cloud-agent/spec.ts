@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/did-registrar/dids/{longFormDid}": {
+    "/credential-definition-registry/definitions": {
         parameters: {
             query?: never;
             header?: never;
@@ -12,77 +12,58 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get DID stored in Prism Agent's wallet
-         * @description Get DID stored in Prism Agent's wallet
+         * Lookup credential definitions by indexed fields
+         * @description Lookup credential definitions by `author`, `name`, `tag` parameters and control the pagination by `offset` and `limit` parameters
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    longFormDid: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "did": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff",
-                         *       "status": "PUBLICATION_PENDING",
-                         *       "longFormDid": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff:Cr4BCrsBElsKBmF1dGgtMRAEQk8KCXNlY3AyNTZrMRIg0opTuxu-zt6aRbT1tPniG4eu4CYsQPM3rrLzvzNiNgwaIIFTnyT2N4U7qCQ78qtWC3-p0el6Hvv8qxG5uuEw-WgMElwKB21hc3RlcjAQAUJPCglzZWNwMjU2azESIKhBU0eCOO6Vinz_8vhtFSAhYYqrkEXC8PHGxkuIUev8GiAydFHLXb7c22A1Uj_PR21NZp6BCDQqNq2xd244txRgsQ"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
+        get: operations["lookupCredentialDefinitionsByQueryHttpUrl"];
+        put?: never;
+        /**
+         * Publish new definition to the definition registry, resolvable by HTTP url
+         * @description Create the new credential definition record with metadata and internal JSON Schema on behalf of Cloud Agent. The credential definition will be signed by the keys of Cloud Agent and issued by the DID that corresponds to it.
+         */
+        post: operations["createCredentialDefinitionHttpUrl"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/credential-definition-registry/definitions/did-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
+        /**
+         * Lookup credential definitions by indexed fields
+         * @description Lookup DID url resolvable credential definitions by `author`, `name`, `tag` parameters and control the pagination by `offset` and `limit` parameters
+         */
+        get: operations["lookupCredentialDefinitionsByQueryDidUrl"];
+        put?: never;
+        /**
+         * Publish new definition to the definition registry, resolvable by DID url
+         * @description Create the new credential definition record with metadata and internal JSON Schema on behalf of the Cloud Agent. The credential definition will be signed by the keys of Cloud Agent and issued by the DID that corresponds to it.
+         */
+        post: operations["createCredentialDefinitionDidUrl"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/credential-definition-registry/definitions/{guid}/definition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fetch the inner definition field of the credential definition from the registry by `guid`
+         * @description Fetch the inner definition fields of the credential definition by the unique identifier
+         */
+        get: operations["getCredentialDefinitionInnerDefinitionByIdHttpUrl"];
         put?: never;
         post?: never;
         delete?: never;
@@ -91,7 +72,344 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/did-registrar/dids/{longFormDid}/publications": {
+    "/credential-definition-registry/definitions/did-url/{guid}/definition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fetch the inner definition field of the credential definition from the registry by `guid`, wrapped in an envelope
+         * @description Fetch the inner definition fields of the credential definition by the unique identifier, it should have been crated via DID url, otherwise not found error is returned.
+         */
+        get: operations["getCredentialDefinitionInnerDefinitionByIdDidUrl"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/credential-definition-registry/definitions/{guid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fetch the credential definition from the registry by `guid`
+         * @description Fetch the credential definition by the unique identifier
+         */
+        get: operations["getCredentialDefinitionByIdHttpUrl"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/credential-definition-registry/definitions/did-url/{guid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fetch the credential definition from the registry by `guid`, wrapped in an envelope
+         * @description Fetch the credential definition by the unique identifier, it should have been crated via DID url, otherwise not found error is returned.
+         */
+        get: operations["getCredentialDefinitionByIdDidUrl"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schema-registry/schemas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lookup schemas by indexed fields
+         * @description Lookup schemas by `author`, `name`, `tags` parameters and control the pagination by `offset` and `limit` parameters
+         */
+        get: operations["lookupSchemasByQuery"];
+        put?: never;
+        /**
+         * Publish new schema to the schema registry, http url resolvable
+         * @description Create the new credential schema record with metadata and internal JSON Schema on behalf of Cloud Agent. The credential schema will be signed by the keys of Cloud Agent and issued by the DID that corresponds to it.
+         */
+        post: operations["createSchema"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schema-registry/schemas/did-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lookup schemas by indexed fields
+         * @description Lookup schemas by `author`, `name`, `tags` parameters and control the pagination by `offset` and `limit` parameters
+         */
+        get: operations["lookupSchemasByQueryDidUrl"];
+        put?: never;
+        /**
+         * Publish new schema to the schema registry, did url resolvable
+         * @description Create the new credential schema record with metadata and internal JSON Schema on behalf of Cloud Agent. The credential schema will be signed by the keys of Cloud Agent and issued by the DID that corresponds to it.
+         */
+        post: operations["createSchemaDidUrl"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schema-registry/schemas/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Publish the new version of the credential schema to the schema registry
+         * @description Publish the new version of the credential schema record with metadata and internal JSON Schema on behalf of Cloud Agent. The credential schema will be signed by the keys of Cloud Agent and issued by the DID that corresponds to it.
+         */
+        put: operations["updateSchema"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schema-registry/schemas/did-url/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Publish the new version of the credential schema to the schema registry
+         * @description Publish the new version of the credential schema record with metadata and internal JSON Schema on behalf of Cloud Agent. The credential schema will be signed by the keys of Cloud Agent and issued by the DID that corresponds to it.
+         */
+        put: operations["updateSchemaDidUrl"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schema-registry/schemas/{guid}/schema": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fetch the schema from the registry by `guid`
+         * @description Fetch the credential schema by the unique identifier
+         */
+        get: operations["getRawSchemaById"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schema-registry/schemas/did-url/{guid}/schema": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fetch the schema from the registry by `guid`
+         * @description Fetch the credential schema by the unique identifier
+         */
+        get: operations["getRawSchemaByIdDidUrl"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schema-registry/schemas/{guid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fetch the schema from the registry by `guid`
+         * @description Fetch the credential schema by the unique identifier
+         */
+        get: operations["getSchemaById"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schema-registry/schemas/did-url/{guid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fetch the schema from the registry by `guid`
+         * @description Fetch the credential schema by the unique identifier
+         */
+        get: operations["getSchemaByIdDidUrl"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/verification/policies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lookup verification policies by query
+         * @description Lookup verification policies by `name`, and control the pagination by `offset` and `limit` parameters
+         */
+        get: operations["lookupVerificationPoliciesByQuery"];
+        put?: never;
+        /**
+         * Create the new verification policy
+         * @description Create the new verification policy
+         */
+        post: operations["createVerificationPolicy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/verification/policies/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fetch the verification policy by id
+         * @description Get the verification policy by id
+         */
+        get: operations["getVerificationPolicyById"];
+        /**
+         * Update the verification policy object by id
+         * @description Update the verification policy entry
+         */
+        put: operations["updateVerificationPolicy"];
+        post?: never;
+        /**
+         * Deleted the verification policy by id
+         * @description Delete the verification policy by id
+         */
+        delete: operations["deleteVerificationPolicyById"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Retrieves the list of connection flow records available from the Agent's database.
+         * @description Retrieve of a list containing connections available from the Agent's database.
+         *     The API returns a comprehensive collection of connection flow records within the system, regardless of their state.
+         *     Each connection item includes essential metadata such as connection ID, thread ID, state, role, participant information, and other relevant details.
+         *     Pagination support is available, allowing for efficient handling of large datasets.
+         */
+        get: operations["getConnections"];
+        put?: never;
+        /**
+         * Create a new connection invitation that can be delivered out-of-band to a peer Agent.
+         * @description Create a new connection invitation that can be delivered out-of-band to a peer Agent, regardless of whether it resides in Cloud Agent or edge environment.
+         *     The generated invitation adheres to the DIDComm Messaging v2.0 - [Out of Band Messages](https://identity.foundation/didcomm-messaging/spec/v2.0/#out-of-band-messages) specification [section 9.5.4](https://identity.foundation/didcomm-messaging/spec/v2.0/#invitation).
+         *     The <b>from</b> field of the out-of-band invitation message contains a freshly generated Peer DID that complies with the [did:peer:2](https://identity.foundation/peer-did-method-spec/#generating-a-didpeer2) specification.
+         *     This Peer DID includes the 'uri' location of the DIDComm messaging service, essential for the invitee's subsequent execution of the connection flow.
+         *     In the Agent database, the created connection record has an initial state set to `InvitationGenerated`.
+         *     The request body may contain a `label` that can be used as a human readable alias for the connection, for example `{'label': "Connection with Bob"}`
+         */
+        post: operations["createConnection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/connections/{connectionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Retrieves a specific connection flow record from the Agent's database based on its unique `connectionId`.
+         * @description Retrieve a specific connection flow record from the Agent's database based in its unique `connectionId`.
+         *     The returned item includes essential metadata such as connection ID, thread ID, state, role, participant information, and other relevant details.
+         */
+        get: operations["getConnection"];
+        put?: never;
+        post?: never;
+        /**
+         * Deletes a specific connection flow record from the Agent's database based on its unique `connectionId`.
+         * @description Delete a specific connection flow record from the Agent's database based in its unique `connectionId`.
+         */
+        delete: operations["deleteConnection"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/connection-invitations": {
         parameters: {
             query?: never;
             header?: never;
@@ -101,82 +419,110 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Publish the DID stored in Prism Agent's wallet to the VDR
-         * @description Publish the DID stored in Prism Agent's wallet to the VDR.
+         * Accept a new connection invitation received out-of-band from another peer Agent.
+         * @description Accept an new connection invitation received out-of-band from another peer Agent.
+         *     The invitation must be compliant with the DIDComm Messaging v2.0 - [Out of Band Messages](https://identity.foundation/didcomm-messaging/spec/v2.0/#out-of-band-messages) specification [section 9.5.4](https://identity.foundation/didcomm-messaging/spec/v2.0/#invitation).
+         *     A new connection record with state `ConnectionRequestPending` will be created in the agent database and later processed by a background job to send a connection request to the peer Agent.
+         *     The created record will contain a newly generated pairwise Peer DID used for that connection.
+         *     A connection request will then be sent to the peer Agent to actually establish the connection, moving the record state to `ConnectionRequestSent`, and waiting the connection response from the peer Agent.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    longFormDid: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "*/*"?: never;
-                };
-            };
-            responses: {
-                /** @description Accepted */
-                202: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "scheduledOperation": {
-                         *         "id": "98e6a4db10e58fcc011dd8def5ce99fd8b52af39e61e5fb436dc28259139818b",
-                         *         "didRef": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff"
-                         *       }
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Unprocessable Entity (WebDAV) (RFC 4918) */
-                422: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
+        post: operations["acceptConnectionInvitation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dids/{didRef}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
+        /**
+         * Resolve Prism DID to a W3C representation
+         * @description Resolve Prism DID to a W3C DID document representation.
+         *     The response can be the [DID resolution result](https://w3c-ccg.github.io/did-resolution/#did-resolution-result)
+         *     or [DID document representation](https://www.w3.org/TR/did-core/#representations) depending on the `Accept` request header.
+         *     The response is implemented according to [resolver HTTP binding](https://w3c-ccg.github.io/did-resolution/#bindings-https) in the DID resolution spec.
+         */
+        get: operations["getDID"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/did-registrar/dids": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all DIDs stored in the agent's wallet
+         * @description List all DIDs stored in the agent's wallet.
+         *     Return a paginated items ordered by created timestamp.
+         */
+        get: operations["getDid-registrarDids"];
+        put?: never;
+        /**
+         * Create an unpublished PRISM DID and store it in the agent's wallet
+         * @description Create an unpublished PRISM DID and store it in the agent's wallet.
+         *     The public/private keys of the DID will be derived according to the `didDocumentTemplate` and managed by the agent.
+         *     The DID can later be published to the VDR using the `publications` endpoint.
+         *     After the DID is created, it has the `CREATED` status.
+         */
+        post: operations["postDid-registrarDids"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/did-registrar/dids/{didRef}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a specific DID stored in the agent's wallet
+         * @description Get a specific DID stored in the agent's wallet
+         */
+        get: operations["getDid-registrarDidsDidref"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/did-registrar/dids/{didRef}/publications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish the DID stored in the agent's wallet to the VDR
+         * @description Initiate the publication of the DID stored in the agent's wallet to the VDR.
+         *     The publishing process is asynchronous.
+         *     Attempting to publish the same DID while the previous publication is ongoing will not initiate another publication.
+         *     After the submission of the DID publication, its status is changed to `PUBLICATION_PENDING`.
+         *     Upon confirmation after a predefined number of blocks, the status is changed to `PUBLISHED`.
+         *     In case of a failed DID publication, the status is reverted to `CREATED`.
+         */
+        post: operations["postDid-registrarDidsDidrefPublications"];
         delete?: never;
         options?: never;
         head?: never;
@@ -193,92 +539,14 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Update DID in Prism Agent's wallet and post update operation to the VDR
-         * @description Update DID in Prism Agent's wallet and post update operation to the VDR.
+         * Update DID in the agent's wallet and post update operation to the VDR
+         * @description Update DID in the agent's wallet and post the update operation to the VDR.
+         *     Only the DID with status `PUBLISHED` can be updated.
          *     This endpoint updates the DID document from the last confirmed operation.
-         *     Submitting multiple update operations without waiting for confirmation will result in
-         *     some operations being rejected as only one operation is allowed to be appended to the last confirmed operation.
+         *     The update operation is asynchronous operation and the agent will reject
+         *     a new update request if the previous operation is not yet confirmed.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: {
-                    /** @example application/json */
-                    "Content-Type"?: string;
-                };
-                path: {
-                    /**
-                     * @description (Required) Prism DID according to [the Prism DID method syntax](https://github.com/input-output-hk/prism-did-method-spec/blob/main/w3c-spec/PRISM-method.md#prism-did-method-syntax)
-                     * @example <string>
-                     */
-                    didRef: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "*/*": string;
-                };
-            };
-            responses: {
-                /** @description Accepted */
-                202: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "scheduledOperation": {
-                         *         "id": "98e6a4db10e58fcc011dd8def5ce99fd8b52af39e61e5fb436dc28259139818b",
-                         *         "didRef": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff"
-                         *       }
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Unprocessable Entity (WebDAV) (RFC 4918) */
-                422: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
-        };
+        post: operations["postDid-registrarDidsDidrefUpdates"];
         delete?: never;
         options?: never;
         head?: never;
@@ -295,511 +563,20 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Deactivate DID in Prism Agent's wallet and post deactivate operation to the VDR
-         * @description Deactivate DID in Prism Agent's wallet and post deactivate operation to the VDR.
+         * Deactivate DID in the agent's wallet and post deactivate operation to the VDR
+         * @description Deactivate DID in the agent's wallet and post deactivate operation to the VDR.
+         *     Only the DID with status `PUBLISHED` can be deactivated.
+         *     The deactivate operation is asynchornous operation and the agent will reject
+         *     a new deactivate request if the previous operation is not yet comfirmed.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /**
-                     * @description (Required) Prism DID according to [the Prism DID method syntax](https://github.com/input-output-hk/prism-did-method-spec/blob/main/w3c-spec/PRISM-method.md#prism-did-method-syntax)
-                     * @example <string>
-                     */
-                    didRef: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "*/*"?: never;
-                };
-            };
-            responses: {
-                /** @description Accepted */
-                202: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "scheduledOperation": {
-                         *         "id": "98e6a4db10e58fcc011dd8def5ce99fd8b52af39e61e5fb436dc28259139818b",
-                         *         "didRef": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff"
-                         *       }
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Unprocessable Entity (WebDAV) (RFC 4918) */
-                422: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
-        };
+        post: operations["postDid-registrarDidsDidrefDeactivations"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/did-registrar/dids": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List all DIDs stored in Prism Agent's wallet
-         * @description List all DIDs stored in Prism Agent's wallet.
-         *     Return a paginated items ordered by created timestamp.
-         *     If the `limit` parameter is not set, it defaults to 100 items per page.
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "contents": [
-                         *         {
-                         *           "did": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff",
-                         *           "status": "CREATED",
-                         *           "longFormDid": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff:Cr4BCrsBElsKBmF1dGgtMRAEQk8KCXNlY3AyNTZrMRIg0opTuxu-zt6aRbT1tPniG4eu4CYsQPM3rrLzvzNiNgwaIIFTnyT2N4U7qCQ78qtWC3-p0el6Hvv8qxG5uuEw-WgMElwKB21hc3RlcjAQAUJPCglzZWNwMjU2azESIKhBU0eCOO6Vinz_8vhtFSAhYYqrkEXC8PHGxkuIUev8GiAydFHLXb7c22A1Uj_PR21NZp6BCDQqNq2xd244txRgsQ"
-                         *         },
-                         *         {
-                         *           "did": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff",
-                         *           "status": "PUBLICATION_PENDING",
-                         *           "longFormDid": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff:Cr4BCrsBElsKBmF1dGgtMRAEQk8KCXNlY3AyNTZrMRIg0opTuxu-zt6aRbT1tPniG4eu4CYsQPM3rrLzvzNiNgwaIIFTnyT2N4U7qCQ78qtWC3-p0el6Hvv8qxG5uuEw-WgMElwKB21hc3RlcjAQAUJPCglzZWNwMjU2azESIKhBU0eCOO6Vinz_8vhtFSAhYYqrkEXC8PHGxkuIUev8GiAydFHLXb7c22A1Uj_PR21NZp6BCDQqNq2xd244txRgsQ"
-                         *         }
-                         *       ],
-                         *       "kind": "Collection",
-                         *       "pageOf": "sed esse",
-                         *       "self": "https://atala-prism-products.io/dids",
-                         *       "next": "velit proident do dolor consequat",
-                         *       "previous": "la"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
-        };
-        put?: never;
-        /** Create ED25519 unpublished DID */
-        post: {
-            parameters: {
-                query?: never;
-                header?: {
-                    /** @example application/json */
-                    "Content-Type"?: string;
-                };
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "*/*": string;
-                };
-            };
-            responses: {
-                /** @description Created */
-                201: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "longFormDid": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff:Cr4BCrsBElsKBmF1dGgtMRAEQk8KCXNlY3AyNTZrMRIg0opTuxu-zt6aRbT1tPniG4eu4CYsQPM3rrLzvzNiNgwaIIFTnyT2N4U7qCQ78qtWC3-p0el6Hvv8qxG5uuEw-WgMElwKB21hc3RlcjAQAUJPCglzZWNwMjU2azESIKhBU0eCOO6Vinz_8vhtFSAhYYqrkEXC8PHGxkuIUev8GiAydFHLXb7c22A1Uj_PR21NZp6BCDQqNq2xd244txRgsQ"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Unprocessable Entity (WebDAV) (RFC 4918) */
-                422: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/credential-definition-registry/definitions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Credential Definitions */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Successful response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": unknown;
-                    };
-                };
-            };
-        };
-        put?: never;
-        /** Create Credential Definition */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": Record<string, never>;
-                };
-            };
-            responses: {
-                /** @description Successful response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": unknown;
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/credential-definition-registry/definitions/{definitionId}/definition": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Single Credential Definition */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    definitionId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Successful response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": unknown;
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/_system/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Fetch the schema from the registry by `guid`
-         * @description Fetch the credential schema by the unique identifier
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "guid": "0527aea1-d131-3948-a34d-03af39aba8b4",
-                         *       "id": "0527aea1-d131-3948-a34d-03af39aba8b5",
-                         *       "name": "DrivingLicense",
-                         *       "version": "1.0.0",
-                         *       "description": "Simple credential schema for the driving licence verifiable credential. This field is not a part of W3C specification",
-                         *       "type": "https://w3c-ccg.github.io/vc-json-schemas/schema/2.0/schema.json",
-                         *       "schema": {
-                         *         "example": {
-                         *           "$id": "driving-license-1.0",
-                         *           "$schema": "https://json-schema.org/draft/2020-12/schema",
-                         *           "description": "Driving License",
-                         *           "type": "object",
-                         *           "properties": {
-                         *             "credentialSubject": {
-                         *               "type": "object",
-                         *               "properties": {
-                         *                 "emailAddress": {
-                         *                   "type": "string",
-                         *                   "format": "email"
-                         *                 },
-                         *                 "givenName": {
-                         *                   "type": "string"
-                         *                 },
-                         *                 "familyName": {
-                         *                   "type": "string"
-                         *                 },
-                         *                 "dateOfIssuance": {
-                         *                   "type": "datetime"
-                         *                 },
-                         *                 "drivingLicenseID": {
-                         *                   "type": "string"
-                         *                 },
-                         *                 "drivingClass": {
-                         *                   "type": "integer"
-                         *                 },
-                         *                 "required": [
-                         *                   "emailAddress",
-                         *                   "familyName",
-                         *                   "dateOfIssuance",
-                         *                   "drivingLicenseID",
-                         *                   "drivingClass"
-                         *                 ],
-                         *                 "additionalProperties": true
-                         *               }
-                         *             }
-                         *           }
-                         *         }
-                         *       },
-                         *       "author": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff",
-                         *       "authored": "2022-03-10T12:00:00Z",
-                         *       "kind": "CredentialSchema",
-                         *       "self": "/prism-agent/schema-registry/schemas/0527aea1-d131-3948-a34d-03af39aba8b4",
-                         *       "longId": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff/0527aea1-d131-3948-a34d-03af39aba8b4?version=1.0.0",
-                         *       "tags": [
-                         *         "laborum",
-                         *         "anim incididunt enim in cupidatat"
-                         *       ],
-                         *       "proof": {
-                         *         "type": "Ed25519Signature2018",
-                         *         "created": "2022-03-10T12:00:00Z",
-                         *         "verificationMethod": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff#key-1",
-                         *         "proofPurpose": "assertionMethod",
-                         *         "proofValue": "FiPfjknHikKmZ...",
-                         *         "jws": "eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il0sImt0eSI6Ik...",
-                         *         "domain": "prims.atala.com"
-                         *       }
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/schema-registry/schemas": {
+    "/issue-credentials/credential-offers": {
         parameters: {
             query?: never;
             header?: never;
@@ -809,108 +586,78 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * SDJWT Schema
-         * @description Create the new credential schema record with metadata and internal JSON Schema on behalf of Cloud Agent. The credential schema will be signed by the keys of Cloud Agent and issued by the DID that corresponds to it
+         * As a credential issuer, create a new credential offer that will be sent to a holder Agent.
+         * @description Creates a new credential offer that will be delivered, through a previously established DIDComm connection, to a holder Agent.
+         *     The subsequent credential offer message adheres to the [Issue Credential Protocol 3.0 - Offer Credential](https://github.com/decentralized-identity/waci-didcomm/tree/main/issue_credential#offer-credential) specification.
+         *     The created offer can be of two types: 'JWT' or 'AnonCreds'.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: {
-                    /** @example application/json */
-                    "Content-Type"?: string;
-                    /** @example application/json */
-                    Accept?: string;
-                    /** @example {{ISSUER_API_KEY}} */
-                    apikey?: string;
-                };
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": Record<string, never>;
-                };
-            };
-            responses: {
-                /** @description Created */
-                201: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "author": "<string>",
-                         *       "authored": "<dateTime>",
-                         *       "description": "<string>",
-                         *       "guid": "<uuid>",
-                         *       "id": "<string>",
-                         *       "kind": "<string>",
-                         *       "name": "<string>",
-                         *       "schema": {},
-                         *       "self": "<string>",
-                         *       "type": "<string>",
-                         *       "version": "<string>",
-                         *       "longId": "<string>",
-                         *       "tags": [
-                         *         "<string>",
-                         *         "<string>"
-                         *       ],
-                         *       "proof": {
-                         *         "created": "<dateTime>",
-                         *         "jws": "<string>",
-                         *         "proofPurpose": "<string>",
-                         *         "proofValue": "<string>",
-                         *         "type": "<string>",
-                         *         "verificationMethod": "<string>",
-                         *         "domain": "<string>"
-                         *       }
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "instance": "<string>",
-                         *       "status": "<integer>",
-                         *       "title": "<string>",
-                         *       "type": "<string>",
-                         *       "detail": "<string>"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "instance": "<string>",
-                         *       "status": "<integer>",
-                         *       "title": "<string>",
-                         *       "type": "<string>",
-                         *       "detail": "<string>"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
+        post: operations["createCredentialOffer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/issue-credentials/credential-offers/invitation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
+        get?: never;
+        put?: never;
+        /**
+         * As a credential issuer, create a new credential offer Invitation that will be delivered as out-of-band to a peer Agent.
+         * @description Creates a new credential offer invitation to be delivered as an out-of-band message.
+         *     The invitation message adheres to the OOB specification as outlined [here](https://identity.foundation/didcomm-messaging/spec/#invitation),
+         *     with the credential offer message attached according to the [Issue Credential Protocol 3.0 - Offer Credential specification](https://github.com/decentralized-identity/waci-didcomm/tree/main/issue_credential#offer-credential).
+         *     The created offer attachment can be of three types: 'JWT', 'AnonCreds', or 'SDJWT'.
+         */
+        post: operations["createCredentialOfferInvitation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/issue-credentials/credential-offers/accept-invitation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * As a holder, accept a new credential offer invitation received from another issuer Agent.
+         * @description As a holder, accept a new credential offer invitation received from an issuer Agent.
+         *     The credential offer request message from issuer is decoded and processed. New record with RequestReceived state is created.
+         */
+        post: operations["acceptCredentialOfferInvitation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/issue-credentials/records": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Retrieves the list of issue credential records from the Agent's database.
+         * @description Retrieves the list of issue credential records from the Agent's database.
+         *     The API returns a comprehensive collection of issue credential flow records within the system, regardless of their state.
+         *     The returned items include essential metadata such as record ID, thread ID, state, role, issued credential, and other relevant details.
+         */
+        get: operations["getCredentialRecords"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -925,90 +672,12 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Gets an existing issue credential record by its unique identifier.
-         * @description Gets issue credential records by record id
+         * Retrieves a specific issue credential flow record from the Agent's database based on its unique `recordId`.
+         * @description Retrieves a specific issue credential flow record from the Agent's database based on its unique `recordId`.
+         *     The API returns a comprehensive collection of issue credential flow records within the system, regardless of their state.
+         *     The returned items include essential metadata such as record ID, thread ID, state, role, issued credential, and other relevant details.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /**
-                     * @description (Required) The unique identifier of the issue credential record.
-                     * @example <uuid>
-                     */
-                    recordId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "claims": {},
-                         *       "createdAt": "2008-08-27T04:45:57.028Z",
-                         *       "protocolState": "ProblemReportPending",
-                         *       "recordId": "Duis sit eu",
-                         *       "role": "Issuer",
-                         *       "schemaId": "laborum cillum do cupidatat",
-                         *       "subjectId": "did:prism:subjectofverifiablecredentials",
-                         *       "validityPeriod": 3600,
-                         *       "automaticIssuance": true,
-                         *       "updatedAt": "2019-01-24T23:32:51.264Z",
-                         *       "jwtCredential": "ad eu incididunt",
-                         *       "issuingDID": "did:prism:issuerofverifiablecredentials"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
-        };
+        get: operations["getCredentialRecord"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1027,97 +696,11 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * As a holder, accepts a credential offer received from an issuer.
-         * @description Accepts a credential offer received from a VC issuer and sends back a credential request.
+         * As a holder, accept a new credential offer received from another issuer Agent.
+         * @description As a holder, accept a new credential offer received from an issuer Agent.
+         *     The subsequent credential request message sent to the issuer adheres to the [Issue Credential Protocol 3.0 - Request Credential](https://github.com/decentralized-identity/waci-didcomm/tree/main/issue_credential#request-credential) specification.
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: {
-                    /** @example application/json */
-                    "Content-Type"?: string;
-                };
-                path: {
-                    /**
-                     * @description (Required) The unique identifier of the issue credential record.
-                     * @example <uuid>
-                     */
-                    recordId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "*/*": string;
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "claims": {},
-                         *       "createdAt": "2008-08-27T04:45:57.028Z",
-                         *       "protocolState": "ProblemReportPending",
-                         *       "recordId": "Duis sit eu",
-                         *       "role": "Issuer",
-                         *       "schemaId": "laborum cillum do cupidatat",
-                         *       "subjectId": "did:prism:subjectofverifiablecredentials",
-                         *       "validityPeriod": 3600,
-                         *       "automaticIssuance": true,
-                         *       "updatedAt": "2019-01-24T23:32:51.264Z",
-                         *       "jwtCredential": "ad eu incididunt",
-                         *       "issuingDID": "did:prism:issuerofverifiablecredentials"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
-        };
+        post: operations["acceptCredentialOffer"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1134,102 +717,19 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * As an issuer, issues the verifiable credential related to the specified record.
-         * @description Sends credential to a holder (holder DID is specified in credential as subjectDid).
-         *     Credential is constructed from the credential records found by credential id.
+         * As an issuer, issues the verifiable credential related the identified issuance flow record.
+         * @description As an issuer, issues the verifiable credential related the identified issuance flow record.
+         *     The JWT or AnonCreds credential will be generated and sent to the holder Agent asynchronously and through DIDComm.
+         *     Note that this endpoint should only be called when automatic issuance is disabled for this record (i.e. `automaticIssuance` attribute set to `false` at offer creation time).
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /**
-                     * @description (Required) The unique identifier of the issue credential record.
-                     * @example <uuid>
-                     */
-                    recordId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "*/*"?: never;
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "claims": {},
-                         *       "createdAt": "2008-08-27T04:45:57.028Z",
-                         *       "protocolState": "ProblemReportPending",
-                         *       "recordId": "Duis sit eu",
-                         *       "role": "Issuer",
-                         *       "schemaId": "laborum cillum do cupidatat",
-                         *       "subjectId": "did:prism:subjectofverifiablecredentials",
-                         *       "validityPeriod": 3600,
-                         *       "automaticIssuance": true,
-                         *       "updatedAt": "2019-01-24T23:32:51.264Z",
-                         *       "jwtCredential": "ad eu incididunt",
-                         *       "issuingDID": "did:prism:issuerofverifiablecredentials"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
-        };
+        post: operations["issueCredential"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/issue-credentials/records": {
+    "/credential-status/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1237,105 +737,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Gets the list of issue credential records.
-         * @description Get the list of issue credential records paginated
+         * Fetch credential status list by its ID
+         * @description Fetch credential status list by its ID
          */
-        get: {
-            parameters: {
-                query?: {
-                    /**
-                     * @description Pagination offset starting from 0.
-                     *     If the parameter is not specifed, it defaults to 0.
-                     * @example <integer>
-                     */
-                    offset?: string;
-                    /**
-                     * @description Pagination limit. The maximum number of items in the paginated response. If the parameter is not specified, it defualt to 100.
-                     * @example <integer>
-                     */
-                    limit?: string;
-                    /**
-                     * @description The thid of a DIDComm communication.
-                     * @example <string>
-                     */
-                    thid?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "contents": [
-                         *         {
-                         *           "claims": {},
-                         *           "createdAt": "1970-08-16T00:55:08.263Z",
-                         *           "protocolState": "OfferReceived",
-                         *           "recordId": "ex id ut",
-                         *           "role": "Holder",
-                         *           "schemaId": "consequat",
-                         *           "subjectId": "did:prism:subjectofverifiablecredentials",
-                         *           "validityPeriod": 3600,
-                         *           "automaticIssuance": true,
-                         *           "updatedAt": "1989-03-22T16:09:27.455Z",
-                         *           "jwtCredential": "consectetur sed cillum",
-                         *           "issuingDID": "did:prism:issuerofverifiablecredentials"
-                         *         },
-                         *         {
-                         *           "claims": {},
-                         *           "createdAt": "1960-11-05T20:38:02.654Z",
-                         *           "protocolState": "RequestGenerated",
-                         *           "recordId": "id anim exercitation",
-                         *           "role": "Issuer",
-                         *           "schemaId": "ex culpa",
-                         *           "subjectId": "did:prism:subjectofverifiablecredentials",
-                         *           "validityPeriod": 3600,
-                         *           "automaticIssuance": true,
-                         *           "updatedAt": "1972-06-30T11:33:30.813Z",
-                         *           "jwtCredential": "cupidatat irure in",
-                         *           "issuingDID": "did:prism:issuerofverifiablecredentials"
-                         *         }
-                         *       ],
-                         *       "kind": "Collection",
-                         *       "pageOf": "dolor incididunt",
-                         *       "self": "https://atala-prism-products.io/dids",
-                         *       "next": "ullamco aliquip velit enim",
-                         *       "previous": "incididunt sed"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
-        };
+        get: operations["getCredentialStatusListEndpoint"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1344,86 +749,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/issue-credentials/credential-offers": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** SDJWT Offer */
-        post: {
-            parameters: {
-                query?: never;
-                header?: {
-                    /** @example application/json */
-                    "Content-Type"?: string;
-                };
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "*/*": string;
-                };
-            };
-            responses: {
-                /** @description Created */
-                201: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "claims": {},
-                         *       "createdAt": "2008-08-27T04:45:57.028Z",
-                         *       "protocolState": "ProblemReportPending",
-                         *       "recordId": "Duis sit eu",
-                         *       "role": "Issuer",
-                         *       "schemaId": "laborum cillum do cupidatat",
-                         *       "subjectId": "did:prism:subjectofverifiablecredentials",
-                         *       "validityPeriod": 3600,
-                         *       "automaticIssuance": true,
-                         *       "updatedAt": "2019-01-24T23:32:51.264Z",
-                         *       "jwtCredential": "ad eu incididunt",
-                         *       "issuingDID": "did:prism:issuerofverifiablecredentials"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Unprocessable Entity (WebDAV) (RFC 4918) */
-                422: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/present-proof/presentations/{recordId}": {
+    "/credential-status/revoke-credential/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1437,82 +763,34 @@ export interface paths {
         options?: never;
         head?: never;
         /**
-         * Updates the proof presentation record matching the unique identifier, with the specific action to perform.
-         * @description Accept or reject presentation of proof request
+         * Revoke a credential by its ID
+         * @description Marks credential to be ready for revocation, it will be revoked automatically
          */
-        patch: {
-            parameters: {
-                query?: never;
-                header?: {
-                    /** @example application/json */
-                    "Content-Type"?: string;
-                };
-                path: {
-                    /**
-                     * @description (Required) The unique identifier of the proof presentation record.
-                     * @example <uuid>
-                     */
-                    recordId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "*/*": string;
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /** @example  */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
+        patch: operations["patchCredential-statusRevoke-credentialId"];
+        trace?: never;
+    };
+    "/present-proof/presentations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
+        /**
+         * Gets the list of proof presentation records.
+         * @description Get the list of proof presentation records and its status that the Agent have at moment
+         */
+        get: operations["getAllPresentation"];
+        put?: never;
+        /**
+         * As a Verifier, create a new proof presentation request and send it to the Prover.
+         * @description Holder presents proof derived from the verifiable credential to verifier.
+         */
+        post: operations["requestPresentation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/present-proof/presentations/{presentationId}": {
@@ -1526,308 +804,17 @@ export interface paths {
          * Gets an existing proof presentation record by its unique identifier. More information on the error can be found in the response body.
          * @description Returns an existing presentation record by id.
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    presentationId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "presentationId": "3c6d9fa5-d277-431e-a6cb-d3956e47e610",
-                         *       "status": "PresentationRejected",
-                         *       "proofs": [
-                         *         {
-                         *           "schemaId": "https://schema.org/Person",
-                         *           "trustIssuers": [
-                         *             "laboris nostrud commodo",
-                         *             "ea adipisicing"
-                         *           ]
-                         *         },
-                         *         {
-                         *           "schemaId": "https://schema.org/Person",
-                         *           "trustIssuers": [
-                         *             "non",
-                         *             "labore"
-                         *           ]
-                         *         }
-                         *       ],
-                         *       "data": [
-                         *         "et do esse",
-                         *         "dolor consequat magna culpa Ut"
-                         *       ],
-                         *       "connectionId": "bc528dc8-69f1-4c5a-a508-5f8019047900"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
-        };
+        get: operations["getPresentation"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/present-proof/presentations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
         /**
-         * Gets the list of proof presentation records.
-         * @description list of presentation statuses
+         * Updates the proof presentation record matching the unique identifier, with the specific action to perform.
+         * @description Accept or reject presentation of proof request.
          */
-        get: {
-            parameters: {
-                query?: {
-                    /**
-                     * @description Pagination offset starting from 0.
-                     *     If the parameter is not specifed, it defaults to 0.
-                     * @example <integer>
-                     */
-                    offset?: string;
-                    /**
-                     * @description Pagination limit. The maximum number of items in the paginated response. If the parameter is not specified, it defualt to 100.
-                     * @example <integer>
-                     */
-                    limit?: string;
-                    /**
-                     * @description The thid of a DIDComm communication.
-                     * @example <string>
-                     */
-                    thid?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "contents": [
-                         *         {
-                         *           "presentationId": "3c6d9fa5-d277-431e-a6cb-d3956e47e610",
-                         *           "status": "PresentationRejected",
-                         *           "proofs": [
-                         *             {
-                         *               "schemaId": "https://schema.org/Person",
-                         *               "trustIssuers": [
-                         *                 "consectetur non",
-                         *                 "laborum mollit commodo exercitation"
-                         *               ]
-                         *             },
-                         *             {
-                         *               "schemaId": "https://schema.org/Person",
-                         *               "trustIssuers": [
-                         *                 "qui non quis ex",
-                         *                 "sed mollit reprehenderit"
-                         *               ]
-                         *             }
-                         *           ],
-                         *           "data": [
-                         *             "in nulla labore Lorem",
-                         *             "reprehenderit incididunt velit aute minim"
-                         *           ],
-                         *           "connectionId": "bc528dc8-69f1-4c5a-a508-5f8019047900"
-                         *         },
-                         *         {
-                         *           "presentationId": "3c6d9fa5-d277-431e-a6cb-d3956e47e610",
-                         *           "status": "ProblemReportSent",
-                         *           "proofs": [
-                         *             {
-                         *               "schemaId": "https://schema.org/Person",
-                         *               "trustIssuers": [
-                         *                 "est irure ",
-                         *                 "labore do dolore nulla culpa"
-                         *               ]
-                         *             },
-                         *             {
-                         *               "schemaId": "https://schema.org/Person",
-                         *               "trustIssuers": [
-                         *                 "sit qui cup",
-                         *                 "ut commodo"
-                         *               ]
-                         *             }
-                         *           ],
-                         *           "data": [
-                         *             "et",
-                         *             "deserunt do in"
-                         *           ],
-                         *           "connectionId": "bc528dc8-69f1-4c5a-a508-5f8019047900"
-                         *         }
-                         *       ],
-                         *       "kind": "Collection",
-                         *       "pageOf": "nulla nostrud non",
-                         *       "self": "https://atala-prism-products.io/dids",
-                         *       "next": "ut aliqua",
-                         *       "previous": "nostrud sint dolor"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
-        };
-        put?: never;
-        /** SD+JWT As a Verifier, create a new proof presentation request and send it to the Prover. */
-        post: {
-            parameters: {
-                query?: never;
-                header?: {
-                    /** @example application/json */
-                    "Content-Type"?: string;
-                };
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "*/*": string;
-                };
-            };
-            responses: {
-                /** @description Created */
-                201: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "presentationId": "adipisicing mollit"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Unprocessable Entity (WebDAV) (RFC 4918) */
-                422: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
+        patch: operations["updatePresentation"];
         trace?: never;
     };
     "/present-proof/presentations/invitation": {
@@ -1839,676 +826,23 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Out of band Verification request */
-        post: {
-            parameters: {
-                query?: never;
-                header?: {
-                    /** @example application/json */
-                    "Content-Type"?: string;
-                };
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "*/*": string;
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "self": "https://atala-prism-products.io/connections/ABCD-1234",
-                         *       "kind": "Connection",
-                         *       "connectionId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                         *       "state": "ConnectionResponseSent",
-                         *       "createdAt": "2021-10-31T09:22:23Z",
-                         *       "role": "Invitee",
-                         *       "invitation": {
-                         *         "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                         *         "type": "https://didcomm.org/out-of-band/2.0/invitation",
-                         *         "from": "did:peer:1234457",
-                         *         "invitationUrl": "https://domain.com/path?_oob=eyJAaWQiOiIzZmE4NWY2NC01NzE3LTQ1NjItYjNmYy0yYzk2M2Y2NmFmYTYiLCJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvbXktZmFtaWx5LzEuMC9teS1tZXNzYWdlLXR5cGUiLCJkaWQiOiJXZ1d4cXp0ck5vb0c5MlJYdnhTVFd2IiwiaW1hZ2VVcmwiOiJodHRwOi8vMTkyLjE2OC41Ni4xMDEvaW1nL2xvZ28uanBnIiwibGFiZWwiOiJCb2IiLCJyZWNpcGllbnRLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInJvdXRpbmdLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly8xOTIuMTY4LjU2LjEwMTo4MDIwIn0="
-                         *       },
-                         *       "label": "Peter",
-                         *       "myDid": "did:peer:12345",
-                         *       "theirDid": "did:peer:67890",
-                         *       "updatedAt": "2021-12-31T13:59:59Z"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
-        };
+        /**
+         * As a Verifier, create a new OOB Invitation as proof presentation request that can be delivered out-of-band to a invitee/prover.
+         * @description Create a new presentation request invitation that can be delivered out-of-band to a peer Agent, regardless of whether it resides in Cloud Agent or edge environment.
+         *     The generated invitation adheres to the DIDComm Messaging v2.0 - [Out of Band Messages](https://identity.foundation/didcomm-messaging/spec/v2.0/#out-of-band-messages) specification [section 9.5.4](https://identity.foundation/didcomm-messaging/spec/v2.0/#invitation).
+         *     The <b>from</b> field of the out-of-band invitation message contains a freshly generated Peer DID that complies with the [did:peer:2](https://identity.foundation/peer-did-method-spec/#generating-a-didpeer2) specification.
+         *     This Peer DID includes the 'uri' location of the DIDComm messaging service, essential for the prover's subsequent execution of the connection flow.
+         *     In the Agent database, the created presentation record has an initial state set to `InvitationGenerated`.
+         *     The invitation is in the form of a presentation request (as described https://github.com/decentralized-identity/waci-didcomm/blob/main/present_proof/present-proof-v3.md), which is included as an attachment in the OOB DIDComm message sent to the invitee/prover.
+         */
+        post: operations["createOOBRequestPresentationInvitation"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/connections": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Gets the list of connection records.
-         * @description Get the list of connection records paginated
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "contents": [
-                         *         {
-                         *           "self": "https://atala-prism-products.io/connections/ABCD-1234",
-                         *           "kind": "Connection",
-                         *           "connectionId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                         *           "state": "ConnectionResponseSent",
-                         *           "createdAt": "2021-10-31T09:22:23Z",
-                         *           "role": "Invitee",
-                         *           "invitation": {
-                         *             "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                         *             "type": "https://didcomm.org/out-of-band/2.0/invitation",
-                         *             "from": "did:peer:1234457",
-                         *             "invitationUrl": "https://domain.com/path?_oob=eyJAaWQiOiIzZmE4NWY2NC01NzE3LTQ1NjItYjNmYy0yYzk2M2Y2NmFmYTYiLCJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvbXktZmFtaWx5LzEuMC9teS1tZXNzYWdlLXR5cGUiLCJkaWQiOiJXZ1d4cXp0ck5vb0c5MlJYdnhTVFd2IiwiaW1hZ2VVcmwiOiJodHRwOi8vMTkyLjE2OC41Ni4xMDEvaW1nL2xvZ28uanBnIiwibGFiZWwiOiJCb2IiLCJyZWNpcGllbnRLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInJvdXRpbmdLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly8xOTIuMTY4LjU2LjEwMTo4MDIwIn0="
-                         *           },
-                         *           "label": "Peter",
-                         *           "myDid": "did:peer:12345",
-                         *           "theirDid": "did:peer:67890",
-                         *           "updatedAt": "2021-12-31T13:59:59Z"
-                         *         },
-                         *         {
-                         *           "self": "https://atala-prism-products.io/connections/ABCD-1234",
-                         *           "kind": "Connection",
-                         *           "connectionId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                         *           "state": "ConnectionResponsePending",
-                         *           "createdAt": "2021-10-31T09:22:23Z",
-                         *           "role": "Invitee",
-                         *           "invitation": {
-                         *             "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                         *             "type": "https://didcomm.org/out-of-band/2.0/invitation",
-                         *             "from": "did:peer:1234457",
-                         *             "invitationUrl": "https://domain.com/path?_oob=eyJAaWQiOiIzZmE4NWY2NC01NzE3LTQ1NjItYjNmYy0yYzk2M2Y2NmFmYTYiLCJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvbXktZmFtaWx5LzEuMC9teS1tZXNzYWdlLXR5cGUiLCJkaWQiOiJXZ1d4cXp0ck5vb0c5MlJYdnhTVFd2IiwiaW1hZ2VVcmwiOiJodHRwOi8vMTkyLjE2OC41Ni4xMDEvaW1nL2xvZ28uanBnIiwibGFiZWwiOiJCb2IiLCJyZWNpcGllbnRLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInJvdXRpbmdLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly8xOTIuMTY4LjU2LjEwMTo4MDIwIn0="
-                         *           },
-                         *           "label": "Peter",
-                         *           "myDid": "did:peer:12345",
-                         *           "theirDid": "did:peer:67890",
-                         *           "updatedAt": "2021-12-31T13:59:59Z"
-                         *         }
-                         *       ],
-                         *       "kind": "Collection",
-                         *       "pageOf": "adipisicing qui laboris irure dolore",
-                         *       "self": "https://atala-prism-products.io/dids",
-                         *       "next": "magna eiusmod amet",
-                         *       "previous": "exercitation"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
-        };
-        put?: never;
-        /**
-         * Creates a new connection record and returns an Out of Band invitation.
-         * @description Generates a new Peer DID and creates an [Out of Band 2.0](https://identity.foundation/didcomm-messaging/spec/v2.0/#out-of-band-messages) invitation.
-         *     It returns a new connection record in `InvitationGenerated` state.
-         *     The request body may contain a `label` that can be used as a human readable alias for the connection, for example `{'label': "Bob"}`
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: {
-                    /** @example application/json */
-                    "Content-Type"?: string;
-                };
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "*/*": string;
-                };
-            };
-            responses: {
-                /** @description Created */
-                201: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "self": "https://atala-prism-products.io/connections/ABCD-1234",
-                         *       "kind": "Connection",
-                         *       "connectionId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                         *       "state": "ConnectionResponseSent",
-                         *       "createdAt": "2021-10-31T09:22:23Z",
-                         *       "role": "Invitee",
-                         *       "invitation": {
-                         *         "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                         *         "type": "https://didcomm.org/out-of-band/2.0/invitation",
-                         *         "from": "did:peer:1234457",
-                         *         "invitationUrl": "https://domain.com/path?_oob=eyJAaWQiOiIzZmE4NWY2NC01NzE3LTQ1NjItYjNmYy0yYzk2M2Y2NmFmYTYiLCJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvbXktZmFtaWx5LzEuMC9teS1tZXNzYWdlLXR5cGUiLCJkaWQiOiJXZ1d4cXp0ck5vb0c5MlJYdnhTVFd2IiwiaW1hZ2VVcmwiOiJodHRwOi8vMTkyLjE2OC41Ni4xMDEvaW1nL2xvZ28uanBnIiwibGFiZWwiOiJCb2IiLCJyZWNpcGllbnRLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInJvdXRpbmdLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly8xOTIuMTY4LjU2LjEwMTo4MDIwIn0="
-                         *       },
-                         *       "label": "Peter",
-                         *       "myDid": "did:peer:12345",
-                         *       "theirDid": "did:peer:67890",
-                         *       "updatedAt": "2021-12-31T13:59:59Z"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Unprocessable Entity (WebDAV) (RFC 4918) */
-                422: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/connections/{connectionId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Gets an existing connection record by its unique identifier.
-         * @description Gets an existing connection record by its unique identifier
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /**
-                     * @description (Required) The unique identifier of the connection record.
-                     * @example <string>
-                     */
-                    connectionId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "self": "https://atala-prism-products.io/connections/ABCD-1234",
-                         *       "kind": "Connection",
-                         *       "connectionId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                         *       "state": "ConnectionResponseSent",
-                         *       "createdAt": "2021-10-31T09:22:23Z",
-                         *       "role": "Invitee",
-                         *       "invitation": {
-                         *         "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                         *         "type": "https://didcomm.org/out-of-band/2.0/invitation",
-                         *         "from": "did:peer:1234457",
-                         *         "invitationUrl": "https://domain.com/path?_oob=eyJAaWQiOiIzZmE4NWY2NC01NzE3LTQ1NjItYjNmYy0yYzk2M2Y2NmFmYTYiLCJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvbXktZmFtaWx5LzEuMC9teS1tZXNzYWdlLXR5cGUiLCJkaWQiOiJXZ1d4cXp0ck5vb0c5MlJYdnhTVFd2IiwiaW1hZ2VVcmwiOiJodHRwOi8vMTkyLjE2OC41Ni4xMDEvaW1nL2xvZ28uanBnIiwibGFiZWwiOiJCb2IiLCJyZWNpcGllbnRLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInJvdXRpbmdLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly8xOTIuMTY4LjU2LjEwMTo4MDIwIn0="
-                         *       },
-                         *       "label": "Peter",
-                         *       "myDid": "did:peer:12345",
-                         *       "theirDid": "did:peer:67890",
-                         *       "updatedAt": "2021-12-31T13:59:59Z"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/dids/did:prism:bcd01b51b9c17b7d63be0146383ff193b921d846cf319a33a4d68decf2790914:CvsBCvgBEjYKBWF1dGgxEARKKwoHRWQyNTUxORIg7Rs2s9xHQ1gIThdf00ZB6C1sfmeyU-2zM_n2WDuuSOASNwoGaXNzdWUxEAJKKwoHRWQyNTUxORIgsXusVcsoRUJSRgdE6ZoGWMfuJkxP5zd9ybEzLdWlYBkSOwoHbWFzdGVyMBABSi4KCXNlY3AyNTZrMRIhAjKrDkhCppozFg6Bl0uvSBzjeZChMqg8pFiMTSvafMgpGkgKDmFnZW50LWJhc2UtdXJsEhBMaW5rZWRSZXNvdXJjZVYxGiRodHRwOi8vMTkyLjE2OC4xLjQ0OjgwMDAvY2xvdWQtYWdlbnQ": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Resolve Prism DID
-         * @description Resolve Prism DID to a DID document data model.
-         *     The returned DID document is not the W3C DID document representation, but a DID document data model.
-         *     However, this data model is capable of being transformed into the W3C compliant representation.
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "did": {
-                         *         "id": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff",
-                         *         "controller": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff",
-                         *         "verificationMethod": [
-                         *           {
-                         *             "id": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff#key-1",
-                         *             "type": "EcdsaSecp256k1VerificationKey2019",
-                         *             "controller": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff",
-                         *             "publicKeyJwk": {
-                         *               "kty": "EC",
-                         *               "crv": "secp256k1",
-                         *               "x": "38M1FDts7Oea7urmseiugGW7tWc3mLpJh6rKe7xINZ8",
-                         *               "y": "nDQW6XZ7b_u2Sy9slofYLlG03sOEoug3I0aAPQ0exs4"
-                         *             }
-                         *           },
-                         *           {
-                         *             "id": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff#key-1",
-                         *             "type": "EcdsaSecp256k1VerificationKey2019",
-                         *             "controller": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff",
-                         *             "publicKeyJwk": {
-                         *               "kty": "EC",
-                         *               "crv": "secp256k1",
-                         *               "x": "38M1FDts7Oea7urmseiugGW7tWc3mLpJh6rKe7xINZ8",
-                         *               "y": "nDQW6XZ7b_u2Sy9slofYLlG03sOEoug3I0aAPQ0exs4"
-                         *             }
-                         *           }
-                         *         ],
-                         *         "authentication": [
-                         *           {
-                         *             "type": "EMBEDDED",
-                         *             "uri": "did:prism:c7bd808e8e135236d7262ecf5e639b8f9d22bd886f59a4e6c909486846ca8319#key-1",
-                         *             "verificationMethod": {
-                         *               "id": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff#key-1",
-                         *               "type": "EcdsaSecp256k1VerificationKey2019",
-                         *               "controller": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff",
-                         *               "publicKeyJwk": {
-                         *                 "kty": "EC",
-                         *                 "crv": "secp256k1",
-                         *                 "x": "38M1FDts7Oea7urmseiugGW7tWc3mLpJh6rKe7xINZ8",
-                         *                 "y": "nDQW6XZ7b_u2Sy9slofYLlG03sOEoug3I0aAPQ0exs4"
-                         *               }
-                         *             }
-                         *           },
-                         *           {
-                         *             "type": "EMBEDDED",
-                         *             "uri": "did:prism:c7bd808e8e135236d7262ecf5e639b8f9d22bd886f59a4e6c909486846ca8319#key-1",
-                         *             "verificationMethod": {
-                         *               "id": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff#key-1",
-                         *               "type": "EcdsaSecp256k1VerificationKey2019",
-                         *               "controller": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff",
-                         *               "publicKeyJwk": {
-                         *                 "kty": "EC",
-                         *                 "crv": "secp256k1",
-                         *                 "x": "38M1FDts7Oea7urmseiugGW7tWc3mLpJh6rKe7xINZ8",
-                         *                 "y": "nDQW6XZ7b_u2Sy9slofYLlG03sOEoug3I0aAPQ0exs4"
-                         *               }
-                         *             }
-                         *           }
-                         *         ],
-                         *         "assertionMethod": [
-                         *           {
-                         *             "type": "EMBEDDED",
-                         *             "uri": "did:prism:c7bd808e8e135236d7262ecf5e639b8f9d22bd886f59a4e6c909486846ca8319#key-1",
-                         *             "verificationMethod": {
-                         *               "id": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff#key-1",
-                         *               "type": "EcdsaSecp256k1VerificationKey2019",
-                         *               "controller": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff",
-                         *               "publicKeyJwk": {
-                         *                 "kty": "EC",
-                         *                 "crv": "secp256k1",
-                         *                 "x": "38M1FDts7Oea7urmseiugGW7tWc3mLpJh6rKe7xINZ8",
-                         *                 "y": "nDQW6XZ7b_u2Sy9slofYLlG03sOEoug3I0aAPQ0exs4"
-                         *               }
-                         *             }
-                         *           },
-                         *           {
-                         *             "type": "EMBEDDED",
-                         *             "uri": "did:prism:c7bd808e8e135236d7262ecf5e639b8f9d22bd886f59a4e6c909486846ca8319#key-1",
-                         *             "verificationMethod": {
-                         *               "id": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff#key-1",
-                         *               "type": "EcdsaSecp256k1VerificationKey2019",
-                         *               "controller": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff",
-                         *               "publicKeyJwk": {
-                         *                 "kty": "EC",
-                         *                 "crv": "secp256k1",
-                         *                 "x": "38M1FDts7Oea7urmseiugGW7tWc3mLpJh6rKe7xINZ8",
-                         *                 "y": "nDQW6XZ7b_u2Sy9slofYLlG03sOEoug3I0aAPQ0exs4"
-                         *               }
-                         *             }
-                         *           }
-                         *         ],
-                         *         "keyAgreement": [
-                         *           {
-                         *             "type": "EMBEDDED",
-                         *             "uri": "did:prism:c7bd808e8e135236d7262ecf5e639b8f9d22bd886f59a4e6c909486846ca8319#key-1",
-                         *             "verificationMethod": {
-                         *               "id": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff#key-1",
-                         *               "type": "EcdsaSecp256k1VerificationKey2019",
-                         *               "controller": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff",
-                         *               "publicKeyJwk": {
-                         *                 "kty": "EC",
-                         *                 "crv": "secp256k1",
-                         *                 "x": "38M1FDts7Oea7urmseiugGW7tWc3mLpJh6rKe7xINZ8",
-                         *                 "y": "nDQW6XZ7b_u2Sy9slofYLlG03sOEoug3I0aAPQ0exs4"
-                         *               }
-                         *             }
-                         *           },
-                         *           {
-                         *             "type": "EMBEDDED",
-                         *             "uri": "did:prism:c7bd808e8e135236d7262ecf5e639b8f9d22bd886f59a4e6c909486846ca8319#key-1",
-                         *             "verificationMethod": {
-                         *               "id": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff#key-1",
-                         *               "type": "EcdsaSecp256k1VerificationKey2019",
-                         *               "controller": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff",
-                         *               "publicKeyJwk": {
-                         *                 "kty": "EC",
-                         *                 "crv": "secp256k1",
-                         *                 "x": "38M1FDts7Oea7urmseiugGW7tWc3mLpJh6rKe7xINZ8",
-                         *                 "y": "nDQW6XZ7b_u2Sy9slofYLlG03sOEoug3I0aAPQ0exs4"
-                         *               }
-                         *             }
-                         *           }
-                         *         ],
-                         *         "capabilityInvocation": [
-                         *           {
-                         *             "type": "EMBEDDED",
-                         *             "uri": "did:prism:c7bd808e8e135236d7262ecf5e639b8f9d22bd886f59a4e6c909486846ca8319#key-1",
-                         *             "verificationMethod": {
-                         *               "id": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff#key-1",
-                         *               "type": "EcdsaSecp256k1VerificationKey2019",
-                         *               "controller": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff",
-                         *               "publicKeyJwk": {
-                         *                 "kty": "EC",
-                         *                 "crv": "secp256k1",
-                         *                 "x": "38M1FDts7Oea7urmseiugGW7tWc3mLpJh6rKe7xINZ8",
-                         *                 "y": "nDQW6XZ7b_u2Sy9slofYLlG03sOEoug3I0aAPQ0exs4"
-                         *               }
-                         *             }
-                         *           },
-                         *           {
-                         *             "type": "EMBEDDED",
-                         *             "uri": "did:prism:c7bd808e8e135236d7262ecf5e639b8f9d22bd886f59a4e6c909486846ca8319#key-1",
-                         *             "verificationMethod": {
-                         *               "id": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff#key-1",
-                         *               "type": "EcdsaSecp256k1VerificationKey2019",
-                         *               "controller": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff",
-                         *               "publicKeyJwk": {
-                         *                 "kty": "EC",
-                         *                 "crv": "secp256k1",
-                         *                 "x": "38M1FDts7Oea7urmseiugGW7tWc3mLpJh6rKe7xINZ8",
-                         *                 "y": "nDQW6XZ7b_u2Sy9slofYLlG03sOEoug3I0aAPQ0exs4"
-                         *               }
-                         *             }
-                         *           }
-                         *         ],
-                         *         "capabilityDelegation": [
-                         *           {
-                         *             "type": "EMBEDDED",
-                         *             "uri": "did:prism:c7bd808e8e135236d7262ecf5e639b8f9d22bd886f59a4e6c909486846ca8319#key-1",
-                         *             "verificationMethod": {
-                         *               "id": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff#key-1",
-                         *               "type": "EcdsaSecp256k1VerificationKey2019",
-                         *               "controller": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff",
-                         *               "publicKeyJwk": {
-                         *                 "kty": "EC",
-                         *                 "crv": "secp256k1",
-                         *                 "x": "38M1FDts7Oea7urmseiugGW7tWc3mLpJh6rKe7xINZ8",
-                         *                 "y": "nDQW6XZ7b_u2Sy9slofYLlG03sOEoug3I0aAPQ0exs4"
-                         *               }
-                         *             }
-                         *           },
-                         *           {
-                         *             "type": "EMBEDDED",
-                         *             "uri": "did:prism:c7bd808e8e135236d7262ecf5e639b8f9d22bd886f59a4e6c909486846ca8319#key-1",
-                         *             "verificationMethod": {
-                         *               "id": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff#key-1",
-                         *               "type": "EcdsaSecp256k1VerificationKey2019",
-                         *               "controller": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff",
-                         *               "publicKeyJwk": {
-                         *                 "kty": "EC",
-                         *                 "crv": "secp256k1",
-                         *                 "x": "38M1FDts7Oea7urmseiugGW7tWc3mLpJh6rKe7xINZ8",
-                         *                 "y": "nDQW6XZ7b_u2Sy9slofYLlG03sOEoug3I0aAPQ0exs4"
-                         *               }
-                         *             }
-                         *           }
-                         *         ],
-                         *         "service": [
-                         *           {
-                         *             "id": "service-1",
-                         *             "type": "LinkedDomains",
-                         *             "serviceEndpoint": [
-                         *               "https://bar.example.com/",
-                         *               "https://bar.example.com/"
-                         *             ]
-                         *           },
-                         *           {
-                         *             "id": "service-1",
-                         *             "type": "LinkedDomains",
-                         *             "serviceEndpoint": [
-                         *               "https://bar.example.com/",
-                         *               "https://bar.example.com/"
-                         *             ]
-                         *           }
-                         *         ]
-                         *       },
-                         *       "metadata": {
-                         *         "deactivated": false,
-                         *         "canonicalId": "enim dolor eu consectetur irure"
-                         *       }
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Unprocessable Entity (WebDAV) (RFC 4918) */
-                422: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/connection-invitations": {
+    "/present-proof/presentations/accept-invitation": {
         parameters: {
             query?: never;
             header?: never;
@@ -2518,78 +852,498 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Accepts an Out of Band invitation.
-         * @description Accepts an [Out of Band 2.0](https://identity.foundation/didcomm-messaging/spec/v2.0/#out-of-band-messages) invitation, generates a new Peer DID,
-         *     and submits a Connection Request to the inviter.
-         *     It returns a connection object in `ConnectionRequestPending` state, until the Connection Request is eventually sent to the inviter by the prism-agent's background process. The connection object state will then automatically move to `ConnectionRequestSent`.
+         * Decode the invitation extract Request Presentation and Create the proof presentation record with RequestReceived state.
+         * @description Accept Invitation for request presentation
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: {
-                    /** @example application/json */
-                    "Content-Type"?: string;
-                };
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "*/*": string;
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "self": "https://atala-prism-products.io/connections/ABCD-1234",
-                         *       "kind": "Connection",
-                         *       "connectionId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                         *       "state": "ConnectionResponseSent",
-                         *       "createdAt": "2021-10-31T09:22:23Z",
-                         *       "role": "Invitee",
-                         *       "invitation": {
-                         *         "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                         *         "type": "https://didcomm.org/out-of-band/2.0/invitation",
-                         *         "from": "did:peer:1234457",
-                         *         "invitationUrl": "https://domain.com/path?_oob=eyJAaWQiOiIzZmE4NWY2NC01NzE3LTQ1NjItYjNmYy0yYzk2M2Y2NmFmYTYiLCJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvbXktZmFtaWx5LzEuMC9teS1tZXNzYWdlLXR5cGUiLCJkaWQiOiJXZ1d4cXp0ck5vb0c5MlJYdnhTVFd2IiwiaW1hZ2VVcmwiOiJodHRwOi8vMTkyLjE2OC41Ni4xMDEvaW1nL2xvZ28uanBnIiwibGFiZWwiOiJCb2IiLCJyZWNpcGllbnRLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInJvdXRpbmdLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly8xOTIuMTY4LjU2LjEwMTo4MDIwIn0="
-                         *       },
-                         *       "label": "Peter",
-                         *       "myDid": "did:peer:12345",
-                         *       "theirDid": "did:peer:67890",
-                         *       "updatedAt": "2021-12-31T13:59:59Z"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        "Content-Type"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "type": "https://example.org/doc/#model-MalformedEmail/",
-                         *       "title": "Malformed email",
-                         *       "status": 400,
-                         *       "instance": "/problems/d914e",
-                         *       "detail": "The received '{}à!è@!.b}' email does not conform to the email format"
-                         *     }
-                         */
-                        "application/json": Record<string, never>;
-                    };
-                };
-            };
+        post: operations["acceptRequestPresentationInvitation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/verification/credential": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
+        get?: never;
+        put?: never;
+        /**
+         * Verify a set of credentials as a Verifier
+         * @description Endpoint to verify a set of verifiable credentials as a Verifier.
+         */
+        post: operations["verify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/presentation-exchange/presentation-definitions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a presentation-definition */
+        get: operations["getPresentationDefinition"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/presentation-exchange/presentation-definitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all presentation-definitions
+         * @description List all `presentation-definitions` in the wallet.
+         *     Return a paginated items ordered by created timestamp.
+         */
+        get: operations["listPresentationDefinition"];
+        put?: never;
+        /**
+         * Create a new presentation-definition
+         * @description Create a `presentation-definition` object according to the [presentation exchange protocol](https://identity.foundation/presentation-exchange/spec/v2.1.1/).
+         *     The `POST` endpoint is restricted to the owner of the wallet. The `presentation-definition` object, however can be referenced by publicly by `id` returned in the response.
+         */
+        post: operations["createPresentationDefinition"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/_system/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Check the health status of the running service
+         * @description Returns the health info object of the running service
+         */
+        get: operations["systemHealth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/_system/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Collect the runtime metrics of the running service
+         * @description Returns the metrics of the running service from the internal Prometheus registry
+         */
+        get: operations["systemMetrics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/iam/entities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get all entities
+         * @description Get all entities with the pagination by `offset` and `limit` parameters
+         */
+        get: operations["getAllEntities"];
+        put?: never;
+        /**
+         * Create a new entity record
+         * @description Create the new entity record. The entity record is a representation of the account in the system.
+         */
+        post: operations["createEntity"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/iam/entities/{id}/name": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update the entity record name by `id`
+         * @description Update the entity record name by `id`
+         */
+        put: operations["updateEntityName"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/iam/entities/{id}/walletId": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update the entity record `walletId` by `id`
+         * @description Update the entity record `walletId` field by `id`
+         */
+        put: operations["updateEntityWalletId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/iam/entities/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the entity by the `id`
+         * @description Get the entity by the unique identifier
+         */
+        get: operations["getEntityById"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete the entity by `id`
+         * @description Delete the entity by the unique identifier
+         */
+        delete: operations["deleteEntityById"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/iam/apikey-authentication": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register the `apikey` for the entity
+         * @description Register the `apikey` for the entity.
+         */
+        post: operations["addEntityApiKeyAuthentication"];
+        /**
+         * Unregister the `apikey` for the entity
+         * @description Unregister the `apikey` for the entity.
+         */
+        delete: operations["deleteEntityApiKeyAuthentication"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all permitted wallets
+         * @description List all permitted wallets. If the role is admin, returns all the wallets. If the role is tenant, only return permitted wallets.
+         */
+        get: operations["getWallets"];
+        put?: never;
+        /**
+         * Create a new wallet
+         * @description Create a new wallet with the option to provide the seed.
+         *     The seed will be used for all PRISM DID keypair derivation within the wallet.
+         *
+         *     If the role is admin, a wallet can be created at any time.
+         *     If the role is tenant, a wallet can only be created if there is no existing wallet permission for that tenant.
+         *     The permission for the tenant will be automatically granted after the wallet is created with tenant role.
+         */
+        post: operations["createWallet"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallets/{walletId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the wallet by ID
+         * @description Get the wallet by ID. If the role is tenant, only search the ID of permitted wallets.
+         */
+        get: operations["getWalletsWalletid"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallets/{walletId}/uma-permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a UMA resource permission on an authorization server for the wallet.
+         * @description Create a UMA resource permission on an authorization server for the wallet.
+         *     This grants the wallet permission to the specified `subject`, where the `subject` denotes the identity of the tenant on an authorization server.
+         */
+        post: operations["createWalletUmaPermission"];
+        /**
+         * Delete a UMA resource permission on an authorization server for the wallet.
+         * @description Remove a UMA resource permission on an authorization server for the wallet.
+         *     This remove the wallet permission to the specified `subject`, where the `subject` denotes the identity of the tenant on an authorization server.
+         */
+        delete: operations["deleteWalletUmaPermission"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/events/webhooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List wallet webhook notifications
+         * @description List all registered webhook notifications.
+         *     Each webhook notification contains a unique identifier, the URL to which the events are sent,
+         *     and the custom headers to be included in the dispatched webhook request.
+         */
+        get: operations["getEventsWebhooks"];
+        put?: never;
+        /**
+         * Create wallet webhook notifications
+         * @description Create a new wallet webhook notification and subscribe to events.
+         *     A dispatched webhook request may contain static custom headers for authentication or custom metadata.
+         */
+        post: operations["postEventsWebhooks"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/events/webhooks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete the wallet webhook notification by `id` */
+        delete: operations["deleteEventsWebhooksId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oid4vci/issuers/{issuerId}/credentials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Credential Endpoint
+         * @description OID for VCI [Credential Endpoint](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-endpoint)
+         */
+        post: operations["oid4vciIssueCredential"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oid4vci/issuers/{issuerId}/credential-offers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a new credential offer
+         * @description Create a new credential offer and return a compliant `CredentialOffer` for the holder's
+         *     [Credential Offer Endpoint](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-offer-endpoint).
+         */
+        post: operations["oid4vciCreateCredentialOffer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oid4vci/nonces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Nonce Endpoint
+         * @description The endpoint that returns a `nonce` value for the [Token Endpoint](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-nonce-endpoint)
+         */
+        post: operations["getNonce"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oid4vci/issuers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all credential issuers */
+        get: operations["getCredentialIssuers"];
+        put?: never;
+        /** Create a new  credential issuer */
+        post: operations["createCredentialIssuer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oid4vci/issuers/{issuerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete the credential issuer */
+        delete: operations["deleteCredentialIssuer"];
+        options?: never;
+        head?: never;
+        /** Update the credential issuer */
+        patch: operations["updateCredentialIssuer"];
+        trace?: never;
+    };
+    "/oid4vci/issuers/{issuerId}/credential-configurations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a new  credential configuration
+         * @description Create a new credential configuration for the issuer.
+         *     It represents the configuration of the credential that can be issued by the issuer.
+         *     This credential configuration object will be displayed in the credential issuer metadata.
+         */
+        post: operations["createCredentialConfiguration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oid4vci/issuers/{issuerId}/credential-configurations/{credentialConfigId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the credential configuration */
+        get: operations["getCredentialConfiguration"];
+        put?: never;
+        post?: never;
+        /** Delete the credential configuration */
+        delete: operations["deleteCredentialConfiguration"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oid4vci/issuers/{issuerId}/.well-known/openid-credential-issuer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the credential issuer metadata */
+        get: operations["getIssuerMetadata"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2599,7 +1353,2794 @@ export interface paths {
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: never;
+    schemas: {
+        /** AcceptConnectionInvitationRequest */
+        AcceptConnectionInvitationRequest: {
+            /**
+             * @description The base64-encoded raw out-of-band invitation.
+             * @example eyJAaWQiOiIzZmE4NWY2NC01NzE3LTQ1NjItYjNmYy0yYzk2M2Y2NmFmYTYiLCJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvbXktZmFtaWx5LzEuMC9teS1tZXNzYWdlLXR5cGUiLCJkaWQiOiJXZ1d4cXp0ck5vb0c5MlJYdnhTVFd2IiwiaW1hZ2VVcmwiOiJodHRwOi8vMTkyLjE2OC41Ni4xMDEvaW1nL2xvZ28uanBnIiwibGFiZWwiOiJCb2IiLCJyZWNpcGllbnRLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInJvdXRpbmdLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly8xOTIuMTY4LjU2LjEwMTo4MDIwIn0=
+             */
+            invitation: string;
+        };
+        /** AcceptCredentialOfferInvitation */
+        AcceptCredentialOfferInvitation: {
+            /**
+             * @description The base64-encoded raw invitation.
+             * @example eyJAaWQiOiIzZmE4NWY2NC01NzE3LTQ1NjItYjNmYy0yYzk2M2Y2NmFmYTYiLCJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvbXktZmFtaWx5LzEuMC9teS1tZXNzYWdlLXR5cGUiLCJkaWQiOiJXZ1d4cXp0ck5vb0c5MlJYdnhTVFd2IiwiaW1hZ2VVcmwiOiJodHRwOi8vMTkyLjE2OC41Ni4xMDEvaW1nL2xvZ28uanBnIiwibGFiZWwiOiJCb2IiLCJyZWNpcGllbnRLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInJvdXRpbmdLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly8xOTIuMTY4LjU2LjEwMTo4MDIwIn0=
+             */
+            invitation: string;
+        };
+        /** AcceptCredentialOfferRequest */
+        AcceptCredentialOfferRequest: {
+            /**
+             * @description The short-form subject Prism DID to which the JWT verifiable credential will be issued.
+             *     This parameter only applies if the offer is of type 'JWT'.
+             * @example did:prism:3bb0505d13fcb04d28a48234edb27b0d4e6d7e18a81e2c1abab58f3bbc21ce6f
+             */
+            subjectId?: string;
+            /**
+             * @description The short-form subject Prism DID to which the JWT verifiable credential will be issued.
+             *     This parameter only applies if the offer is of type 'JWT'.
+             * @example did:prism:3bb0505d13fcb04d28a48234edb27b0d4e6d7e18a81e2c1abab58f3bbc21ce6f
+             */
+            keyId?: string;
+        };
+        /** AcceptRequestPresentationInvitation */
+        AcceptRequestPresentationInvitation: {
+            /**
+             * @description The base64-encoded raw invitation.
+             * @example eyJAaWQiOiIzZmE4NWY2NC01NzE3LTQ1NjItYjNmYy0yYzk2M2Y2NmFmYTYiLCJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvbXktZmFtaWx5LzEuMC9teS1tZXNzYWdlLXR5cGUiLCJkaWQiOiJXZ1d4cXp0ck5vb0c5MlJYdnhTVFd2IiwiaW1hZ2VVcmwiOiJodHRwOi8vMTkyLjE2OC41Ni4xMDEvaW1nL2xvZ28uanBnIiwibGFiZWwiOiJCb2IiLCJyZWNpcGllbnRLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInJvdXRpbmdLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly8xOTIuMTY4LjU2LjEwMTo4MDIwIn0=
+             */
+            invitation: string;
+        };
+        /**
+         * ActionType
+         * @enum {string}
+         */
+        ActionType: "ADD_KEY" | "ADD_SERVICE" | "PATCH_CONTEXT" | "REMOVE_KEY" | "REMOVE_SERVICE" | "UPDATE_SERVICE";
+        /**
+         * AnonCredsVCPropertiesV1
+         * @description The properties of the AnonCreds verifiable credential that will be issued complied with AnonCreds 1.0.
+         */
+        AnonCredsVCPropertiesV1: {
+            /**
+             * @description The issuer Prism DID by which the verifiable credential will be issued. DID can be short for or long form.
+             * @example did:prism:3bb0505d13fcb04d28a48234edb27b0d4e6d7e18a81e2c1abab58f3bbc21ce6f
+             */
+            issuingDID: string;
+            /**
+             * Format: uuid
+             * @description The unique identifier (UUID) of the credential definition that will be used for this offer.
+             *     It should be the identifier of a credential definition that exists in the issuer agent's database.
+             * @example d9569cec-c81e-4779-aa86-0d5994d82676
+             */
+            credentialDefinitionId: string;
+            /**
+             * @description The set of claims that will be included in the issued credential.
+             *     The object should comply with the schema applicable for this offer (i.e. 'schemaId' or 'credentialDefinitionId').
+             * @example {
+             *       "firstname": "Alice",
+             *       "lastname": "Wonderland"
+             *     }
+             */
+            claims: unknown;
+            /**
+             * Format: double
+             * @description The validity period in seconds of the verifiable credential that will be issued.
+             * @example 3600
+             */
+            validityPeriod?: number;
+        };
+        /** AnoncredCredentialProofV1 */
+        AnoncredCredentialProofV1: {
+            credential: string;
+            requestedAttribute?: string[];
+            requestedPredicate?: string[];
+        };
+        /**
+         * AnoncredCredentialProofsV1
+         * @description A list of proofs from the Anoncred library, each corresponding to a credential.
+         */
+        AnoncredCredentialProofsV1: {
+            credentialProofs?: components["schemas"]["AnoncredCredentialProofV1"][];
+        };
+        /** AnoncredNonRevokedIntervalV1 */
+        AnoncredNonRevokedIntervalV1: {
+            /** Format: int32 */
+            from?: number;
+            /** Format: int32 */
+            to?: number;
+        };
+        /**
+         * AnoncredPresentationRequestV1
+         * @description Anoncred Presentation Request
+         * @example AnoncredPresentationRequestV1(Map(attribute1 -> AnoncredRequestedAttributeV1(Attribute 1,List(Map(cred_def_id -> credential_definition_id_of_attribute1)),Some(AnoncredNonRevokedIntervalV1(Some(1635734400),Some(1735734400))))),Map(predicate1 -> AnoncredRequestedPredicateV1(Predicate 1,>=,18,List(Map(schema_id -> schema_id_of_predicate1)),Some(AnoncredNonRevokedIntervalV1(Some(1635734400),None)))),Example Presentation Request,1234567890,1.0,None)
+         */
+        AnoncredPresentationRequestV1: {
+            requested_attributes: components["schemas"]["Map_AnoncredRequestedAttributeV1"];
+            requested_predicates: components["schemas"]["Map_AnoncredRequestedPredicateV1"];
+            name: string;
+            nonce: string;
+            version: string;
+            non_revoked?: components["schemas"]["AnoncredNonRevokedIntervalV1"];
+        };
+        /** AnoncredRequestedAttributeV1 */
+        AnoncredRequestedAttributeV1: {
+            name: string;
+            restrictions?: components["schemas"]["Map_String"][];
+            non_revoked?: components["schemas"]["AnoncredNonRevokedIntervalV1"];
+        };
+        /** AnoncredRequestedPredicateV1 */
+        AnoncredRequestedPredicateV1: {
+            name: string;
+            p_type: string;
+            /** Format: int32 */
+            p_value: number;
+            restrictions?: components["schemas"]["Map_String"][];
+            non_revoked?: components["schemas"]["AnoncredNonRevokedIntervalV1"];
+        };
+        /** AnoncredsCredentialRequest */
+        AnoncredsCredentialRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            format: "anoncreds";
+            proof?: components["schemas"]["Proof2"];
+            credential_identifier?: string;
+            credential_response_encryption?: components["schemas"]["CredentialResponseEncryption"];
+            credential_definition?: components["schemas"]["CredentialDefinition"];
+            anoncreds: string;
+        };
+        /** ApiKeyAuthenticationRequest */
+        ApiKeyAuthenticationRequest: {
+            /**
+             * Format: uuid
+             * @description The `entityId` of the entity to be updated
+             * @example 01234567-0000-0000-0000-000000000000
+             */
+            entityId: string;
+            /**
+             * @description The `apikey` of the entity to be updated
+             * @example dkflks3DflkFmkllnDfde
+             */
+            apiKey: string;
+        };
+        /** AuthorizationServer */
+        AuthorizationServer: {
+            url: string;
+            clientId: string;
+            clientSecret: string;
+        };
+        /** ClaimDescriptor */
+        ClaimDescriptor: {
+            mandatory?: boolean;
+            value_type?: string;
+            display?: components["schemas"]["Localization"][];
+        };
+        /** ClaimFormat */
+        ClaimFormat: {
+            jwt?: components["schemas"]["Jwt"];
+            jwt_vc?: components["schemas"]["Jwt"];
+            jwt_vp?: components["schemas"]["Jwt"];
+            ldp?: components["schemas"]["Ldp"];
+        };
+        /** Connection */
+        Connection: {
+            /**
+             * Format: uuid
+             * @description The unique identifier of the connection.
+             * @example 0527aea1-d131-3948-a34d-03af39aba8b4
+             */
+            connectionId: string;
+            /**
+             * @description The unique identifier of the thread this connection record belongs to. The value will identical on both sides of the connection (inviter and invitee)
+             * @example 0527aea1-d131-3948-a34d-03af39aba8b4
+             */
+            thid: string;
+            /**
+             * @description A human readable alias for the connection.
+             * @example Peter
+             */
+            label?: string;
+            /**
+             * @description A self-attested code the receiver may want to display to the user or use in automatically deciding what to do with the out-of-band message.
+             * @example issue-vc
+             */
+            goalCode?: string;
+            /**
+             * @description A self-attested string that the receiver may want to display to the user about the context-specific goal of the out-of-band message.
+             * @example To issue a Faber College Graduate credential
+             */
+            goal?: string;
+            /**
+             * @description The DID representing me as the inviter or invitee in this specific connection.
+             * @example did:peer:12345
+             */
+            myDid?: string;
+            /**
+             * @description The DID representing the other peer as the an inviter or invitee in this specific connection.
+             * @example did:peer:67890
+             */
+            theirDid?: string;
+            /**
+             * @description The role played by the Prism agent in the connection flow.
+             * @example Inviter
+             * @enum {string}
+             */
+            role: "Inviter" | "Invitee";
+            /**
+             * @description The current state of the connection protocol execution.
+             * @example InvitationGenerated
+             * @enum {string}
+             */
+            state: "InvitationGenerated" | "InvitationReceived" | "ConnectionRequestPending" | "ConnectionRequestSent" | "ConnectionRequestReceived" | "ConnectionResponsePending" | "ConnectionResponseSent" | "ConnectionResponseReceived" | "ProblemReportPending" | "ProblemReportSent" | "ProblemReportReceived";
+            invitation: components["schemas"]["ConnectionInvitation"];
+            /**
+             * Format: date-time
+             * @description The date and time the connection record was created.
+             * @example 2022-03-10T12:00Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description The date and time the connection record was last updated.
+             * @example 2022-03-10T12:00Z
+             */
+            updatedAt?: string;
+            /**
+             * Format: int32
+             * @description The maximum background processing attempts remaining for this record
+             * @example 5
+             */
+            metaRetries: number;
+            /**
+             * @description The last failure if any.
+             * @example ErrorResponse(404,NotFound,Not Found,Some(The requested resource was not found),error:instance:f47ac10b-58cc-4372-a567-0e02b2c3d479)
+             */
+            metaLastFailure?: components["schemas"]["ErrorResponse"];
+            /**
+             * @description The reference to the connection resource.
+             * @example https://atala-prism-products.io/connections/ABCD-1234
+             */
+            self: string;
+            /**
+             * @description The type of object returned. In this case a `Connection`.
+             * @example Connection
+             */
+            kind: string;
+        };
+        /**
+         * ConnectionInvitation
+         * @description The invitation for this connection
+         */
+        ConnectionInvitation: {
+            /**
+             * Format: uuid
+             * @description The unique identifier of the invitation. It should be used as parent thread ID (pthid) for the Connection Request message that follows.
+             * @example 0527aea1-d131-3948-a34d-03af39aba8b4
+             */
+            id: string;
+            /**
+             * @description The DIDComm Message Type URI (MTURI) the invitation message complies with.
+             * @example https://didcomm.org/out-of-band/2.0/invitation
+             */
+            type: string;
+            /**
+             * @description The DID representing the sender to be used by recipients for future interactions.
+             * @example did:peer:1234457
+             */
+            from: string;
+            /**
+             * @description The invitation message encoded as a URL. This URL follows the Out of [Band 2.0 protocol](https://identity.foundation/didcomm-messaging/spec/v2.0/#out-of-band-messages) and can be used to generate a QR code for example.
+             * @example https://my.domain.com/path?_oob=eyJAaWQiOiIzZmE4NWY2NC01NzE3LTQ1NjItYjNmYy0yYzk2M2Y2NmFmYTYiLCJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvbXktZmFtaWx5LzEuMC9teS1tZXNzYWdlLXR5cGUiLCJkaWQiOiJXZ1d4cXp0ck5vb0c5MlJYdnhTVFd2IiwiaW1hZ2VVcmwiOiJodHRwOi8vMTkyLjE2OC41Ni4xMDEvaW1nL2xvZ28uanBnIiwibGFiZWwiOiJCb2IiLCJyZWNpcGllbnRLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInJvdXRpbmdLZXlzIjpbIkgzQzJBVnZMTXY2Z21NTmFtM3VWQWpacGZrY0pDd0R3blpuNnozd1htcVBWIl0sInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly8xOTIuMTY4LjU2LjEwMTo4MDIwIn0=
+             */
+            invitationUrl: string;
+        };
+        /** ConnectionsPage */
+        ConnectionsPage: {
+            /**
+             * @description Array of resources (Connection)
+             *     A sequence of Connection resources representing the list of connections that the paginated response contains.
+             * @example []
+             */
+            contents?: components["schemas"]["Connection"][];
+            /**
+             * @description A string that identifies the type of resource being returned in the response.
+             * @example ConnectionsPage
+             */
+            kind: string;
+            /**
+             * @description The URL that uniquely identifies the resource being returned in the response.
+             * @example /cloud-agent/connections?offset=10&limit=10
+             */
+            self: string;
+            /**
+             * @description A string field indicating the type of resource that the contents field contains.
+             * @example
+             */
+            pageOf: string;
+            /**
+             * @description An optional string field containing the URL of the next page of results. If the API response does not contain any more pages, this field should be set to None.
+             * @example /cloud-agent/connections?offset=20&limit=10
+             */
+            next?: string;
+            /**
+             * @description An optional string field containing the URL of the previous page of results. If the API response is the first page of results, this field should be set to None.
+             * @example /cloud-agent/connections?offset=0&limit=10
+             */
+            previous?: string;
+        };
+        /** Constraints */
+        Constraints: {
+            fields?: components["schemas"]["Field"][];
+        };
+        /** CreateConnectionRequest */
+        CreateConnectionRequest: {
+            /**
+             * @description A human readable alias for the connection.
+             * @example Peter
+             */
+            label?: string;
+            /**
+             * @description A self-attested code the receiver may want to display to the user or use in automatically deciding what to do with the out-of-band message.
+             * @example issue-vc
+             */
+            goalCode?: string;
+            /**
+             * @description A self-attested string that the receiver may want to display to the user about the context-specific goal of the out-of-band message.
+             * @example To issue a Faber College Graduate credential
+             */
+            goal?: string;
+        };
+        /** CreateCredentialConfigurationRequest */
+        CreateCredentialConfigurationRequest: {
+            configurationId: string;
+            format: components["schemas"]["CredentialFormat"];
+            schemaId: string;
+        };
+        /** CreateCredentialIssuerRequest */
+        CreateCredentialIssuerRequest: {
+            /** Format: uuid */
+            id?: string;
+            authorizationServer: components["schemas"]["AuthorizationServer"];
+        };
+        /** CreateEntityRequest */
+        CreateEntityRequest: {
+            /**
+             * Format: uuid
+             * @description The new `id` of the entity to be created. If this field is not provided, the server will generate a new UUID for the entity
+             * @example 00000000-0000-0000-0000-000000000000
+             */
+            id?: string;
+            /**
+             * @description The new `name` of the entity to be created. If this field is not provided, the server will generate a random name for the entity
+             * @example John Doe
+             */
+            name: string;
+            /**
+             * Format: uuid
+             * @description The new `walletId` of the entity to be created. If this field is not provided, the server will set the default `walletId`
+             * @example 00000000-0000-0000-0000-000000000000
+             */
+            walletId?: string;
+        };
+        /** CreateIssueCredentialRecordRequest */
+        CreateIssueCredentialRecordRequest: {
+            /**
+             * Format: double
+             * @description The validity period in seconds of the verifiable credential that will be issued.
+             * @example 3600
+             */
+            validityPeriod?: number;
+            /**
+             * @description The URL pointing to the JSON schema that will be used for this offer (should be 'http' or 'https').
+             *     When dereferenced, the returned content should be a JSON schema compliant with the '[Draft 2020-12](https://json-schema.org/draft/2020-12/release-notes)' version of the specification.
+             *     Note that this parameter only applies when the offer is of type 'JWT'.
+             * @example https://agent-host.com/cloud-agent/schema-registry/schemas/d9569cec-c81e-4779-aa86-0d5994d82676/schema
+             */
+            schemaId?: string;
+            /**
+             * Format: uuid
+             * @description The unique identifier (UUID) of the credential definition that will be used for this offer.
+             *     It should be the identifier of a credential definition that exists in the issuer agent's database.
+             *     Note that this parameter only applies when the offer is of type 'AnonCreds'.
+             * @example d9569cec-c81e-4779-aa86-0d5994d82676
+             */
+            credentialDefinitionId?: string;
+            /**
+             * @description The credential format for this offer (defaults to 'JWT')
+             * @example JWT
+             */
+            credentialFormat?: string;
+            /**
+             * @description The set of claims that will be included in the issued credential.
+             *     The JSON object should comply with the schema applicable for this offer (i.e. 'schemaId' or 'credentialDefinitionId').
+             * @example {
+             *       "firstname": "Alice",
+             *       "lastname": "Wonderland"
+             *     }
+             */
+            claims?: unknown;
+            /**
+             * @description Specifies whether or not the credential should be automatically generated and issued when receiving the `CredentialRequest` from the holder.
+             *     If set to `false`, a manual approval by the issuer via another API call will be required for the VC to be issued.
+             * @example true
+             */
+            automaticIssuance?: boolean;
+            /**
+             * @description The issuer Prism DID by which the verifiable credential will be issued. DID can be short for or long form.
+             * @example did:prism:3bb0505d13fcb04d28a48234edb27b0d4e6d7e18a81e2c1abab58f3bbc21ce6f
+             */
+            issuingDID?: string;
+            /**
+             * @description Specified the key ID (kid) of the DID, it will be used to sign credential.
+             *     User should specify just the partial identifier of the key. The full id of the kid MUST be "<issuingDID>#<kid>"
+             *     Note the cryto algorithm used with depend type of the key.
+             * @example kid1
+             */
+            issuingKid?: string;
+            /**
+             * Format: uuid
+             * @description The unique identifier of a DIDComm connection that already exists between the this issuer agent and the holder cloud or edeg agent.
+             *     It should be the identifier of a connection that exists in the issuer agent's database.
+             *     This connection will be used to execute the issue credential protocol.
+             *     Note: connectionId is only required when the offer is from existing connection.
+             *     connectionId is not required when the offer is from invitation for connectionless issuance.
+             * @example d9569cec-c81e-4779-aa86-0d5994d82676
+             */
+            connectionId?: string;
+            /**
+             * @description A self-attested code the receiver may want to display to the user or use in automatically deciding what to do with the out-of-band message.
+             *      goalcode is optional and can be provided when the offer is from invitation for connectionless issuance.
+             * @example issue-vc
+             */
+            goalCode?: string;
+            /**
+             * @description A self-attested string that the receiver may want to display to the user about the context-specific goal of the out-of-band message.
+             *      goal is optional and can be provided when the offer is from invitation for connectionless issuance.
+             * @example To issue a Faber College Graduate credential
+             */
+            goal?: string;
+            /**
+             * @description A string that specifies the intended scope or audience for the offer request. The 'domain' field binds the proof or presentation to a particular context (e.g., application, service, or verifier) to prevent misuse.
+             *      It is often used alongside a 'challenge' field to ensure the freshness and uniqueness of the proof. The 'domain' field adds context to validate the origin or purpose of the proof.
+             * @example faber-college-jwt-vc
+             */
+            domain?: string;
+            jwtVcPropertiesV1?: components["schemas"]["JwtVCPropertiesV1"];
+            anoncredsVcPropertiesV1?: components["schemas"]["AnonCredsVCPropertiesV1"];
+            sdJwtVcPropertiesV1?: components["schemas"]["SDJWTVCPropertiesV1"];
+        };
+        /** CreateManagedDIDResponse */
+        CreateManagedDIDResponse: {
+            /**
+             * @description A long-form DID for the created DID
+             * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff:Cr4BCrsBElsKBmF1dGgtMRAEQk8KCXNlY3AyNTZrMRIg0opTuxu-zt6aRbT1tPniG4eu4CYsQPM3rrLzvzNiNgwaIIFTnyT2N4U7qCQ78qtWC3-p0el6Hvv8qxG5uuEw-WgMElwKB21hc3RlcjAQAUJPCglzZWNwMjU2azESIKhBU0eCOO6Vinz_8vhtFSAhYYqrkEXC8PHGxkuIUev8GiAydFHLXb7c22A1Uj_PR21NZp6BCDQqNq2xd244txRgsQ
+             */
+            longFormDid: string;
+        };
+        /** CreateManagedDidRequest */
+        CreateManagedDidRequest: {
+            documentTemplate: components["schemas"]["CreateManagedDidRequestDocumentTemplate"];
+        };
+        /** CreateManagedDidRequestDocumentTemplate */
+        CreateManagedDidRequestDocumentTemplate: {
+            publicKeys?: components["schemas"]["ManagedDIDKeyTemplate"][];
+            services?: components["schemas"]["Service"][];
+            contexts?: string[];
+        };
+        /** CreatePresentationDefinition */
+        CreatePresentationDefinition: {
+            input_descriptors?: components["schemas"]["InputDescriptor"][];
+            name?: string;
+            purpose?: string;
+            format?: components["schemas"]["ClaimFormat"];
+        };
+        /** CreateWalletRequest */
+        CreateWalletRequest: {
+            /**
+             * @description A BIP32 seed encoded in hexadecimal string. It is expected to represent 64-bytes binary seed (128 hex characters).
+             * @example c9994785ce6d548134020f610b76102ca1075d3bb672a75ec8c9a27a7b8607e3b9b384e43b77bb08f8d5159651ae38b98573f7ecc79f2d7e1f1cc371ce60cf8a
+             */
+            seed?: string;
+            /**
+             * @description A name of the wallet
+             * @example my-wallet-1
+             */
+            name: string;
+            /**
+             * Format: uuid
+             * @description The unique `id` of the wallet. Randomly generated if not specified.
+             * @example 00000000-0000-0000-0000-000000000000
+             */
+            id?: string;
+        };
+        /** CreateWalletUmaPermissionRequest */
+        CreateWalletUmaPermissionRequest: {
+            /**
+             * Format: uuid
+             * @description The subject ID that should be granted the permission to the wallet. This can be found in the `sub` claim of a JWT token.
+             * @example 00000000-0000-0000-0000-000000000000
+             */
+            subject: string;
+        };
+        /** CreateWebhookNotification */
+        CreateWebhookNotification: {
+            /**
+             * @description A URL of webhook for event notification
+             * @example http://example.com
+             */
+            url: string;
+            customHeaders?: components["schemas"]["Map_String"];
+        };
+        /** CredentialConfiguration */
+        CredentialConfiguration: {
+            configurationId: string;
+            format: components["schemas"]["CredentialFormat"];
+            scope: string;
+            schemaId: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        /** CredentialDefinition */
+        CredentialDefinition: {
+            "@context"?: string[];
+            type?: string[];
+            credentialSubject?: components["schemas"]["Map_ClaimDescriptor"];
+        };
+        /** CredentialDefinitionDidUrlResponsePage */
+        CredentialDefinitionDidUrlResponsePage: {
+            /**
+             * @description A sequence of CredentialDefinitionResponse objects representing the list of credential definitions that the API response contains
+             * @example []
+             */
+            contents?: components["schemas"]["PrismEnvelopeResponse"][];
+            /**
+             * @description A string field indicating the type of the API response. In this case, it will always be set to `CredentialDefinitionPage`
+             * @example CredentialDefinitionPage
+             */
+            kind: string;
+            /**
+             * @description A string field containing the URL of the current API endpoint
+             * @example /cloud-agent/credential-definition-registry/definitions?skip=10&limit=10
+             */
+            self: string;
+            /**
+             * @description A string field indicating the type of resource that the contents field contains
+             * @example /cloud-agent/credential-definition-registry/definitions
+             */
+            pageOf: string;
+            /**
+             * @description An optional string field containing the URL of the next page of results. If the API response does not contain any more pages, this field should be set to None.
+             * @example /cloud-agent/credential-definition-registry/definitions?skip=20&limit=10
+             */
+            next?: string;
+            /**
+             * @description An optional string field containing the URL of the previous page of results. If the API response is the first page of results, this field should be set to None.
+             * @example /cloud-agent/credential-definition-registry/definitions?skip=0&limit=10
+             */
+            previous?: string;
+        };
+        /** CredentialDefinitionInput */
+        CredentialDefinitionInput: {
+            /**
+             * @description A human-readable name for the credential definition. A piece of Metadata.
+             * @example DrivingLicense
+             */
+            name: string;
+            /**
+             * @description A human-readable description of the credential definition
+             * @example Simple credential definition for the driving licence verifiable credential.
+             */
+            description?: string;
+            /**
+             * @description Denotes the revision of a given Credential Definition. It should follow semantic version convention to describe the impact of the credential definition evolution.
+             * @example 1.0.0
+             */
+            version: string;
+            /**
+             * @description Token that allow to lookup and filter the credential definition records.
+             * @example licence
+             */
+            tag: string;
+            /**
+             * @description DID of the identity which authored the credential definition. A piece of Metadata.
+             * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff
+             */
+            author: string;
+            /**
+             * @description The unique identifier of the schema used for this credential definition.
+             * @example https://agent-host.com/cloud-agent/schema-registry/schemas/d9569cec-c81e-4779-aa86-0d5994d82676
+             */
+            schemaId: string;
+            /**
+             * @description Signature type used in the CredentialDefinition.
+             * @example CL
+             */
+            signatureType: string;
+            /**
+             * @description Boolean flag indicating whether revocation is supported for this CredentialDefinition.
+             * @example false
+             */
+            supportRevocation: boolean;
+        };
+        /** CredentialDefinitionResponse */
+        CredentialDefinitionResponse: {
+            /**
+             * Format: uuid
+             * @description Globally unique id of the credential definition.It's composed from the bytes of the string that contain the `author`, `name`, and `version` values.The string format looks like the resource identifier: `author`/`id`?version=`version`
+             * @example 0527aea1-d131-3948-a34d-03af39aba8b4
+             */
+            guid: string;
+            /**
+             * @description A locally unique identifier to address the credential definition. UUID is generated by the backend.
+             * @example 0527aea1-d131-3948-a34d-03af39aba8b5
+             */
+            id: string;
+            /**
+             * @description Resource id of the credential definition. Contains the `author`'s DID, `id` and `version` fields.
+             * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff/0527aea1-d131-3948-a34d-03af39aba8b4?version=1.0.0
+             */
+            longId?: string;
+            /**
+             * @description A human-readable name for the credential definition. A piece of Metadata.
+             * @example DrivingLicense
+             */
+            name: string;
+            /**
+             * @description Denotes the revision of a given Credential Definition. It should follow semantic version convention to describe the impact of the credential definition evolution.
+             * @example 1.0.0
+             */
+            version: string;
+            /**
+             * @description Token that allow to lookup and filter the credential definition records.
+             * @example licence
+             */
+            tag: string;
+            /**
+             * @description A human-readable description of the credential definition
+             * @example Simple credential definition for the driving licence verifiable credential.
+             */
+            description: string;
+            /**
+             * @description DID of the identity which authored the credential definition. A piece of Metadata.
+             * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff
+             */
+            author: string;
+            /**
+             * Format: date-time
+             * @description [RFC3339](https://www.rfc-editor.org/rfc/rfc3339) date on which the credential definition was created. A piece of Metadata.
+             * @example 2022-03-10T12:00Z
+             */
+            authored: string;
+            /**
+             * @description The unique identifier of the schema used for this credential definition.
+             * @example https://agent-host.com/cloud-agent/schema-registry/schemas/d9569cec-c81e-4779-aa86-0d5994d82676
+             */
+            schemaId: string;
+            /**
+             * @description Definition object that represents the actual definition of the credential.
+             * @example {
+             *       "credentialSubject": {
+             *         "emailAddress": "alice@wonderland.com",
+             *         "givenName": "Alice",
+             *         "familyName": "Wonderland",
+             *         "dateOfIssuance": "2000-01-01T10:00:00Z",
+             *         "drivingLicenseID": "12345",
+             *         "drivingClass": 5
+             *       }
+             *     }
+             */
+            definition: unknown;
+            /** @description A proof that validates the correctness of the key within the context of the credential definition. */
+            keyCorrectnessProof: unknown;
+            /**
+             * @description Signature type used in the CredentialDefinition.
+             * @example CL
+             */
+            signatureType: string;
+            /**
+             * @description Boolean flag indicating whether revocation is supported for this CredentialDefinition.
+             * @example false
+             */
+            supportRevocation: boolean;
+            proof?: components["schemas"]["Proof"];
+            /**
+             * @description A string that identifies the type of resource being returned in the response.
+             * @example CredentialDefinition
+             */
+            kind: string;
+            /**
+             * @description The URL that uniquely identifies the resource being returned in the response.
+             * @example /cloud-agent/credential-definition-registry/schemas/0527aea1-d131-3948-a34d-03af39aba8b4
+             */
+            self: string;
+        };
+        /** CredentialDefinitionResponsePage */
+        CredentialDefinitionResponsePage: {
+            /**
+             * @description A sequence of CredentialSchemaResponse objects representing the list of credential schemas that the API response contains
+             * @example []
+             */
+            contents?: components["schemas"]["CredentialDefinitionResponse"][];
+            /**
+             * @description A string field indicating the type of the API response. In this case, it will always be set to `CredentialSchemaPage`
+             * @example CredentialSchemaPage
+             */
+            kind: string;
+            /**
+             * @description A string field containing the URL of the current API endpoint
+             * @example /cloud-agent/schema-registry/schemas?skip=10&limit=10
+             */
+            self: string;
+            /**
+             * @description A string field indicating the type of resource that the contents field contains
+             * @example /cloud-agent/schema-registry/schemas
+             */
+            pageOf: string;
+            /**
+             * @description An optional string field containing the URL of the next page of results. If the API response does not contain any more pages, this field should be set to None.
+             * @example /cloud-agent/schema-registry/schemas?skip=20&limit=10
+             */
+            next?: string;
+            /**
+             * @description An optional string field containing the URL of the previous page of results. If the API response is the first page of results, this field should be set to None.
+             * @example /cloud-agent/schema-registry/schemas?skip=0&limit=10
+             */
+            previous?: string;
+        };
+        /**
+         * CredentialErrorCode
+         * @enum {string}
+         */
+        CredentialErrorCode: "insufficient_scope" | "invalid_credential_request" | "invalid_encryption_parameters" | "invalid_proof" | "invalid_request" | "invalid_token" | "unsupported_credential_format" | "unsupported_credential_type";
+        /** CredentialErrorResponse */
+        CredentialErrorResponse: {
+            error: components["schemas"]["CredentialErrorCode"];
+            error_description?: string;
+            c_nonce?: string;
+            /** Format: int64 */
+            c_nonce_expires_in?: number;
+        };
+        /**
+         * CredentialFormat
+         * @constant
+         * @enum {string}
+         */
+        CredentialFormat: "jwt_vc_json";
+        /** CredentialIssuer */
+        CredentialIssuer: {
+            id: string;
+            type: string;
+        };
+        /** CredentialIssuer */
+        CredentialIssuer1: {
+            /** Format: uuid */
+            id: string;
+            authorizationServerUrl: string;
+        };
+        /** CredentialIssuerPage */
+        CredentialIssuerPage: {
+            self: string;
+            kind: string;
+            pageOf: string;
+            next?: string;
+            previous?: string;
+            contents?: components["schemas"]["CredentialIssuer1"][];
+        };
+        /** CredentialOfferRequest */
+        CredentialOfferRequest: {
+            credentialConfigurationId: string;
+            issuingDID: string;
+            claims: unknown;
+        };
+        /** CredentialOfferResponse */
+        CredentialOfferResponse: {
+            credentialOffer: string;
+        };
+        /** CredentialRequest */
+        CredentialRequest: components["schemas"]["AnoncredsCredentialRequest"] | components["schemas"]["JwtCredentialRequest"];
+        /** CredentialResponse */
+        CredentialResponse: components["schemas"]["DeferredCredentialResponse"] | components["schemas"]["ImmediateCredentialResponse"];
+        /** CredentialResponseEncryption */
+        CredentialResponseEncryption: {
+            jwk: string;
+            alg: string;
+            enc: string;
+        };
+        /** CredentialSchemaDidUrlResponsePage */
+        CredentialSchemaDidUrlResponsePage: {
+            /**
+             * @description A sequence of PrismEnvelopeResponse objects representing the list of credential schemas wrapped in an envelope
+             * @example []
+             */
+            contents?: components["schemas"]["PrismEnvelopeResponse"][];
+            /**
+             * @description A string field indicating the type of the API response. In this case, it will always be set to `CredentialSchemaPage`
+             * @example CredentialSchemaPage
+             */
+            kind: string;
+            /**
+             * @description A string field containing the URL of the current API endpoint
+             * @example /cloud-agent/schema-registry/schemas/did-url?skip=10&limit=10
+             */
+            self: string;
+            /**
+             * @description A string field indicating the type of resource that the contents field contains
+             * @example /cloud-agent/schema-registry/schemas/did-url
+             */
+            pageOf: string;
+            /**
+             * @description An optional string field containing the URL of the next page of results. If the API response does not contain any more pages, this field should be set to None.
+             * @example /cloud-agent/schema-registry/schemas/did-url?skip=20&limit=10
+             */
+            next?: string;
+            /**
+             * @description An optional string field containing the URL of the previous page of results. If the API response is the first page of results, this field should be set to None.
+             * @example /cloud-agent/schema-registry/schemas/did-url?skip=0&limit=10
+             */
+            previous?: string;
+        };
+        /** CredentialSchemaInput */
+        CredentialSchemaInput: {
+            /**
+             * @description A human-readable name for the credential schema. A piece of Metadata.
+             * @example DrivingLicense
+             */
+            name: string;
+            /**
+             * @description Denotes the revision of a given Credential Schema. It should follow semantic version convention to describe the impact of the schema evolution.
+             * @example 1.0.0
+             */
+            version: string;
+            /**
+             * @description A human-readable description of the credential schema
+             * @example Simple credential schema for the driving licence verifiable credential.
+             */
+            description?: string;
+            /**
+             * @description This field resolves to a JSON schema with details about the schema metadata that applies to the schema. A piece of Metadata.
+             * @example https://w3c-ccg.github.io/vc-json-schemas/schema/2.0/schema.json
+             */
+            type: string;
+            /**
+             * @description Valid JSON Schema where the Credential Schema data fields are defined. A piece of Metadata
+             * @example {
+             *       "$id": "https://example.com/driving-license-1.0",
+             *       "$schema": "https://json-schema.org/draft/2020-12/schema",
+             *       "description": "Driving License",
+             *       "type": "object",
+             *       "properties": {
+             *         "emailAddress": {
+             *           "type": "string",
+             *           "format": "email"
+             *         },
+             *         "givenName": {
+             *           "type": "string"
+             *         },
+             *         "familyName": {
+             *           "type": "string"
+             *         },
+             *         "dateOfIssuance": {
+             *           "type": "string",
+             *           "format": "date-time"
+             *         },
+             *         "drivingLicenseID": {
+             *           "type": "string"
+             *         },
+             *         "drivingClass": {
+             *           "type": "integer"
+             *         }
+             *       },
+             *       "required": [
+             *         "emailAddress",
+             *         "familyName",
+             *         "dateOfIssuance",
+             *         "drivingLicenseID",
+             *         "drivingClass"
+             *       ],
+             *       "additionalProperties": false
+             *     }
+             */
+            schema: unknown;
+            /**
+             * @description Tokens that allow to lookup and filter the credential schema records.
+             * @example [
+             *       "driving",
+             *       "licence",
+             *       "id"
+             *     ]
+             */
+            tags?: string[];
+            /**
+             * @description DID of the identity which authored the credential schema. A piece of Metadata.
+             * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff
+             */
+            author: string;
+        };
+        /**
+         * CredentialSchemaRef
+         * @example CredentialSchemaRef(https://agent-host.com/cloud-agent/schema-registry/schemas/d9569cec-c81e-4779-aa86-0d5994d82676,JsonSchemaValidator2018)
+         */
+        CredentialSchemaRef: {
+            /**
+             * @description The URL or DIDURL pointing to the credential schema that will be used for this offer.
+             * @example https://agent-host.com/cloud-agent/schema-registry/schemas/d9569cec-c81e-4779-aa86-0d5994d82676
+             */
+            id: string;
+            /**
+             * @description The type of the credential schema that will be used for this offer.
+             * @example JsonSchema
+             */
+            type: string;
+        };
+        /** CredentialSchemaResponse */
+        CredentialSchemaResponse: {
+            /**
+             * Format: uuid
+             * @description Globally unique id of the credential schema.It's composed from the bytes of the string that contain the `author`, `name`, and `version` values.The string format looks like the resource identifier: `author`/`id`?version=`version`
+             * @example 0527aea1-d131-3948-a34d-03af39aba8b4
+             */
+            guid: string;
+            /**
+             * @description A locally unique identifier to address the schema. UUID is generated by the backend.
+             * @example 0527aea1-d131-3948-a34d-03af39aba8b5
+             */
+            id: string;
+            /**
+             * @description Resource id of the credential schema. Contains the `author`'s DID, `id` and `version` fields.
+             * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff/0527aea1-d131-3948-a34d-03af39aba8b4?version=1.0.0
+             */
+            longId?: string;
+            /**
+             * @description A human-readable name for the credential schema. A piece of Metadata.
+             * @example DrivingLicense
+             */
+            name: string;
+            /**
+             * @description Denotes the revision of a given Credential Schema. It should follow semantic version convention to describe the impact of the schema evolution.
+             * @example 1.0.0
+             */
+            version: string;
+            /**
+             * @description Tokens that allow to lookup and filter the credential schema records.
+             * @example [
+             *       "driving",
+             *       "licence",
+             *       "id"
+             *     ]
+             */
+            tags?: string[];
+            /**
+             * @description A human-readable description of the credential schema
+             * @example Simple credential schema for the driving licence verifiable credential.
+             */
+            description: string;
+            /**
+             * @description This field resolves to a JSON schema with details about the schema metadata that applies to the schema. A piece of Metadata.
+             * @example https://w3c-ccg.github.io/vc-json-schemas/schema/2.0/schema.json
+             */
+            type: string;
+            /**
+             * @description Valid JSON Schema where the Credential Schema data fields are defined. A piece of Metadata
+             * @example {
+             *       "$id": "https://example.com/driving-license-1.0",
+             *       "$schema": "https://json-schema.org/draft/2020-12/schema",
+             *       "description": "Driving License",
+             *       "type": "object",
+             *       "properties": {
+             *         "emailAddress": {
+             *           "type": "string",
+             *           "format": "email"
+             *         },
+             *         "givenName": {
+             *           "type": "string"
+             *         },
+             *         "familyName": {
+             *           "type": "string"
+             *         },
+             *         "dateOfIssuance": {
+             *           "type": "string",
+             *           "format": "date-time"
+             *         },
+             *         "drivingLicenseID": {
+             *           "type": "string"
+             *         },
+             *         "drivingClass": {
+             *           "type": "integer"
+             *         }
+             *       },
+             *       "required": [
+             *         "emailAddress",
+             *         "familyName",
+             *         "dateOfIssuance",
+             *         "drivingLicenseID",
+             *         "drivingClass"
+             *       ],
+             *       "additionalProperties": false
+             *     }
+             */
+            schema: unknown;
+            /**
+             * @description DID of the identity which authored the credential schema. A piece of Metadata.
+             * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff
+             */
+            author: string;
+            /**
+             * Format: date-time
+             * @description [RFC3339](https://www.rfc-editor.org/rfc/rfc3339) date on which the credential schema was created. A piece of Metadata.
+             * @example 2022-03-10T12:00Z
+             */
+            authored: string;
+            proof?: components["schemas"]["Proof1"];
+            resolutionMethod: components["schemas"]["ResourceResolutionMethod"];
+            /**
+             * @description A string that identifies the type of resource being returned in the response.
+             * @example CredentialSchema
+             */
+            kind: string;
+            /**
+             * @description The URL that uniquely identifies the resource being returned in the response.
+             * @example /cloud-agent/schema-registry/schemas/0527aea1-d131-3948-a34d-03af39aba8b4
+             */
+            self: string;
+        };
+        /** CredentialSchemaResponsePage */
+        CredentialSchemaResponsePage: {
+            /**
+             * @description A sequence of CredentialSchemaResponse objects representing the list of credential schemas that the API response contains
+             * @example []
+             */
+            contents?: components["schemas"]["CredentialSchemaResponse"][];
+            /**
+             * @description A string field indicating the type of the API response. In this case, it will always be set to `CredentialSchemaPage`
+             * @example CredentialSchemaPage
+             */
+            kind: string;
+            /**
+             * @description A string field containing the URL of the current API endpoint
+             * @example /cloud-agent/schema-registry/schemas?skip=10&limit=10
+             */
+            self: string;
+            /**
+             * @description A string field indicating the type of resource that the contents field contains
+             * @example /cloud-agent/schema-registry/schemas
+             */
+            pageOf: string;
+            /**
+             * @description An optional string field containing the URL of the next page of results. If the API response does not contain any more pages, this field should be set to None.
+             * @example /cloud-agent/schema-registry/schemas?skip=20&limit=10
+             */
+            next?: string;
+            /**
+             * @description An optional string field containing the URL of the previous page of results. If the API response is the first page of results, this field should be set to None.
+             * @example /cloud-agent/schema-registry/schemas?skip=0&limit=10
+             */
+            previous?: string;
+        };
+        /**
+         * CredentialSubject
+         * @description Object containing claims specific to status list credential
+         */
+        CredentialSubject: {
+            /**
+             * @description Always equals to constant value - StatusList2021
+             * @example StatusList2021
+             */
+            type: string;
+            statusPurpose: components["schemas"]["StatusPurpose"];
+            /**
+             * @description base64 url encoded bitstring of credential statuses
+             * @example H4sIAAAAAAAA_-3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAIC3AYbSVKsAQAAA
+             */
+            encodedList: string;
+        };
+        /**
+         * Curve
+         * @description The curve name of the verification material in the DID Document. Defaults to `secp256k1` if not specified.
+         * @example Ed25519
+         * @enum {string}
+         */
+        Curve: "Ed25519" | "X25519" | "secp256k1";
+        /** CwtProof */
+        CwtProof: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            proof_type: "cwt";
+            cwt: string;
+        };
+        /**
+         * DIDDocument
+         * @description A W3C compliant Prism DID document representation.
+         */
+        DIDDocument: {
+            "@context"?: string[];
+            /**
+             * @description [DID subject](https://www.w3.org/TR/did-core/#did-subject).
+             *     The value must match the DID that was given to the resolver.
+             * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff
+             */
+            id: string;
+            /**
+             * @description [DID controller](https://www.w3.org/TR/did-core/#did-controller)
+             * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff
+             */
+            controller?: string;
+            verificationMethod?: components["schemas"]["VerificationMethod"][];
+            authentication?: string[];
+            assertionMethod?: string[];
+            keyAgreement?: string[];
+            capabilityInvocation?: string[];
+            capabilityDelegation?: string[];
+            service?: components["schemas"]["Service"][];
+        };
+        /**
+         * DIDDocumentMetadata
+         * @description [DID document metadata](https://www.w3.org/TR/did-core/#did-document-metadata)
+         */
+        DIDDocumentMetadata: {
+            /**
+             * @description If a DID has been deactivated, DID document metadata MUST include this property with the boolean value true. If a DID has not been deactivated, this property is OPTIONAL, but if included, MUST have the boolean value false.
+             * @example false
+             */
+            deactivated?: boolean;
+            /**
+             * @description A DID in canonical form.
+             *     If a DID is in long form and has been published, DID document metadata MUST contain a `canonicalId`` property with the short form DID as its value.
+             *     If a DID in short form or has not been published, DID document metadata MUST NOT contain a `canonicalId` property.
+             * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff
+             */
+            canonicalId?: string;
+            /**
+             * @description DID document metadata MUST contain a versionId property with the hash of the AtalaOperation contained in the latest valid SignedAtalaOperation that created the DID or changed the DID's internal state.
+             * @example 4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff
+             */
+            versionId?: string;
+            /**
+             * @description The timestamp of the Cardano block that contained the first valid SignedAtalaOperation with a CreateDIDOperation that created the DID.
+             * @example 2023-02-04T13:52:10Z
+             */
+            created?: string;
+            /**
+             * @description The timestamp of the Cardano block that contained the latest valid SignedAtalaOperation that changed the DID's internal state.
+             * @example 2023-02-04T13:52:10Z
+             */
+            updated?: string;
+        };
+        /** DIDOperationResponse */
+        DIDOperationResponse: {
+            scheduledOperation: components["schemas"]["DidOperationSubmission"];
+        };
+        /**
+         * DIDResolutionMetadata
+         * @description [DID resolution metadata](https://www.w3.org/TR/did-core/#did-resolution-metadata)
+         */
+        DIDResolutionMetadata: {
+            /**
+             * @description Resolution error constant according to [DID spec registries](https://www.w3.org/TR/did-spec-registries/#error)
+             * @example invalidDid
+             */
+            error?: string;
+            /**
+             * @description Resolution error message
+             * @example The initialState does not match the suffix
+             */
+            errorMessage?: string;
+            /**
+             * @description The media type of the returned DID document
+             * @example application/did+ld+json
+             */
+            contentType?: string;
+        };
+        /** DIDResolutionResult */
+        DIDResolutionResult: {
+            /**
+             * @description The JSON-LD context describing the JSON document
+             * @example https://didcomm.org/messaging/contexts/v2
+             */
+            "@context": string;
+            didDocument?: components["schemas"]["DIDDocument"];
+            didDocumentMetadata: components["schemas"]["DIDDocumentMetadata"];
+            didResolutionMetadata: components["schemas"]["DIDResolutionMetadata"];
+        };
+        /** DateTimeParameter */
+        DateTimeParameter: {
+            /**
+             * Format: date-time
+             * @description The date and time to use for verification.
+             * @example 2022-03-10T12:00:00Z
+             */
+            dateTime: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            parameterType: "DateTimeParameter";
+        };
+        /** DeferredCredentialResponse */
+        DeferredCredentialResponse: {
+            transaction_id: string;
+            c_nonce?: string;
+            /** Format: int32 */
+            c_nonce_expires_in?: number;
+        };
+        /** DidOperationSubmission */
+        DidOperationSubmission: {
+            /**
+             * @description A scheduled operation ID
+             * @example 98e6a4db10e58fcc011dd8def5ce99fd8b52af39e61e5fb436dc28259139818b
+             */
+            id: string;
+            /**
+             * @description A DID affected by the scheduled operation
+             * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff
+             */
+            didRef: string;
+        };
+        /** DidParameter */
+        DidParameter: {
+            /**
+             * @description The DID (Decentralized Identifier) to use for verification.
+             * @example did:prism:issuer
+             */
+            did: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            parameterType: "DidParameter";
+        };
+        /** EntityResponse */
+        EntityResponse: {
+            /**
+             * @description The `kind` of the entity.
+             * @example Entity
+             */
+            kind: string;
+            /**
+             * @description The `self` link of the entity.
+             * @example http://localhost:8080/cloud-agent/iam/entities/00000000-0000-0000-0000-000000000000
+             */
+            self: string;
+            /**
+             * Format: uuid
+             * @description The unique `id` of the entity
+             * @example 00000000-0000-0000-0000-000000000000
+             */
+            id: string;
+            /**
+             * @description The `name` of the entity.
+             * @example John Doe
+             */
+            name: string;
+            /**
+             * Format: uuid
+             * @description The `walletId` owned by the entity.
+             * @example 00000000-0000-0000-0000-000000000000
+             */
+            walletId: string;
+            /**
+             * Format: date-time
+             * @description The `createdAt` timestamp of the entity.
+             * @example 2023-01-01T00:00:00Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description The `updatedAt` timestamp of the entity.
+             * @example 2023-01-01T00:00:00Z
+             */
+            updatedAt: string;
+        };
+        /** EntityResponsePage */
+        EntityResponsePage: {
+            /**
+             * @description A sequence of CredentialSchemaResponse objects representing the list of credential schemas that the API response contains
+             * @example [
+             *       {
+             *         "kind": "Entity",
+             *         "self": "/cloud-agent/iam/entities/00000000-0000-0000-0000-000000000000",
+             *         "id": "00000000-0000-0000-0000-000000000000",
+             *         "name": "John Doe",
+             *         "walletId": "00000000-0000-0000-0000-000000000000",
+             *         "createdAt": "2023-01-01T00:00:00Z",
+             *         "updatedAt": "2023-01-01T00:00:00Z"
+             *       }
+             *     ]
+             */
+            contents?: components["schemas"]["EntityResponse"][];
+            /**
+             * @description A string field indicating the type of the API response. In this case, it will always be set to `CredentialSchemaPage`
+             * @example CredentialSchemaPage
+             */
+            kind: string;
+            /**
+             * @description A string field containing the URL of the current API endpoint
+             * @example /cloud-agent/schema-registry/schemas?skip=10&limit=10
+             */
+            self: string;
+            /**
+             * @description A string field indicating the type of resource that the contents field contains
+             * @example /cloud-agent/schema-registry/schemas
+             */
+            pageOf: string;
+            /**
+             * @description An optional string field containing the URL of the next page of results. If the API response does not contain any more pages, this field should be set to None.
+             * @example /cloud-agent/schema-registry/schemas?skip=20&limit=10
+             */
+            next?: string;
+            /**
+             * @description An optional string field containing the URL of the previous page of results. If the API response is the first page of results, this field should be set to None.
+             * @example /cloud-agent/schema-registry/schemas?skip=0&limit=10
+             */
+            previous?: string;
+        };
+        /** ErrorResponse */
+        ErrorResponse: {
+            /**
+             * Format: int32
+             * @description The HTTP status code for this occurrence of the problem.
+             * @example 200
+             */
+            status: number;
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example https://example.org/doc/#model-MalformedEmail/
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type. It does not change from occurrence to occurrence of the problem.
+             * @example Malformed email
+             */
+            title: string;
+            /**
+             * @description A human-readable explanation specific to this occurrence of the problem.
+             * @example The received '{}à!è@!.b}' email does not conform to the email format
+             */
+            detail?: string;
+            /**
+             * @description A URI reference that identifies the specific occurrence of the problem. It may or may not yield further information if dereferenced.
+             * @example The received '{}à!è@!.b}' email does not conform to the email format
+             */
+            instance: string;
+        };
+        /** ExtendedErrorResponse */
+        ExtendedErrorResponse: components["schemas"]["CredentialErrorResponse"] | components["schemas"]["ErrorResponse"];
+        /** Field */
+        Field: {
+            id?: string;
+            path?: string[];
+            name?: string;
+            purpose?: string;
+            filter?: unknown;
+            optional?: boolean;
+        };
+        /** HealthInfo */
+        HealthInfo: {
+            /**
+             * @description The semantic version number of the running service
+             * @example 1.1.0
+             */
+            version: string;
+        };
+        /** ImmediateCredentialResponse */
+        ImmediateCredentialResponse: {
+            credential: string;
+            c_nonce?: string;
+            /** Format: int32 */
+            c_nonce_expires_in?: number;
+        };
+        /** InputDescriptor */
+        InputDescriptor: {
+            id: string;
+            name?: string;
+            purpose?: string;
+            format?: components["schemas"]["ClaimFormat"];
+            constraints: components["schemas"]["Constraints"];
+        };
+        /**
+         * IssueCredentialOfferInvitation
+         * @description The invitation for this Offer Credential
+         */
+        IssueCredentialOfferInvitation: {
+            /**
+             * Format: uuid
+             * @description The unique identifier of the invitation. It should be used as parent thread ID (pthid) for the Connection Request message that follows.
+             * @example 0527aea1-d131-3948-a34d-03af39aba8b4
+             */
+            id: string;
+            /**
+             * @description The DIDComm Message Type URI (MTURI) the invitation message complies with.
+             * @example https://didcomm.org/out-of-band/2.0/invitation
+             */
+            type: string;
+            /**
+             * @description The DID representing the sender to be used by recipients for future interactions.
+             * @example did:peer:1234457
+             */
+            from: string;
+            /**
+             * @description The invitation message encoded as a URL. This URL follows the Out of [Band 2.0 protocol](https://identity.foundation/didcomm-messaging/spec/v2.0/#out-of-band-messages) and can be used to generate a QR code for example.
+             * @example https://my.domain.com/path?_oob=eyJpZCI6ImY5NmUzNjk5LTU5MWMtNGFlNy1iNWU2LTZlZmU2ZDI2MjU1YiIsInR5cGUiOiJodHRwczovL2RpZGNvbW0ub3JnL291dC1vZi1iYW5kLzIuMC9pbnZpdGF0aW9uIiwiZnJvbSI6ImRpZDpwZWVyOjIuRXo2TFNmc0tNZTh2U1NXa1lkWkNwbjRZVmlQRVJmZEdBaGRMQUdIZ3gyTEdKd2ZtQS5WejZNa3B3MWtTYWJCTXprQTN2NTl0UUZuaDNGdGtLeTZ4TGhMeGQ5UzZCQW9hQmcyLlNleUowSWpvaVpHMGlMQ0p6SWpwN0luVnlhU0k2SW1oMGRIQTZMeTh4T1RJdU1UWTRMakV1TXpjNk9EQTRNQzlrYVdSamIyMXRJaXdpY2lJNlcxMHNJbUVpT2xzaVpHbGtZMjl0YlM5Mk1pSmRmWDAiLCJib2R5Ijp7ImdvYWxfY29kZSI6Imlzc3VlLXZjIiwiZ29hbCI6IlRvIGlzc3VlIGEgRmFiZXIgQ29sbGVnZSBHcmFkdWF0ZSBjcmVkZW50aWFsIiwiYWNjZXB0IjpbImRpZGNvbW0vdjIiXX0sImF0dGFjaG1lbnRzIjpbeyJpZCI6IjcwY2RjOTBjLTlhOTktNGNkYS04N2ZlLTRmNGIyNTk1MTEyYSIsIm1lZGlhX3R5cGUiOiJhcHBsaWNhdGlvbi9qc29uIiwiZGF0YSI6eyJqc29uIjp7ImlkIjoiNjU1ZTlhMmMtNDhlZC00NTliLWIzZGEtNmIzNjg2NjU1NTY0IiwidHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvaXNzdWUtY3JlZGVudGlhbC8zLjAvb2ZmZXItY3JlZGVudGlhbCIsImJvZHkiOnsiZ29hbF9jb2RlIjoiT2ZmZXIgQ3JlZGVudGlhbCIsImNyZWRlbnRpYWxfcHJldmlldyI6eyJ0eXBlIjoiaHR0cHM6Ly9kaWRjb21tLm9yZy9pc3N1ZS1jcmVkZW50aWFsLzMuMC9jcmVkZW50aWFsLWNyZWRlbnRpYWwiLCJib2R5Ijp7ImF0dHJpYnV0ZXMiOlt7Im5hbWUiOiJmYW1pbHlOYW1lIiwidmFsdWUiOiJXb25kZXJsYW5kIn0seyJuYW1lIjoiZ2l2ZW5OYW1lIiwidmFsdWUiOiJBbGljZSJ9LHsibmFtZSI6ImRyaXZpbmdDbGFzcyIsInZhbHVlIjoiTXc9PSIsIm1lZGlhX3R5cGUiOiJhcHBsaWNhdGlvbi9qc29uIn0seyJuYW1lIjoiZGF0ZU9mSXNzdWFuY2UiLCJ2YWx1ZSI6IjIwMjAtMTEtMTNUMjA6MjA6MzkrMDA6MDAifSx7Im5hbWUiOiJlbWFpbEFkZHJlc3MiLCJ2YWx1ZSI6ImFsaWNlQHdvbmRlcmxhbmQuY29tIn0seyJuYW1lIjoiZHJpdmluZ0xpY2Vuc2VJRCIsInZhbHVlIjoiMTIzNDUifV19fX0sImF0dGFjaG1lbnRzIjpbeyJpZCI6Ijg0MDQ2NzhiLTlhMzYtNDk4OS1hZjFkLTBmNDQ1MzQ3ZTBlMyIsIm1lZGlhX3R5cGUiOiJhcHBsaWNhdGlvbi9qc29uIiwiZGF0YSI6eyJqc29uIjp7Im9wdGlvbnMiOnsiY2hhbGxlbmdlIjoiYWQwZjQzYWQtODUzOC00MWQ0LTljYjgtMjA5NjdiYzY4NWJjIiwiZG9tYWluIjoiZG9tYWluIn0sInByZXNlbnRhdGlvbl9kZWZpbml0aW9uIjp7ImlkIjoiNzQ4ZWZhNTgtMmJjZS00NDBkLTkyMWYtMjUyMGE4NDQ2NjYzIiwiaW5wdXRfZGVzY3JpcHRvcnMiOltdLCJmb3JtYXQiOnsiand0Ijp7ImFsZyI6WyJFUzI1NksiXSwicHJvb2ZfdHlwZSI6W119fX19fSwiZm9ybWF0IjoicHJpc20vand0In1dLCJ0aGlkIjoiZjk2ZTM2OTktNTkxYy00YWU3LWI1ZTYtNmVmZTZkMjYyNTViIiwiZnJvbSI6ImRpZDpwZWVyOjIuRXo2TFNmc0tNZTh2U1NXa1lkWkNwbjRZVmlQRVJmZEdBaGRMQUdIZ3gyTEdKd2ZtQS5WejZNa3B3MWtTYWJCTXprQTN2NTl0UUZuaDNGdGtLeTZ4TGhMeGQ5UzZCQW9hQmcyLlNleUowSWpvaVpHMGlMQ0p6SWpwN0luVnlhU0k2SW1oMGRIQTZMeTh4T1RJdU1UWTRMakV1TXpjNk9EQTRNQzlrYVdSamIyMXRJaXdpY2lJNlcxMHNJbUVpT2xzaVpHbGtZMjl0YlM5Mk1pSmRmWDAifX19XSwiY3JlYXRlZF90aW1lIjoxNzI0ODUxMTM5LCJleHBpcmVzX3RpbWUiOjE3MjQ4NTE0Mzl9=
+             */
+            invitationUrl: string;
+        };
+        /** IssueCredentialRecord */
+        IssueCredentialRecord: {
+            /**
+             * @description The unique identifier of the issue credential record.
+             *     This identifier is internal to the agent and not shared between issuer and holder.
+             * @example 80d612dc-0ded-4ac9-90b4-1b8eabb04545
+             */
+            recordId: string;
+            /**
+             * @description The unique identifier of the 'thread' identifying the specific issuance flow execution as a whole.
+             *     This same unique 'thid' value is included in every message exchanged during the flow execution.
+             *     It is shared between the issuer and the holder agents and its value identical on both sides.
+             * @example 0527aea1-d131-3948-a34d-03af39aba8b4
+             */
+            thid: string;
+            /**
+             * @description The credential format for this offer.
+             * @example JWT
+             * @enum {string}
+             */
+            credentialFormat: "JWT" | "SDJWT" | "AnonCreds";
+            /**
+             * @description The short-form subject Prism DID to which the JWT verifiable credential will be or has been issued.
+             *     This parameter only applies if the offer is of type 'JWT' and will only exist in the cloud agent of the holder (it will be empty on the issuer side).
+             * @example did:prism:3bb0505d13fcb04d28a48234edb27b0d4e6d7e18a81e2c1abab58f3bbc21ce6f
+             */
+            subjectId?: string;
+            /**
+             * Format: double
+             * @description The validity period in seconds of the verifiable credential that will be issued.
+             *     This parameter will only exist in the cloud agent of the issuer (it will be empty on the holder side).
+             * @example 3600
+             */
+            validityPeriod?: number;
+            /**
+             * @description The set of claims included in the issued credential.
+             * @example {
+             *       "firstname": "Alice",
+             *       "lastname": "Wonderland"
+             *     }
+             */
+            claims: unknown;
+            /**
+             * @description Specifies whether or not the credential is automatically generated and issued when receiving the `CredentialRequest` from the holder.
+             *     If set to `false`, a manual approval by the issuer via another API call will be required for the VC to be issued.
+             *     This parameter will only exist in the cloud agent of the issuer (it will be empty on the holder side).
+             * @example true
+             */
+            automaticIssuance?: boolean;
+            /**
+             * Format: date-time
+             * @description The date and time when the issue credential record was created.
+             * @example 2023-01-01T00:00Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description The date and time when the issue credential record was last updated.
+             */
+            updatedAt?: string;
+            /**
+             * @description The role played by the agent in the credential issuance flow.
+             * @example Issuer
+             * @enum {string}
+             */
+            role: "Issuer" | "Holder";
+            /**
+             * @description The current state of the issue credential protocol execution.
+             * @example CredentialSent
+             * @enum {string}
+             */
+            protocolState: "OfferPending" | "OfferSent" | "OfferReceived" | "RequestPending" | "RequestGenerated" | "RequestSent" | "RequestReceived" | "CredentialPending" | "CredentialGenerated" | "CredentialSent" | "CredentialReceived" | "ProblemReportPending" | "ProblemReportSent" | "ProblemReportReceived" | "InvitationExpired" | "InvitationGenerated";
+            /**
+             * @description The base64-encoded credential that was issued by the issuer agent, in 'JWT' or 'AnonCreds' format depending on the offer type.
+             * @example eyJzY2hlbWFfaWQiOiJodHRwOi8vaG9zdC5kb2NrZXIuaW50ZXJuYWw6ODA4MC9wcmlzbS1hZ2VudC9zY2hlbWEtcmVnaXN0cnkvc2NoZW1hcy8zOTZmZDE2OC02YmVmLTMyNDItYTJiNy1hNTZlYWM1MDc2OWMvc2NoZW1hIiwiY3JlZF9kZWZfaWQiOiJodHRwOi8vMTkyLjE2OC4wLjE0OjgwODAvcHJpc20tYWdlbnQvY3JlZGVudGlhbC1kZWZpbml0aW9uLXJlZ2lzdHJ5L2RlZmluaXRpb25zLzNhZmQxZWJkLWIzN2ItMzRiNC1iMWQ2LWYwMDQ5ZmU5ZmQ1Mi9kZWZpbml0aW9uIiwicmV2X3JlZ19pZCI6bnVsbCwidmFsdWVzIjp7ImdpdmVuTmFtZSI6eyJyYXciOiJBbGljZSIsImVuY29kZWQiOiIyNzAzNDY0MDAyNDExNzMzMTAzMzA2MzEyODA0NDAwNDMxODIxODQ4NjgxNjkzMTUyMDg4NjQwNTUzNTY1OTkzNDQxNzQzODc4MTUwNyJ9LCJlbWFpbEFkZHJlc3MiOnsicmF3IjoiYWxpY2VAd29uZGVybGFuZC5jb20iLCJlbmNvZGVkIjoiNzUxMDcwNDYzNDAxNjU2NzcwMTE5NDIwNzU2NDQwMDkwNjY1NDE2NjExNDg4MjI1ODkwMzM2Nzk4NjEyMDkxODY0OTI3Njg2Njk5MjQifSwiZmFtaWx5TmFtZSI6eyJyYXciOiJXb25kZXJsYW5kIiwiZW5jb2RlZCI6IjE2NzkwODQ5MzEyMzc0Nzk0NzM2ODEzMzc3NTY3MjUzODUxMzczNjA3OTcwNDczMzc3NzAxNDc3MjY5MTk0MDE5NTU3NjU0NTYyMDM1In0sImRhdGVPZklzc3VhbmNlIjp7InJhdyI6IjIwMjAtMTEtMTNUMjA6MjA6MzkrMDA6MDAiLCJlbmNvZGVkIjoiNTM4Njg1NTk1MzE3NDg0NjcwOTc1MjA4NTkwNTMwODE4MzU3NDc0MzU2MTE2MDY4NDIwNDExNDc1ODIwMDQ4NzQzNDgwNDYxNjQ2ODUifSwiZHJpdmluZ0xpY2Vuc2VJRCI6eyJyYXciOiIxMjM0NSIsImVuY29kZWQiOiIxMjM0NSJ9LCJkcml2aW5nQ2xhc3MiOnsicmF3IjoiMyIsImVuY29kZWQiOiIzIn19LCJzaWduYXR1cmUiOnsicF9jcmVkZW50aWFsIjp7Im1fMiI6IjMzNjg4ODUzNTU3NTg2MDI3MDg3OTY5ODAzMjgzMzcyNzE4Nzc5MDAzNDAzMDgwODMzMjQzNDIxMTU3MDA5NzE4MDUzMTMyNDIwODAwIiwiYSI6IjEwMjUxMTg2OTU5MTg2NDc2NDcwNzU0MTQ0MDg5NDE3MjI4OTM1Mjk0ODgxNDExMTc5ODYwNzgxODIxODY2OTcyODIyMzg1MTQ1OTcwNDA4Mzk2Mjg5OTM2NzgzNTUxMDk4NDA2MjE2MjcwNjgyNDM1ODg3NjY0OTI0MzQwMDg3NTY4MDMyNzMyMzYwMDc5MTI2ODk2MDU3NDA3MTYyMjI0NDgwODM2NTgzNjY2MzQ1MzA5NzQ0NDE5NjA0ODg5ODA1NDU3Mjc4NDE0MjgyMjA4NzIzMDIwNDQzNzk0MjM0NzU1NTgwNjA1MTE1NjU3NTQ4NjE1MTgwNTU1ODEzMjA0MzQyNjkzNjYyODQzNzY4MjQ2NDM1NjU4MjQ5MDYyMjUxMzYwNzE2MzEyNzM4MjAyMTU2NTEwNzM2NDY1ODk2NjIyNDY4MDk3OTY0OTk0NTA1NDUwMjczMzQ2Mzk4MzY4NzcxNDM3MzAzNTI2NjE0NTk4NTU4Mjg0MTAxNzk0NjYwOTAxNDMwOTI4MzY1MTk3MzA2MDIxMzQ5OTQ3MDI2MzIzMzEwOTE3MjgzODM0ODY2NzI1MzgyMDg4NDIzNDU1NzE0MDY3MTk1NDEzMDA4MzAxNTQ2MTA1NzY4NTAxNzMxNjEwMjk3MDY5ODUyNjAxMTgxMTM3OTg2NjM2MDU2MjI4MTE4NzUzMTM1NjMxMDIwNzA0MzYxODQxNTg0MjA0NzIwMDU1NjY0ODIxMTczOTA3MzYyMTQzNTQyNjk1NTExMTMxNzU3NTE0OTUxMDY2ODQ2MzIyMDAyNzYxMzg4MzIwNjkyNSIsImUiOiIyNTkzNDQ3MjMwNTUwNjIwNTk5MDcwMjU0OTE0ODA2OTc1NzE5MzgyNzc4ODk1MTUxNTIzMDYyNDk3Mjg1ODMxMDU2NjU4MDA3MTMzMDY3NTkxNDk5ODE2OTA1NTkxOTM5ODcxNDMwMTIzNjc5MTMyMDYyOTkzMjM4OTk2OTY5NDIyMTMyMzU5NTY3NDI5Mjk4MTYwMTkzMjA4MDYyNzM5NTc5MDExNDE1Njk0NDAwMjUyMTkiLCJ2IjoiMTAwODYwMTE5NjExNDQ0MjUxODg1ODcyNzA0OTEyNDQwMTQzNTA0MDEwMDQ3NzE3MzYxNzgxMjIwOTQ0OTA3OTE3ODM0NTE3NjQyOTk5MDgxMjEzMDcyNTI4NzU5NTczMzIyNDM1NjU5NzY4OTI2NzA4MjE0NTI5Njg0Njg5NTc5MjAwNzY4MDkxMTM0OTM0MzYxNDUyNzM5ODUwMjEyODc1MDUwMzg5NjkzOTMxMjEzMDg2MTUyOTM4NzA2ODc4MzQyNjIxNjQ1MTc2NDY5NTU0NDMyNTY2MDk0MDY5NjU2ODkzNDg1NjQyNDI2MTc0MjA5MjY3OTI1MDEzODkxMTU2MzAzMzY0MzUwMzgwNTUwMzQ4OTk3MDI1Nzc3NDc5NDg3ODI0NDkzNzg4MDYwNTg1NzMxMTY2NDM5OTE1MTc3ODUyNTYwNjczMjkwODA2Mjk5ODEyOTY1NjMwNDc2OTc0NzExNDY4MDE1MzY4NzM2NTc3MDEzNDE2NjE3ODc0MTc3ODgwNjMzNTc1OTAwMzQyODM5MDUxNjc4NjExNDMxMTk5Mzk3NTIzMDE5Njc0NTA3MjM0NDAzNzcyMTcxMDM3Nzg3NzUyNTMwMjIyODYyNDg5OTMzMzczMzY1MjIwNTc4MDIzNDY2NjkyMDQ4MTA0NTE0NjczMzMwMzMwNzQ1OTEyMjUzNzQ0MDQwMjI1NTM4NjMxNDk2MjY4NDM0MDk5Njk3Nzk1NTY5MDA3MTExMjQzMTg4MTc3MzUyNjE5MTUxNzk1NjEzNTAwNjg5MzUwMzQyNTk3NjA1ODY2MjUyOTYwMjQ3ODg4OTE2NDIwNDcyMDEzNDYzMTA5NTA5MjMxNDcwNjc4MDc5MDI2Mzc3MzY4NDEwNTIyODg3NDExOTIyMzE4Njk5NzA4MjkxNzI4NTg3ODgzNjExODMyMjU4MTE5MzI2ODQ5NjkxODI1MDI2MzU2NDQ1OTM1NjYxOTkyODEyNjIwNDY4MzAxMjEwMzMwNTA1NjEwMjYyNTU5MDk5NDgwNzcxMjA0NDU0ODg0MDI5ODA3MDcwOTM4NDU5OTgxNDM1NjQyNTkzNTQyODc0ODAifSwicl9jcmVkZW50aWFsIjpudWxsfSwic2lnbmF0dXJlX2NvcnJlY3RuZXNzX3Byb29mIjp7InNlIjoiMjMwNDc5NjEzNTA0MDI5NTI3NTk3NzM3MTY4NjY0OTQ5MzQwNzk1NTg1ODM5NTQ4OTI2MTEwMjQ2NzU0NzA3OTgyNjc2MDEyMjIyMTYyNzQyNTQ2Nzg4NDI3MDA4MDQ5NzIyNDMwNDgyODAyOTYyNTgxNDE2ODI2MjEzMTgwMTE4MTA4MTA1Nzg1NjA4OTg5NjEyNTU0ODMwOTE5MjU4MTI0NDgyMzUwNTQ2MTkxOTQ5NTU5ODM2NTk4NzcxMTE0MzI1NjA5MTI4MjUxMTc1MDM4NDMxNDA2NzM2NTc1MDkwMzk5ODk0MDQzMjc3MTg5MTM3MzE1NTM5NTQ2MTE3Mjk2NTM1OTMyOTQ3NDk3NTU0Mjg0NDc1NjkxNDE1NDEzMzIzNjE2OTYyNTk1NDAzMTkxMjQ4ODY2NDE1MjI0NDY2MTU2OTgyODg4OTkyNTAxNjc1NTcwNjI0MzQ2MzMyMTE0NjMzMDQ1NzUxNDg3NzU3ODM3MDA5Mzc3ODMwNTI1MTU5MjUwNjMwMjcxNjY3NDQxMDI3MTM5MjE3Nzc5ODU5MDExMjUxOTc1OTczNjY0NTc4MjMxOTk1Mzc3OTE4Mjg4MTkyNjIyMDM5NDEzMDM0ODg5MjM3Mzg2NzU4Mzg3NTcwNTMxNDc1OTQxMDU2MTg3NzUzOTEyNDA0NzkwNzQ5NzgzMTM0OTk3MDgzODk3NjE5MTczMTg3MDg1MzE1MjQ3NTM4NjU2OTcwOTE0NzI2MzM1ODA1ODY5OTk3NzI3OTc5NTUwMjIzNjkzMDA2MjcwNjIzNTc3NjM2NTIyNjIyNTY0MTE4NTMiLCJjIjoiOTM2NzQ1MDczNzcxNzQ3MjE3OTg3OTY2OTYzMDQxNzUzMTE4NDk0NDE4NDQ0NzQ1MDI3NzAyMjI3Nzk0NzU1ODQ2Mjg3ODMzMzU4NTAifSwicmV2X3JlZyI6bnVsbCwid2l0bmVzcyI6bnVsbH0=
+             */
+            credential?: string;
+            /**
+             * @description The short-form issuer Prism DID by which the JWT verifiable credential will be or has been issued.
+             *     Note that this parameter only applies when the offer is type 'JWT'.
+             * @example did:prism:3bb0505d13fcb04d28a48234edb27b0d4e6d7e18a81e2c1abab58f3bbc21ce6f
+             */
+            issuingDID?: string;
+            /**
+             * @description A self-attested code the receiver may want to display to the user or use in automatically deciding what to do with the out-of-band message.
+             *     The goalCode is optional and can be included when the credential offer originates from an invitation for connectionless issuance
+             * @example issue-vc
+             */
+            goalCode?: string;
+            /**
+             * @description A self-attested string that the receiver may want to display to the user about the context-specific goal of the out-of-band message.
+             *     The goal is optional and can be included when the credential offer originates from an invitation for connectionless issuance
+             * @example To issue a Faber College Graduate credential
+             */
+            goal?: string;
+            /**
+             * @description The DID representing me as the inviter or invitee in this specific connection.
+             * @example did:peer:12345
+             */
+            myDid?: string;
+            invitation?: components["schemas"]["IssueCredentialOfferInvitation"];
+            /**
+             * Format: int32
+             * @description The maximum background processing attempts remaining for this record.
+             * @example 5
+             */
+            metaRetries: number;
+            /**
+             * @description The last failure if any.
+             * @example ErrorResponse(404,NotFound,Not Found,Some(The requested resource was not found),error:instance:f47ac10b-58cc-4372-a567-0e02b2c3d479)
+             */
+            metaLastFailure?: components["schemas"]["ErrorResponse"];
+        };
+        /** IssueCredentialRecordPage */
+        IssueCredentialRecordPage: {
+            /**
+             * @description An sequence of IssueCredentialRecord resources representing the list of credential records that the paginated response contains.
+             * @example []
+             */
+            contents?: components["schemas"]["IssueCredentialRecord"][];
+            /**
+             * @description A string that identifies the type of resource being returned in the response.
+             * @example Collection
+             */
+            kind: string;
+            /**
+             * @description The URL that uniquely identifies the resource being returned in the response.
+             * @example /cloud-agent/issue-credentials/records?offset=10&limit=10
+             */
+            self: string;
+            /**
+             * @description A string field indicating the type of resource that the contents field contains.
+             * @example /cloud-agent/issue-credentials/records
+             */
+            pageOf: string;
+            /**
+             * @description An optional string field containing the URL of the next page of results. If the API response does not contain any more pages, this field should be set to None.
+             * @example /cloud-agent/issue-credentials/records?offset=20&limit=10
+             */
+            next?: string;
+            /**
+             * @description An optional string field containing the URL of the previous page of results. If the API response is the first page of results, this field should be set to None.
+             * @example /cloud-agent/issue-credentials/records?offset=0&limit=10
+             */
+            previous?: string;
+        };
+        /** IssuerMetadata */
+        IssuerMetadata: {
+            credential_issuer: string;
+            authorization_servers?: string[];
+            credential_endpoint: string;
+            credential_configurations_supported: components["schemas"]["Map_SupportedCredentialConfiguration"];
+        };
+        /** Jwt */
+        Jwt: {
+            alg?: string[];
+        };
+        /** JwtCredentialRequest */
+        JwtCredentialRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            format: "jwt_vc_json";
+            proof?: components["schemas"]["Proof2"];
+            credential_identifier?: string;
+            credential_response_encryption?: components["schemas"]["CredentialResponseEncryption"];
+            credential_definition?: components["schemas"]["CredentialDefinition"];
+        };
+        /** JwtProof */
+        JwtProof: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            proof_type: "jwt";
+            jwt: string;
+        };
+        /**
+         * JwtVCPropertiesV1
+         * @description The properties of the JWT verifiable credential that will be issued complied with VCDM 1.1.
+         */
+        JwtVCPropertiesV1: {
+            /**
+             * @description The issuer Prism DID by which the verifiable credential will be issued. DID can be short for or long form.
+             * @example did:prism:3bb0505d13fcb04d28a48234edb27b0d4e6d7e18a81e2c1abab58f3bbc21ce6f
+             */
+            issuingDID: string;
+            /**
+             * @description Specified the key ID (kid) of the DID, it will be used to sign credential.
+             *     User should specify just the partial identifier of the key. The full id of the kid MUST be "<issuingDID>#<kid>"
+             *     Note the cryto algorithm used with depend type of the key.
+             * @example kid1
+             */
+            issuingKid?: string;
+            /**
+             * Format: double
+             * @description The validity period in seconds of the verifiable credential that will be issued.
+             * @example 3600
+             */
+            validityPeriod?: number;
+            /**
+             * @description The set of claims that will be included in the issued credential.
+             *     The JSON object should comply with the schema applicable for this offer (i.e. 'schemaId' or 'credentialDefinitionId').
+             * @example {
+             *       "firstname": "Alice",
+             *       "lastname": "Wonderland"
+             *     }
+             */
+            claims: unknown;
+            /** @description The properties of the JWT verifiable credential that will be issued complied with VCDM 1.1. */
+            credentialSchema: components["schemas"]["CredentialSchemaRef"];
+        };
+        /** Ldp */
+        Ldp: {
+            proof_type?: string[];
+        };
+        /** LdpProof */
+        LdpProof: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            proof_type: "ldp_vp";
+            vp: string;
+        };
+        /** Localization */
+        Localization: {
+            name: string;
+            locale: string;
+        };
+        /** ManagedDID */
+        ManagedDID: {
+            /**
+             * @description A managed DID
+             * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff
+             */
+            did: string;
+            /**
+             * @description A long-form DID. Mandatory when status is not `PUBLISHED` and optional when status is `PUBLISHED`
+             * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff:Cr4BCrsBElsKBmF1dGgtMRAEQk8KCXNlY3AyNTZrMRIg0opTuxu-zt6aRbT1tPniG4eu4CYsQPM3rrLzvzNiNgwaIIFTnyT2N4U7qCQ78qtWC3-p0el6Hvv8qxG5uuEw-WgMElwKB21hc3RlcjAQAUJPCglzZWNwMjU2azESIKhBU0eCOO6Vinz_8vhtFSAhYYqrkEXC8PHGxkuIUev8GiAydFHLXb7c22A1Uj_PR21NZp6BCDQqNq2xd244txRgsQ
+             */
+            longFormDid?: string;
+            /**
+             * @description A status indicating a publication state of a DID in the wallet (e.g. `PUBLICATION_PENDING`, `PUBLISHED`).
+             *     Does not represent DID a lifecyle (e.g. `deactivated`, `recovered`, `updated`).
+             * @example CREATED
+             */
+            status: string;
+        };
+        /**
+         * ManagedDIDKeyTemplate
+         * @description A key-pair template to add to DID document.
+         */
+        ManagedDIDKeyTemplate: {
+            /**
+             * @description Identifier of a verification material in the DID Document
+             * @example key-1
+             */
+            id: string;
+            purpose: components["schemas"]["Purpose"];
+            curve?: components["schemas"]["Curve"];
+        };
+        /** ManagedDIDPage */
+        ManagedDIDPage: {
+            self: string;
+            kind: string;
+            pageOf: string;
+            next?: string;
+            previous?: string;
+            contents?: components["schemas"]["ManagedDID"][];
+        };
+        /** Map_AnoncredRequestedAttributeV1 */
+        Map_AnoncredRequestedAttributeV1: {
+            [key: string]: components["schemas"]["AnoncredRequestedAttributeV1"];
+        };
+        /** Map_AnoncredRequestedPredicateV1 */
+        Map_AnoncredRequestedPredicateV1: {
+            [key: string]: components["schemas"]["AnoncredRequestedPredicateV1"];
+        };
+        /** Map_ClaimDescriptor */
+        Map_ClaimDescriptor: {
+            [key: string]: components["schemas"]["ClaimDescriptor"];
+        };
+        /** Map_String */
+        Map_String: {
+            [key: string]: string;
+        };
+        /** Map_SupportedCredentialConfiguration */
+        Map_SupportedCredentialConfiguration: {
+            [key: string]: components["schemas"]["SupportedCredentialConfiguration"];
+        };
+        /** NonceRequest */
+        NonceRequest: {
+            issuerState: string;
+        };
+        /** NonceResponse */
+        NonceResponse: {
+            nonce: string;
+            /** Format: int64 */
+            nonceExpiresIn: number;
+        };
+        /**
+         * OOBPresentationInvitation
+         * @description The invitation for this Request Presentation
+         */
+        OOBPresentationInvitation: {
+            /**
+             * Format: uuid
+             * @description The unique identifier of the invitation. It should be used as parent thread ID (pthid) for the Connection Request message that follows.
+             * @example 0527aea1-d131-3948-a34d-03af39aba8b4
+             */
+            id: string;
+            /**
+             * @description The DIDComm Message Type URI (MTURI) the invitation message complies with.
+             * @example https://didcomm.org/out-of-band/2.0/invitation
+             */
+            type: string;
+            /**
+             * @description The DID representing the sender to be used by recipients for future interactions.
+             * @example did:peer:1234457
+             */
+            from: string;
+            /**
+             * @description The invitation message encoded as a URL. This URL follows the Out of [Band 2.0 protocol](https://identity.foundation/didcomm-messaging/spec/v2.0/#out-of-band-messages) and can be used to generate a QR code for example.
+             * @example https://my.domain.com/path?_oob=eyJpZCI6IjViMjUwMjIzLWExNDItNDRmYi1hOWJkLWU1MjBlNGI0ZjQzMiIsInR5cGUiOiJodHRwczovL2RpZGNvbW0ub3JnL291dC1vZi1iYW5kLzIuMC9pbnZpdGF0aW9uIiwiZnJvbSI6ImRpZDpwZWVyOjIuRXo2TFNkV0hWQ1BFOHc0NWZETjM4aUh0ZFJ6WGkyTFNqQmRSUjRGTmNOUm12VkNKcy5WejZNa2Z2aUI5S1F1OGlnNVZpeG1HZHM3dmdMNmoyUXNOUGFybkZaanBNQ0E5aHpQLlNleUowSWpvaVpHMGlMQ0p6SWpwN0luVnlhU0k2SW1oMGRIQTZMeTh4T1RJdU1UWTRMakV1TXpjNk9EQTNNQzlrYVdSamIyMXRJaXdpY2lJNlcxMHNJbUVpT2xzaVpHbGtZMjl0YlM5Mk1pSmRmWDAiLCJib2R5Ijp7ImdvYWxfY29kZSI6InByZXNlbnQtdnAiLCJnb2FsIjoiUmVxdWVzdCBwcm9vZiBvZiB2YWNjaW5hdGlvbiBpbmZvcm1hdGlvbiIsImFjY2VwdCI6W119LCJhdHRhY2htZW50cyI6W3siaWQiOiIyYTZmOGM4NS05ZGE3LTRkMjQtOGRhNS0wYzliZDY5ZTBiMDEiLCJtZWRpYV90eXBlIjoiYXBwbGljYXRpb24vanNvbiIsImRhdGEiOnsianNvbiI6eyJpZCI6IjI1NTI5MTBiLWI0NmMtNDM3Yy1hNDdhLTlmODQ5OWI5ZTg0ZiIsInR5cGUiOiJodHRwczovL2RpZGNvbW0uYXRhbGFwcmlzbS5pby9wcmVzZW50LXByb29mLzMuMC9yZXF1ZXN0LXByZXNlbnRhdGlvbiIsImJvZHkiOnsiZ29hbF9jb2RlIjoiUmVxdWVzdCBQcm9vZiBQcmVzZW50YXRpb24iLCJ3aWxsX2NvbmZpcm0iOmZhbHNlLCJwcm9vZl90eXBlcyI6W119LCJhdHRhY2htZW50cyI6W3siaWQiOiJiYWJiNTJmMS05NDUyLTQzOGYtYjk3MC0yZDJjOTFmZTAyNGYiLCJtZWRpYV90eXBlIjoiYXBwbGljYXRpb24vanNvbiIsImRhdGEiOnsianNvbiI6eyJvcHRpb25zIjp7ImNoYWxsZW5nZSI6IjExYzkxNDkzLTAxYjMtNGM0ZC1hYzM2LWIzMzZiYWI1YmRkZiIsImRvbWFpbiI6Imh0dHBzOi8vcHJpc20tdmVyaWZpZXIuY29tIn0sInByZXNlbnRhdGlvbl9kZWZpbml0aW9uIjp7ImlkIjoiMGNmMzQ2ZDItYWY1Ny00Y2E1LTg2Y2EtYTA1NTE1NjZlYzZmIiwiaW5wdXRfZGVzY3JpcHRvcnMiOltdfX19LCJmb3JtYXQiOiJwcmlzbS9qd3QifV0sInRoaWQiOiI1YjI1MDIyMy1hMTQyLTQ0ZmItYTliZC1lNTIwZTRiNGY0MzIiLCJmcm9tIjoiZGlkOnBlZXI6Mi5FejZMU2RXSFZDUEU4dzQ1ZkROMzhpSHRkUnpYaTJMU2pCZFJSNEZOY05SbXZWQ0pzLlZ6Nk1rZnZpQjlLUXU4aWc1Vml4bUdkczd2Z0w2ajJRc05QYXJuRlpqcE1DQTloelAuU2V5SjBJam9pWkcwaUxDSnpJanA3SW5WeWFTSTZJbWgwZEhBNkx5OHhPVEl1TVRZNExqRXVNemM2T0RBM01DOWthV1JqYjIxdElpd2ljaUk2VzEwc0ltRWlPbHNpWkdsa1kyOXRiUzkyTWlKZGZYMCJ9fX1dLCJjcmVhdGVkX3RpbWUiOjE3MjQzMzkxNDQsImV4cGlyZXNfdGltZSI6MTcyNDMzOTQ0NH0=
+             */
+            invitationUrl: string;
+        };
+        /**
+         * Obj
+         * @description The set of claims to be disclosed from the  issued credential.
+         *     The JSON object should comply with the schema applicable for this offer (i.e. 'schemaId' or 'credentialDefinitionId').
+         * @example {
+         *       "firstname": "Alice",
+         *       "lastname": "Wonderland"
+         *     }
+         */
+        Obj: Record<string, never>;
+        /**
+         * Options
+         * @description The options to use when creating the proof presentation request (e.g., domain, challenge).
+         */
+        Options: {
+            /**
+             * @description The challenge should be a randomly generated string.
+             * @example 11c91493-01b3-4c4d-ac36-b336bab5bddf
+             */
+            challenge: string;
+            /**
+             * @description The domain value can be any string or URI.
+             * @example https://example-verifier.com
+             */
+            domain: string;
+        };
+        /** ParameterizableVcVerification */
+        ParameterizableVcVerification: {
+            /** @description The type of verification to perform. */
+            verification: components["schemas"]["VcVerification"];
+            parameter?: components["schemas"]["VcVerificationParameter"];
+        };
+        /** PatchAuthorizationServer */
+        PatchAuthorizationServer: {
+            url?: string;
+            clientId?: string;
+            clientSecret?: string;
+        };
+        /** PatchContextAction */
+        PatchContextAction: {
+            contexts?: string[];
+        };
+        /** PatchCredentialIssuerRequest */
+        PatchCredentialIssuerRequest: {
+            authorizationServer?: components["schemas"]["PatchAuthorizationServer"];
+        };
+        /**
+         * PresentCredentialRequestFormat
+         * @description The presentation format to display in Didcomm messages (default to 'prism/jwt', vc+sd-jwt or anoncreds/proof-request@v1.0)
+         * @example prism/jwt
+         * @enum {string}
+         */
+        PresentCredentialRequestFormat: "Anoncred" | "JWT" | "SDJWT";
+        /**
+         * PresentationDefinition
+         * @description *Presentation Definition* object according to the [PresentationExchange spec](https://identity.foundation/presentation-exchange/spec/v2.1.1/#presentation-definition)
+         */
+        PresentationDefinition: {
+            id: string;
+            input_descriptors?: components["schemas"]["InputDescriptor"][];
+            name?: string;
+            purpose?: string;
+            format?: components["schemas"]["ClaimFormat"];
+        };
+        /** PresentationDefinitionPage */
+        PresentationDefinitionPage: {
+            self: string;
+            kind: string;
+            pageOf: string;
+            next?: string;
+            previous?: string;
+            contents?: components["schemas"]["PresentationDefinition"][];
+        };
+        /** PresentationStatus */
+        PresentationStatus: {
+            /**
+             * @description The unique identifier of the presentation record.
+             * @example 3c6d9fa5-d277-431e-a6cb-d3956e47e610
+             */
+            presentationId: string;
+            /**
+             * @description The unique identifier of the thread this presentation record belongs to. The value will identical on both sides of the presentation flow (verifier and prover)
+             * @example 0527aea1-d131-3948-a34d-03af39aba8b4
+             */
+            thid: string;
+            /**
+             * @description The role played by the Prism agent in the proof presentation flow.
+             * @example Verifier
+             * @enum {string}
+             */
+            role: "Verifier" | "Prover";
+            /**
+             * @description The current state of the proof presentation record.
+             * @example RequestPending
+             * @enum {string}
+             */
+            status: "RequestPending" | "RequestSent" | "RequestReceived" | "RequestRejected" | "PresentationPending" | "PresentationGenerated" | "PresentationSent" | "PresentationReceived" | "PresentationVerified" | "PresentationVerificationFailed" | "PresentationAccepted" | "PresentationRejected" | "ProblemReportPending" | "ProblemReportSent" | "ProblemReportReceived" | "InvitationGenerated" | "InvitationReceived";
+            /**
+             * @description The type of proofs requested in the context of this proof presentation request (e.g., VC schema, trusted issuers, etc.)
+             * @example []
+             */
+            proofs?: components["schemas"]["ProofRequestAux"][];
+            /**
+             * @description The list of proofs presented by the prover to the verifier.
+             * @example []
+             */
+            data?: string[];
+            /**
+             * @description The list of request presented by the verifier to the prover.
+             * @example []
+             */
+            requestData?: string[];
+            /**
+             * @description The set of claims disclosed from the issued credential, this field is applicable to credential type SDJWT only.
+             * @example {
+             *       "firstname": "Alice",
+             *       "lastname": "Wonderland"
+             *     }
+             */
+            disclosedClaims?: unknown;
+            /**
+             * @description The unique identifier of an established connection between the verifier and the prover.
+             * @example bc528dc8-69f1-4c5a-a508-5f8019047900
+             */
+            connectionId?: string;
+            /**
+             * @description A self-attested code the receiver may want to display to the user or use in automatically deciding what to do with the out-of-band message.
+             *     The goalcode is optional and can be included when the presentation request originates from an invitation for connectionless proof request
+             * @example present-vp
+             */
+            goalCode?: string;
+            /**
+             * @description A self-attested string that the receiver may want to display to the user about the context-specific goal of the out-of-band message.
+             *     The goal is optional and can be included when the presentation request originates from an invitation for connectionless proof request
+             * @example To verify a Peter College Graduate credential
+             */
+            goal?: string;
+            /**
+             * @description The DID representing me as the inviter or invitee in this specific connection.
+             * @example did:peer:12345
+             */
+            myDid?: string;
+            invitation?: components["schemas"]["OOBPresentationInvitation"];
+            /**
+             * Format: int32
+             * @description The maximum background processing attempts remaining for this record
+             * @example 5
+             */
+            metaRetries: number;
+            /**
+             * @description The last failure if any.
+             * @example ErrorResponse(404,NotFound,Not Found,Some(The requested resource was not found),error:instance:f47ac10b-58cc-4372-a567-0e02b2c3d479)
+             */
+            metaLastFailure?: components["schemas"]["ErrorResponse"];
+        };
+        /** PresentationStatusPage */
+        PresentationStatusPage: {
+            /**
+             * @description A sequence of Presentation objects.
+             * @example [
+             *       {
+             *         "presentationId": "938bfc23-f78d-4734-9bf3-6dccf300856f",
+             *         "thid": "04112f4d-e894-4bff-a706-85b3e7190a2c",
+             *         "role": "Verifier",
+             *         "status": "RequestSent",
+             *         "proofs": [],
+             *         "data": [],
+             *         "requestData": [],
+             *         "connectionId": "e0d81be9-47ca-4e0b-b8a7-325e8c3abc2f",
+             *         "metaRetries": 5
+             *       },
+             *       {
+             *         "presentationId": "d22158b0-c650-48ea-be85-2920a845ef26",
+             *         "thid": "04112f4d-e894-4bff-a706-85b3e7190a2c",
+             *         "role": "Prover",
+             *         "status": "RequestReceived",
+             *         "proofs": [],
+             *         "data": [],
+             *         "requestData": [],
+             *         "metaRetries": 5
+             *       },
+             *       {
+             *         "presentationId": "fd3f5e54-fae9-4f72-9413-ec66aab83a57",
+             *         "thid": "6b42fd91-4c98-40ae-a371-a1fd1a39e05e",
+             *         "role": "Prover",
+             *         "status": "PresentationPending",
+             *         "proofs": [],
+             *         "data": [],
+             *         "requestData": [],
+             *         "metaRetries": 5
+             *       },
+             *       {
+             *         "presentationId": "e56dd3e0-79d0-45f4-ba6c-ff857211b07b",
+             *         "thid": "6b42fd91-4c98-40ae-a371-a1fd1a39e05e",
+             *         "role": "Verifier",
+             *         "status": "PresentationVerified",
+             *         "proofs": [],
+             *         "data": [
+             *           "{\"claimsToDisclose\":{\"emailAddress\":{},\"givenName\":{}},\"presentation\":\"{\\\"protected\\\":\\\"eyJhbGciOiJFZERTQSJ9\\\",\\\"payload\\\":\\\"eyJfc2QiOlsiMGl4d0tIV0dzbzFvZThFR0hQd2tGYW9EZE1TRFQ3SmgyNkZGSm1ZbGRnRSIsIjQ4VlFXZS1tcjBibHMyOWpicHFKeDNxX2dYY0k5N3dHcEpsZnRoNXQwMGciLCI0Wk9xanFNZVNUVHRKQTNJRExsc3ZXN0dTNzRIemNxY3N2NVFoZk1valE4IiwiUjhGRE0ydXB1V09mNmVJMVA5ckNPdG12c3puVWFFYXpncVNuN0JfeTE0MCIsIlU5MmpfUHlpcHN2TERNQTlDaVRWbnl3bUFzYTM4S2lDWm5TeVhyUE5mNG8iLCJldFB1Mmc5ajdRd01rZ3g5VnpEX1RnNTNUV3UydVpadk1KeHRnNEJ1WGJBIiwidGV3RG1LWklNcS10bUNrMkpqZU0wajNYbU1aUUFLN01heENVNlF4dm9OMCJdLCJfc2RfYWxnIjoic2hhLTI1NiIsImlzcyI6ImRpZDpwcmlzbToxMmEzOWI1YWEwZTcxODI3ZmMxYzYwMjg1ZDVlZWJjMTk0Yjg2NzFhYTJmY2QxZDM2NDBkMGYwMTBlMzliZmVlIiwiaWF0IjoxNzE3NDEwMzgzLCJleHAiOjE3MjAwMDIzODN9\\\",\\\"signature\\\":\\\"953FfSRU_0Y2q0ERrFPzbXJ_hkF0YQe5efwESaZwtXDCn8aanD3MUstp3lzqGZkhvcWRdtCCpIxzhy0zgKwLBg\\\",\\\"disclosures\\\":[\\\"WyI0SHF6MDZCeG5fRlJMb2hWX2lWNXp3IiwgImdpdmVuTmFtZSIsICJBbGljZSJd\\\",\\\"WyJLUnNYYU01c3NXZTl4UEhqQnNjT213IiwgImVtYWlsQWRkcmVzcyIsICJhbGljZUB3b25kZXJsYW5kLmNvbSJd\\\"],\\\"kb_jwt\\\":null}\"}"
+             *         ],
+             *         "requestData": [],
+             *         "connectionId": "e0d81be9-47ca-4e0b-b8a7-325e8c3abc2f",
+             *         "metaRetries": 5
+             *       },
+             *       {
+             *         "presentationId": "938bfc23-f78d-4734-9bf3-6dccf300856f",
+             *         "thid": "04112f4d-e894-4bff-a706-85b3e7190a2c",
+             *         "role": "Verifier",
+             *         "status": "InvitationGenerated",
+             *         "proofs": [],
+             *         "data": [],
+             *         "requestData": [],
+             *         "myDid": "did:peer:veriferPeerDID1234567890",
+             *         "invitation": {
+             *           "id": "04112f4d-e894-4bff-a706-85b3e7190a2c",
+             *           "type": "didcomm/aip2;rfc0048/invitation",
+             *           "from": "did:peer:veriferPeerDID1234567890",
+             *           "invitationUrl": "http://localhost:8000/present-proof/invitation?_oob=eyJpZCI6ImU2M2JkNzQ1LWZjYzYtNGQ0My05NjgzLTY4MjUyOTNlYTgxNiIsInR5cGUiOiJodHRwczovL2RpZGNvbW0ub3JnL291dC1vZi1iYW5kLzIuMC9pbnZpdGF0aW9uIiwiZnJvbSI6ImRpZDpwZWVyOjIuRXo2TFNoOWFSQmRFQlV6WkFRSzN5VnFBRnRYS0pVMVZ1cUZlMVd1U1ZRcnRvRGROZi5WejZNa3NCWmZkc3U4UmFxWjNmdjlBdkJ0elVGd1VyaW5td0xRODFNVjVoc29td2JZLlNleUowSWpvaVpHMGlMQ0p6SWpwN0luVnlhU0k2SW1oMGRIQTZMeTh4T1RJdU1UWTRMakV1TVRrNU9qZ3dOekF2Wkdsa1kyOXRiU0lzSW5JaU9sdGRMQ0poSWpwYkltUnBaR052YlcwdmRqSWlYWDE5IiwiYm9keSI6eyJnb2FsX2NvZGUiOiJwcmVzZW50LXZwIiwiZ29hbCI6IlJlcXVlc3QgcHJvb2Ygb2YgdmFjY2luYXRpb24gaW5mb3JtYXRpb24iLCJhY2NlcHQiOltdfSwiYXR0YWNobWVudHMiOlt7ImlkIjoiZTE5ZjNkNmMtY2U2Ni00Y2EwLWI1ZWUtZDBiY2ZhOGI1MTc3IiwibWVkaWFfdHlwZSI6ImFwcGxpY2F0aW9uL2pzb24iLCJkYXRhIjp7Impzb24iOnsiaWQiOiIxYjMwYzRjZi05MmVjLTQwOTMtYWFlOC1hZDk3NmIzODljY2MiLCJ0eXBlIjoiaHR0cHM6Ly9kaWRjb21tLmF0YWxhcHJpc20uaW8vcHJlc2VudC1wcm9vZi8zLjAvcmVxdWVzdC1wcmVzZW50YXRpb24iLCJib2R5Ijp7ImdvYWxfY29kZSI6IlJlcXVlc3QgUHJvb2YgUHJlc2VudGF0aW9uIiwid2lsbF9jb25maXJtIjpmYWxzZSwicHJvb2ZfdHlwZXMiOltdfSwiYXR0YWNobWVudHMiOlt7ImlkIjoiNDBiZjcyNzUtMDNkNS00MjI1LWFlYjAtMzhhZDYyODhhMThkIiwibWVkaWFfdHlwZSI6ImFwcGxpY2F0aW9uL2pzb24iLCJkYXRhIjp7Impzb24iOnsib3B0aW9ucyI6eyJjaGFsbGVuZ2UiOiIxMWM5MTQ5My0wMWIzLTRjNGQtYWMzNi1iMzM2YmFiNWJkZGYiLCJkb21haW4iOiJodHRwczovL3ByaXNtLXZlcmlmaWVyLmNvbSJ9LCJwcmVzZW50YXRpb25fZGVmaW5pdGlvbiI6eyJpZCI6IjkyODkyMjJmLWY3ZmItNDk4Yi1iMmE0LTNlODdiNzdiMzk5ZiIsImlucHV0X2Rlc2NyaXB0b3JzIjpbXX19fSwiZm9ybWF0IjoicHJpc20vand0In1dLCJ0aGlkIjoiZTYzYmQ3NDUtZmNjNi00ZDQzLTk2ODMtNjgyNTI5M2VhODE2IiwiZnJvbSI6ImRpZDpwZWVyOjIuRXo2TFNoOWFSQmRFQlV6WkFRSzN5VnFBRnRYS0pVMVZ1cUZlMVd1U1ZRcnRvRGROZi5WejZNa3NCWmZkc3U4UmFxWjNmdjlBdkJ0elVGd1VyaW5td0xRODFNVjVoc29td2JZLlNleUowSWpvaVpHMGlMQ0p6SWpwN0luVnlhU0k2SW1oMGRIQTZMeTh4T1RJdU1UWTRMakV1TVRrNU9qZ3dOekF2Wkdsa1kyOXRiU0lzSW5JaU9sdGRMQ0poSWpwYkltUnBaR052YlcwdmRqSWlYWDE5In19fV19"
+             *         },
+             *         "metaRetries": 5
+             *       }
+             *     ]
+             */
+            contents?: components["schemas"]["PresentationStatus"][];
+            /**
+             * @description The reference to the presentation collection itself.
+             * @example /present-proof/presentations
+             */
+            self: string;
+            /**
+             * @description The type of object returned. In this case a `Collection`.
+             * @example Collection
+             */
+            kind: string;
+            /**
+             * @description Page number within the context of paginated response.
+             * @example 1
+             */
+            pageOf: string;
+            /**
+             * @description An optional string field containing the URL of the next page of results. If the API response does not contain any more pages, this field should be set to None.
+             * @example /present-proof/presentations?offset=20&limit=10
+             */
+            next?: string;
+            /**
+             * @description An optional string field containing the URL of the previous page of results. If the API response is the first page of results, this field should be set to None.
+             * @example /present-proof/presentations?offset=0&limit=10
+             */
+            previous?: string;
+        };
+        /** PrismEnvelopeResponse */
+        PrismEnvelopeResponse: {
+            /**
+             * @description JCS normalized and base64url encoded json of the resource
+             * @example
+             */
+            resource: string;
+            /**
+             * @description JCS normalized and base64url encoded json of the resource
+             * @example did:prism:462c4811bf61d7de25b3baf86c5d2f0609b4debe53792d297bf612269bf8593a?resourceService=agent-base-url&resourcePath=credential-definition-registry/definitions/did-url/ef3e4135-8fcf-3ce7-b5bb-df37defc13f6?resourceHash=4074bb1a8e0ea45437ad86763cd7e12de3fe8349ef19113df773b0d65c8a9c46
+             */
+            url: string;
+        };
+        /**
+         * Proof
+         * @description A digital signature over the Credential Definition for the sake of asserting authorship. A piece of Metadata.
+         * @example {
+         *       "type": "Ed25519Signature2018",
+         *       "created": "2022-03-10T12:00:00Z",
+         *       "verificationMethod": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff#key-1",
+         *       "proofPurpose": "assertionMethod",
+         *       "proofValue": "FiPfjknHikKmZ...",
+         *       "jws": "eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il0sImt0eSI6Ik...",
+         *       "domain": "prims.atala.com"
+         *     }
+         */
+        Proof: {
+            /**
+             * @description The type of cryptographic signature algorithm used to generate the proof.
+             * @example Ed25519Signature2018
+             */
+            type: string;
+            /**
+             * Format: date-time
+             * @description The date and time at which the proof was created, in UTC format. This field is used to ensure that the proof was generated before or at the same time as the credential definition itself.
+             * @example 2022-03-10T12:00Z
+             */
+            created: string;
+            /**
+             * @description The verification method used to generate the proof. This is usually a DID and key ID combination that can be used to look up the public key needed to verify the proof.
+             * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff#key-1
+             */
+            verificationMethod: string;
+            /**
+             * @description The purpose of the proof (for example: `assertionMethod`). This indicates that the proof is being used to assert that the issuer really issued this credential definition instance.
+             * @example assertionMethod
+             */
+            proofPurpose: string;
+            /**
+             * @description The cryptographic signature value that was generated using the private key associated with the verification method, and which can be used to verify the proof.
+             * @example FiPfjknHikKmZ...
+             */
+            proofValue: string;
+            /**
+             * @description The JSON Web Signature (JWS) that contains the proof information.
+             * @example eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il0sImt0eSI6Ik...
+             */
+            jws: string;
+            /**
+             * @description It specifies the domain context within which the credential definition and proof are being used
+             * @example prims.atala.com
+             */
+            domain?: string;
+        };
+        /**
+         * Proof
+         * @description A digital signature over the Credential Schema for the sake of asserting authorship. A piece of Metadata.
+         * @example {
+         *       "type": "Ed25519Signature2018",
+         *       "created": "2022-03-10T12:00:00Z",
+         *       "verificationMethod": "did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff#key-1",
+         *       "proofPurpose": "assertionMethod",
+         *       "proofValue": "FiPfjknHikKmZ...",
+         *       "jws": "eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il0sImt0eSI6Ik...",
+         *       "domain": "prims.atala.com"
+         *     }
+         */
+        Proof1: {
+            /**
+             * @description The type of cryptographic signature algorithm used to generate the proof.
+             * @example Ed25519Signature2018
+             */
+            type: string;
+            /**
+             * Format: date-time
+             * @description The date and time at which the proof was created, in UTC format. This field is used to ensure that the proof was generated before or at the same time as the credential schema itself.
+             * @example 2022-03-10T12:00Z
+             */
+            created: string;
+            /**
+             * @description The verification method used to generate the proof. This is usually a DID and key ID combination that can be used to look up the public key needed to verify the proof.
+             * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff#key-1
+             */
+            verificationMethod: string;
+            /**
+             * @description The purpose of the proof (for example: `assertionMethod`). This indicates that the proof is being used to assert that the issuer really issued this credential schema instance.
+             * @example assertionMethod
+             */
+            proofPurpose: string;
+            /**
+             * @description The cryptographic signature value that was generated using the private key associated with the verification method, and which can be used to verify the proof.
+             * @example FiPfjknHikKmZ...
+             */
+            proofValue: string;
+            /**
+             * @description The JSON Web Signature (JWS) that contains the proof information.
+             * @example eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il0sImt0eSI6Ik...
+             */
+            jws: string;
+            /**
+             * @description It specifies the domain context within which the credential schema and proof are being used
+             * @example prims.atala.com
+             */
+            domain?: string;
+        };
+        /** Proof */
+        Proof2: components["schemas"]["CwtProof"] | components["schemas"]["JwtProof"] | components["schemas"]["LdpProof"];
+        /** ProofRequestAux */
+        ProofRequestAux: {
+            /**
+             * @description The unique identifier of a schema the VC should comply with.
+             * @example https://schema.org/Person
+             */
+            schemaId: string;
+            /**
+             * @description One or more issuers that are trusted by the verifier emitting the proof presentation request.
+             * @example [
+             *       "did:web:atalaprism.io/users/testUser",
+             *       "did.prism:123",
+             *       "did:prism:..."
+             *     ]
+             */
+            trustIssuers?: string[];
+        };
+        /**
+         * ProofType
+         * @constant
+         * @enum {string}
+         */
+        ProofType: "jwt";
+        /** ProofTypeConfiguration */
+        ProofTypeConfiguration: {
+            proof_signing_alg_values_supported?: string[];
+        };
+        /** PublicKeyJwk */
+        PublicKeyJwk: {
+            crv?: string;
+            x?: string;
+            y?: string;
+            kty: string;
+        };
+        /**
+         * Purpose
+         * @description Purpose of the verification material in the DID Document
+         * @example authentication
+         * @enum {string}
+         */
+        Purpose: "assertionMethod" | "authentication" | "capabilityDelegation" | "capabilityInvocation" | "keyAgreement";
+        /** RemoveEntryById */
+        RemoveEntryById: {
+            id: string;
+        };
+        /** RequestPresentationAction */
+        RequestPresentationAction: {
+            /**
+             * @description The action to perform on the proof presentation record.
+             * @example request-accept
+             * @enum {string}
+             */
+            action: "request-accept" | "request-reject" | "presentation-accept" | "presentation-reject";
+            /** @description The unique identifier of the issue credential record - and hence VC - to use as the prover accepts the presentation request. Only applicable on the prover side when the action is `request-accept`. */
+            proofId?: string[];
+            anoncredPresentationRequest?: components["schemas"]["AnoncredCredentialProofsV1"];
+            claims?: components["schemas"]["Obj"];
+            /**
+             * @description The credential format (default to 'JWT')
+             * @example JWT
+             */
+            credentialFormat?: string;
+        };
+        /** RequestPresentationInput */
+        RequestPresentationInput: {
+            /**
+             * @description A self-attested code the receiver may want to display to the user or use in automatically deciding what to do with the out-of-band message.
+             *      goalcode is optional and can be included when the presentation request is from invitation for connectionless verification.
+             * @example present-vp
+             */
+            goalCode?: string;
+            /**
+             * @description A self-attested string that the receiver may want to display to the user about the context-specific goal of the out-of-band message.
+             *      goal is optional and can be included when the presentation request is from invitation for connectionless verification.
+             * @example Request proof of vaccine
+             */
+            goal?: string;
+            /**
+             * Format: uuid
+             * @description The unique identifier of a DIDComm connection that already exists between the this verifier agent and the prover cloud or edeg agent.
+             *     It should be the identifier of a connection that exists in the verifier agent's database.
+             *     This connection will be used to execute the present proof protocol.
+             *     Note: connectionId is only required when the presentation request is from existing connection.
+             *     connectionId is not required when the presentation request is from invitation for connectionless issuance.
+             * @example d9569cec-c81e-4779-aa86-0d5994d82676
+             */
+            connectionId?: string;
+            options?: components["schemas"]["Options"];
+            /**
+             * @description The type of proofs requested in the context of this proof presentation request (e.g., VC schema, trusted issuers, etc.)
+             * @example []
+             */
+            proofs?: components["schemas"]["ProofRequestAux"][];
+            anoncredPresentationRequest?: components["schemas"]["AnoncredPresentationRequestV1"];
+            presentationFormat?: components["schemas"]["PresentCredentialRequestFormat"];
+            claims?: components["schemas"]["Obj"];
+            /**
+             * @description The credential format (default to 'JWT')
+             * @example JWT
+             */
+            credentialFormat?: string;
+        };
+        /**
+         * ResourceResolutionMethod
+         * @description The method used to resolve the schema. It can be either HTTP or DID.
+         * @example http
+         * @enum {string}
+         */
+        ResourceResolutionMethod: "did" | "http";
+        /**
+         * SDJWTVCPropertiesV1
+         * @description The properties of the SDJWT verifiable credential that will be issued complied with SD-JWT specification and VCDM 1.1.
+         */
+        SDJWTVCPropertiesV1: {
+            /**
+             * @description The issuer Prism DID by which the verifiable credential will be issued. DID can be short for or long form.
+             * @example did:prism:3bb0505d13fcb04d28a48234edb27b0d4e6d7e18a81e2c1abab58f3bbc21ce6f
+             */
+            issuingDID: string;
+            /**
+             * @description Specified the key ID (kid) of the DID, it will be used to sign credential.
+             *     User should specify just the partial identifier of the key. The full id of the kid MUST be "<issuingDID>#<kid>"
+             *     Note the cryto algorithm used with depend type of the key.
+             * @example kid1
+             */
+            issuingKid?: string;
+            /**
+             * Format: double
+             * @description The validity period in seconds of the verifiable credential that will be issued.
+             * @example 3600
+             */
+            validityPeriod?: number;
+            /**
+             * @description The properties of the SD-JWT verifiable credential that will be issued complied with VCDM 1.1.
+             *     The current implementation of SD-JWT doesn't includ this property in the JWT payload, but the it is used to validate the credential.
+             */
+            credentialSchema: components["schemas"]["CredentialSchemaRef"];
+            /**
+             * @description The set of claims that will be included in the issued credential.
+             *     The JSON object should comply with the schema applicable for this offer (i.e. 'schemaId' or 'credentialDefinitionId').
+             * @example {
+             *       "firstname": "Alice",
+             *       "lastname": "Wonderland"
+             *     }
+             */
+            claims: unknown;
+        };
+        /**
+         * Service
+         * @description A service that should appear in the DID document. https://www.w3.org/TR/did-core/#services
+         */
+        Service: {
+            /**
+             * @description The id of the service.
+             *     Requires a URI fragment when use in create / update DID.
+             *     Returns the full ID (with DID prefix) when resolving DID
+             * @example service-1
+             */
+            id: string;
+            /**
+             * @description Service type. Can contain multiple possible values as described in the [Create DID operation](https://github.com/input-output-hk/prism-did-method-spec/blob/main/w3c-spec/PRISM-method.md#create-did) under the construction section.
+             * @example LinkedDomains
+             */
+            type: string[] | string;
+            /**
+             * @description The service endpoint. Can contain multiple possible values as described in the [Create DID operation](https://github.com/input-output-hk/prism-did-method-spec/blob/main/w3c-spec/PRISM-method.md#create-did)
+             * @example https://example.com
+             */
+            serviceEndpoint: unknown;
+        };
+        /** StatusListCredential */
+        StatusListCredential: {
+            /**
+             * @description List of JSON-LD contexts
+             * @example [
+             *       "https://www.w3.org/2018/credentials/v1",
+             *       "https://w3id.org/vc/status-list/2021/v1"
+             *     ]
+             */
+            "@context"?: string[];
+            /**
+             * @description List of credential types
+             * @example [
+             *       "VerifiableCredential",
+             *       "StatusList2021Credential"
+             *     ]
+             */
+            type?: string[];
+            /**
+             * @description DID of the issuer of status list credential
+             * @example did:prism:462c4811bf61d7de25b3baf86c5d2f0609b4debe53792d297bf612269bf8593a
+             */
+            issuer: components["schemas"]["CredentialIssuer"] | string;
+            /**
+             * @description Unique identifier of status list credential
+             * @example http://issuer-agent.com/credential-status/060a2bec-6d6f-4c1f-9414-d3c9dbd3ccc9
+             */
+            id: string;
+            /**
+             * Format: date-time
+             * @description Issuance timestamp of status list credential
+             * @example 2025-01-01T22:40:34.560891Z
+             */
+            issuanceDate: string;
+            credentialSubject: components["schemas"]["CredentialSubject"];
+            /**
+             * @description Embedded proof to verify data integrity of status list credential, includes "type" property which defines an algorithm to be used for proof verification
+             * @example {
+             *       "type": "DataIntegrityProof",
+             *       "proofPurpose": "assertionMethod",
+             *       "verificationMethod": "data:application/json;base64,eyJAY29udGV4dCI6WyJodHRwczovL3czaWQub3JnL3NlY3VyaXR5L211bHRpa2V5L3YxIl0sInR5cGUiOiJNdWx0aWtleSIsInB1YmxpY0tleU11bHRpYmFzZSI6InVNRmt3RXdZSEtvWkl6ajBDQVFZSUtvWkl6ajBEQVFjRFFnQUVRUENjM1M0X0xHVXRIM25DRjZ2dUw3ekdEMS13UmVrMHRHbnB0UnZUakhIMUdvTnk1UFBIZ0FmNTZlSzNOd3B0LWNGcmhrT2pRQk1rcFRKOHNaS1pCZz09In0=",
+             *       "created": "2024-01-22T22:40:34.560891Z",
+             *       "proofValue": "zAN1rKq8npnByRqPRxhjHEkivhN8AhA8V6MqDJga1zcCUEvPDUoqJB5Rj6ZJHTCnBZ98VXTEVd1rprX2wvP1MAaTEi7Pm241qm",
+             *       "cryptoSuite": "eddsa-jcs-2022"
+             *     }
+             */
+            proof: unknown;
+        };
+        /**
+         * StatusPurpose
+         * @description type of status list credential, either revocation or suspension
+         * @example Revocation
+         * @enum {string}
+         */
+        StatusPurpose: "Revocation" | "Suspension";
+        /** SupportProofType */
+        SupportProofType: {
+            jwt: components["schemas"]["ProofTypeConfiguration"];
+        };
+        /** SupportedCredentialConfiguration */
+        SupportedCredentialConfiguration: {
+            format: components["schemas"]["CredentialFormat"];
+            scope: string;
+            credential_definition: components["schemas"]["CredentialDefinition"];
+            cryptographic_binding_methods_supported?: string[];
+            credential_signing_alg_values_supported?: string[];
+            proof_types_supported: components["schemas"]["SupportProofType"];
+        };
+        /** UpdateEntityNameRequest */
+        UpdateEntityNameRequest: {
+            /**
+             * @description New name of the entity
+             * @example John Doe
+             */
+            name: string;
+        };
+        /** UpdateEntityWalletIdRequest */
+        UpdateEntityWalletIdRequest: {
+            /**
+             * Format: uuid
+             * @description The walletId owned by the entity
+             * @example 00000000-0000-0000-0000-000000000000
+             */
+            walletId: string;
+        };
+        /** UpdateManagedDIDRequest */
+        UpdateManagedDIDRequest: {
+            actions?: components["schemas"]["UpdateManagedDIDRequestAction"][];
+        };
+        /**
+         * UpdateManagedDIDRequestAction
+         * @description A list of actions to perform on DID document.
+         *     The field `addKey`, `removeKey`, `addService`, `removeService`, `updateService`, `patchContext` must corresponds to
+         *     the `actionType` specified. For example, `addKey` must be present when `actionType` is `ADD_KEY`.
+         */
+        UpdateManagedDIDRequestAction: {
+            actionType: components["schemas"]["ActionType"];
+            addKey?: components["schemas"]["ManagedDIDKeyTemplate"];
+            removeKey?: components["schemas"]["RemoveEntryById"];
+            addService?: components["schemas"]["Service"];
+            removeService?: components["schemas"]["RemoveEntryById"];
+            updateService?: components["schemas"]["UpdateManagedDIDServiceAction"];
+            patchContext?: components["schemas"]["PatchContextAction"];
+        };
+        /**
+         * UpdateManagedDIDServiceAction
+         * @description A patch to existing Service. 'type' and 'serviceEndpoint' cannot both be empty.
+         */
+        UpdateManagedDIDServiceAction: {
+            /**
+             * @description The id of the service to update
+             * @example service-1
+             */
+            id: string;
+            /**
+             * @description The type of the service
+             * @example LinkedDomains
+             */
+            type?: string[] | string;
+            serviceEndpoint?: unknown;
+        };
+        /**
+         * VcVerification
+         * @enum {string}
+         */
+        VcVerification: "AlgorithmVerification" | "AudienceCheck" | "ComplianceWithStandards" | "ExpirationCheck" | "IntegrityOfClaims" | "IssuerIdentification" | "NotBeforeCheck" | "RevocationCheck" | "SchemaCheck" | "SemanticCheckOfClaims" | "SignatureVerification" | "SubjectVerification";
+        /**
+         * VcVerificationParameter
+         * @description Optional parameter for the verification.
+         */
+        VcVerificationParameter: components["schemas"]["DateTimeParameter"] | components["schemas"]["DidParameter"];
+        /** VcVerificationRequest */
+        VcVerificationRequest: {
+            /**
+             * @description Encoded Verifiable Credential to verify
+             * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+             */
+            credential: string;
+            /**
+             * @description The list of verifications to perform on the credential. If the list is empty, all available verifications will be performed.
+             * @example [
+             *       {
+             *         "verification": "SignatureVerification"
+             *       },
+             *       {
+             *         "verification": "IssuerIdentification",
+             *         "parameter": {
+             *           "did": "did:prism:issuer"
+             *         }
+             *       },
+             *       {
+             *         "verification": "ExpirationCheck",
+             *         "parameter": {
+             *           "dateTime": "2022-03-10T12:00:00Z"
+             *         }
+             *       },
+             *       {
+             *         "verification": "NotBeforeCheck",
+             *         "parameter": {
+             *           "dateTime": "2022-03-10T12:00:00Z"
+             *         }
+             *       },
+             *       {
+             *         "verification": "AudienceCheck",
+             *         "parameter": {
+             *           "did": "did:prism:holder"
+             *         }
+             *       },
+             *       {
+             *         "verification": "SubjectVerification"
+             *       },
+             *       {
+             *         "verification": "IntegrityOfClaims"
+             *       },
+             *       {
+             *         "verification": "ComplianceWithStandards"
+             *       },
+             *       {
+             *         "verification": "RevocationCheck"
+             *       },
+             *       {
+             *         "verification": "AlgorithmVerification"
+             *       },
+             *       {
+             *         "verification": "SchemaCheck"
+             *       },
+             *       {
+             *         "verification": "SemanticCheckOfClaims"
+             *       }
+             *     ]
+             */
+            verifications?: components["schemas"]["ParameterizableVcVerification"][];
+        };
+        /** VcVerificationResponse */
+        VcVerificationResponse: {
+            /**
+             * @description Encoded Verifiable Credential that was verified.
+             * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+             */
+            credential: string;
+            /**
+             * @description The list of verification results for each verification performed on the credential.
+             * @example [
+             *       {
+             *         "verification": "SignatureVerification",
+             *         "success": true
+             *       },
+             *       {
+             *         "verification": "IssuerIdentification",
+             *         "success": true
+             *       },
+             *       {
+             *         "verification": "ExpirationCheck",
+             *         "success": true
+             *       },
+             *       {
+             *         "verification": "NotBeforeCheck",
+             *         "success": true
+             *       },
+             *       {
+             *         "verification": "AudienceCheck",
+             *         "success": true
+             *       },
+             *       {
+             *         "verification": "SubjectVerification",
+             *         "success": true
+             *       },
+             *       {
+             *         "verification": "IntegrityOfClaims",
+             *         "success": true
+             *       },
+             *       {
+             *         "verification": "ComplianceWithStandards",
+             *         "success": true
+             *       },
+             *       {
+             *         "verification": "RevocationCheck",
+             *         "success": true
+             *       },
+             *       {
+             *         "verification": "AlgorithmVerification",
+             *         "success": true
+             *       },
+             *       {
+             *         "verification": "SchemaCheck",
+             *         "success": true
+             *       },
+             *       {
+             *         "verification": "SemanticCheckOfClaims",
+             *         "success": true
+             *       }
+             *     ]
+             */
+            result?: components["schemas"]["VcVerificationResult"][];
+        };
+        /** VcVerificationResult */
+        VcVerificationResult: {
+            /** @description The type of verification that was performed. */
+            verification: components["schemas"]["VcVerification"];
+            /** @description Indicates whether the verification was successful. */
+            success: boolean;
+        };
+        /**
+         * VerificationMethod
+         * @description A cryptographic public key expressed in the DID document. https://www.w3.org/TR/did-core/#verification-methods
+         */
+        VerificationMethod: {
+            /**
+             * @description The identifier for the verification method.
+             * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff#key-1
+             */
+            id: string;
+            /**
+             * @description The type of the verification method.
+             * @example JsonWebKey2020
+             */
+            type: string;
+            /**
+             * @description The DID that controls the verification method.
+             * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff
+             */
+            controller: string;
+            publicKeyJwk: components["schemas"]["PublicKeyJwk"];
+        };
+        /** VerificationPolicyConstraint */
+        VerificationPolicyConstraint: {
+            /**
+             * @description The schema ID of the credential that is being verified.
+             * @example https://example.com/driving-license-1.0
+             */
+            schemaId: string;
+            /**
+             * @description A list of DIDs of the trusted issuers.
+             * @example [
+             *       "did:example:123456789abcdefghi"
+             *     ]
+             */
+            trustedIssuers?: string[];
+        };
+        /** VerificationPolicyInput */
+        VerificationPolicyInput: {
+            /**
+             * Format: uuid
+             * @description A unique identifier to address the verification policy instance. UUID is generated by the backend.
+             * @example 0527aea1-d131-3948-a34d-03af39aba8b5
+             */
+            id?: string;
+            /**
+             * @description A human-readable name for the verification policy. The `name` cannot be empty.
+             * @example Trusted Issuers Verification Policy
+             */
+            name: string;
+            /**
+             * @description A human-readable description of the verification policy.
+             * @example Verification policy that checks if the credential was issued by a trusted issuer.
+             */
+            description: string;
+            /**
+             * @description The object that describes the constraints of the verification policy. Each constraint is a tuple of the `schemaId` and a set of DIDs of the trusted issuers.
+             * @example [
+             *       {
+             *         "schemaId": "https://example.com/driving-license-1.0",
+             *         "trustedIssuers": [
+             *           "did:example:123456789abcdefghi"
+             *         ]
+             *       }
+             *     ]
+             */
+            constraints?: components["schemas"]["VerificationPolicyConstraint"][];
+        };
+        /** VerificationPolicyResponse */
+        VerificationPolicyResponse: {
+            /**
+             * @description The URL that uniquely identifies the resource being returned in the response.
+             * @example /cloud-agent/verification/policies/0527aea1-d131-3948-a34d-03af39aba8b4
+             */
+            self: string;
+            /**
+             * @description A string that identifies the type of resource being returned in the response.
+             * @example VerificationPolicy
+             */
+            kind: string;
+            /**
+             * Format: uuid
+             * @description A unique identifier to address the verification policy instance. UUID is generated by the backend.
+             * @example 0527aea1-d131-3948-a34d-03af39aba8b5
+             */
+            id: string;
+            /**
+             * Format: int32
+             * @description A number that is changed every time the verification policy is updated.
+             * @example 1234
+             */
+            nonce: number;
+            /**
+             * @description A human-readable name for the verification policy. The `name` cannot be empty.
+             * @example Trusted Issuers Verification Policy
+             */
+            name: string;
+            /**
+             * @description A human-readable description of the verification policy.
+             * @example Verification policy that checks if the credential was issued by a trusted issuer.
+             */
+            description: string;
+            /**
+             * Format: date-time
+             * @description [RFC3339](https://www.rfc-editor.org/rfc/rfc3339) date on which the verification policy was created.
+             * @example 2022-03-10T12:00Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description [RFC3339](https://www.rfc-editor.org/rfc/rfc3339) date on which the verification policy was updated.
+             * @example 2022-03-10T12:00Z
+             */
+            updatedAt: string;
+            /**
+             * @description The object that describes the constraints of the verification policy. Each constraint is a tuple of the `schemaId` and a set of DIDs of the trusted issuers.
+             * @example [
+             *       {
+             *         "schemaId": "https://example.com/driving-license-1.0",
+             *         "trustedIssuers": [
+             *           "did:example:123456789abcdefghi"
+             *         ]
+             *       }
+             *     ]
+             */
+            constraints?: components["schemas"]["VerificationPolicyConstraint"][];
+        };
+        /** VerificationPolicyResponsePage */
+        VerificationPolicyResponsePage: {
+            /**
+             * @description The URL that uniquely identifies the resource being returned in the response.
+             * @example /cloud-agent/verification/policies?name=Trusted&offset=0&limit=10
+             */
+            self: string;
+            /**
+             * @description A string that identifies the type of resource being returned in the response.
+             * @example VerificationPolicyPage
+             */
+            kind: string;
+            /**
+             * @description A string field indicating the type of resource that the contents field contains
+             * @example /cloud-agent/verification/policies
+             */
+            pageOf: string;
+            /**
+             * @description An optional string field containing the URL of the next page of results. If the API response does not contain any more pages, this field should be set to None.
+             * @example /cloud-agent/verification/policies?skip=20&limit=10
+             */
+            next?: string;
+            /**
+             * @description An optional string field containing the URL of the previous page of results. If the API response is the first page of results, this field should be set to None.
+             * @example /cloud-agent/verification/policies?skip=0&limit=10
+             */
+            previous?: string;
+            /**
+             * @description A sequence of VerificationPolicyResponse objects representing the list of verification policies that the paginated response contains
+             * @example [
+             *       {
+             *         "self": "/cloud-agent/verification/policies",
+             *         "kind": "VerificationPolicy",
+             *         "id": "0527aea1-d131-3948-a34d-03af39aba8b4",
+             *         "nonce": 0,
+             *         "name": "Trusted Issuers Verification Policy",
+             *         "description": "Verification policy that checks if the credential was issued by a trusted issuer.",
+             *         "createdAt": "2022-03-10T12:00:00Z",
+             *         "updatedAt": "2022-03-10T12:00:00Z",
+             *         "constraints": [
+             *           {
+             *             "schemaId": "https://example.com/driving-license-1.0",
+             *             "trustedIssuers": [
+             *               "did:example:123456789abcdefghi"
+             *             ]
+             *           }
+             *         ]
+             *       }
+             *     ]
+             */
+            contents?: components["schemas"]["VerificationPolicyResponse"][];
+        };
+        /** WalletDetail */
+        WalletDetail: {
+            /**
+             * Format: uuid
+             * @description A wallet ID
+             * @example 00000000-0000-0000-0000-000000000000
+             */
+            id: string;
+            /**
+             * @description The name of the wallet
+             * @example my-wallet-1
+             */
+            name: string;
+            /**
+             * Format: date-time
+             * @description The `createdAt` timestamp of the wallet.
+             * @example 2023-01-01T00:00:00Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description The `updateddAt` timestamp of the wallet.
+             * @example 2023-01-01T00:00:00Z
+             */
+            updatedAt: string;
+        };
+        /** WalletDetailPage */
+        WalletDetailPage: {
+            self: string;
+            kind: string;
+            pageOf: string;
+            next?: string;
+            previous?: string;
+            contents?: components["schemas"]["WalletDetail"][];
+        };
+        /** WebhookNotification */
+        WebhookNotification: {
+            /**
+             * Format: uuid
+             * @description ID of webhook notification resource
+             * @example 00000000-0000-0000-0000-000000000000
+             */
+            id: string;
+            /**
+             * @description A URL of webhook for event notification
+             * @example http://example.com
+             */
+            url: string;
+            customHeaders: components["schemas"]["Map_String"];
+            /**
+             * Format: date-time
+             * @description A time which the webhook notification resource was created.
+             * @example 1970-01-01T00:00:00Z
+             */
+            createdAt: string;
+        };
+        /** WebhookNotificationPage */
+        WebhookNotificationPage: {
+            self: string;
+            kind: string;
+            pageOf: string;
+            next?: string;
+            previous?: string;
+            contents?: components["schemas"]["WebhookNotification"][];
+        };
+    };
     responses: never;
     parameters: never;
     requestBodies: never;
@@ -2607,4 +4148,5863 @@ export interface components {
     pathItems: never;
 }
 export type $defs = Record<string, never>;
-export type operations = Record<string, never>;
+export interface operations {
+    lookupCredentialDefinitionsByQueryHttpUrl: {
+        parameters: {
+            query?: {
+                /** @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff */
+                author?: string;
+                /** @example DrivingLicense */
+                name?: string;
+                /** @example 1.0.0 */
+                version?: string;
+                /** @example licence */
+                tag?: string;
+                /** @description The number of items to skip before returning results. Default is 0 if not specified. */
+                offset?: number;
+                /** @description The maximum number of items to return. Defaults to 100 if not specified. */
+                limit?: number;
+                order?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Collection of CredentialDefinitions records. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialDefinitionResponsePage"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createCredentialDefinitionHttpUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description JSON object required for the credential definition creation */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CredentialDefinitionInput"];
+            };
+        };
+        responses: {
+            /** @description The new credential definition record is successfully created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialDefinitionResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    lookupCredentialDefinitionsByQueryDidUrl: {
+        parameters: {
+            query?: {
+                /** @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff */
+                author?: string;
+                /** @example DrivingLicense */
+                name?: string;
+                /** @example 1.0.0 */
+                version?: string;
+                /** @example licence */
+                tag?: string;
+                /** @description The number of items to skip before returning results. Default is 0 if not specified. */
+                offset?: number;
+                /** @description The maximum number of items to return. Defaults to 100 if not specified. */
+                limit?: number;
+                order?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Collection of CredentialDefinitions records. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialDefinitionDidUrlResponsePage"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createCredentialDefinitionDidUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description JSON object required for the credential definition creation */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CredentialDefinitionInput"];
+            };
+        };
+        responses: {
+            /** @description The new credential definition record is successfully created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialDefinitionResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getCredentialDefinitionInnerDefinitionByIdHttpUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CredentialDefinition found by `guid` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getCredentialDefinitionInnerDefinitionByIdDidUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CredentialDefinition found by `guid` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrismEnvelopeResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getCredentialDefinitionByIdHttpUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Globally unique identifier of the credential definition record */
+                guid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CredentialDefinition found by `guid` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialDefinitionResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getCredentialDefinitionByIdDidUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Globally unique identifier of the credential definition record */
+                guid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CredentialDefinition found by `guid`, wrapped in an envelope */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrismEnvelopeResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    lookupSchemasByQuery: {
+        parameters: {
+            query?: {
+                /** @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff */
+                author?: string;
+                /** @example DrivingLicense */
+                name?: string;
+                /** @example 1.0.0 */
+                version?: string;
+                /** @example driving */
+                tags?: string;
+                /** @description The number of items to skip before returning results. Default is 0 if not specified. */
+                offset?: number;
+                /** @description The maximum number of items to return. Defaults to 100 if not specified. */
+                limit?: number;
+                order?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Collection of CredentialSchema records. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialSchemaResponsePage"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createSchema: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description JSON object required for the credential schema creation */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CredentialSchemaInput"];
+            };
+        };
+        responses: {
+            /** @description The new credential schema record is successfully created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialSchemaResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    lookupSchemasByQueryDidUrl: {
+        parameters: {
+            query?: {
+                /** @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff */
+                author?: string;
+                /** @example DrivingLicense */
+                name?: string;
+                /** @example 1.0.0 */
+                version?: string;
+                /** @example driving */
+                tags?: string;
+                /** @description The number of items to skip before returning results. Default is 0 if not specified. */
+                offset?: number;
+                /** @description The maximum number of items to return. Defaults to 100 if not specified. */
+                limit?: number;
+                order?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Collection of CredentialSchema records each wrapped in an envelope. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialSchemaDidUrlResponsePage"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createSchemaDidUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description JSON object required for the credential schema creation */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CredentialSchemaInput"];
+            };
+        };
+        responses: {
+            /** @description The new credential schema record is successfully created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrismEnvelopeResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateSchema: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A locally unique identifier to address the schema. UUID is generated by the backend. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description JSON object required for the credential schema update */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CredentialSchemaInput"];
+            };
+        };
+        responses: {
+            /** @description The credential schema record is successfully updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialSchemaResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateSchemaDidUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A locally unique identifier to address the schema. UUID is generated by the backend. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description JSON object required for the credential schema update */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CredentialSchemaInput"];
+            };
+        };
+        responses: {
+            /** @description The credential schema record is successfully updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrismEnvelopeResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getRawSchemaById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Raw JSON response of the CredentialSchema */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getRawSchemaByIdDidUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Raw JSON response of the CredentialSchema */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrismEnvelopeResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getSchemaById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Globally unique identifier of the credential schema record */
+                guid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CredentialSchema found by `guid` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialSchemaResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getSchemaByIdDidUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Globally unique identifier of the credential schema record */
+                guid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CredentialSchema found by `guid`, wrapped in an envelope */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrismEnvelopeResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    lookupVerificationPoliciesByQuery: {
+        parameters: {
+            query?: {
+                /** @description A human-readable name for the verification policy. The `name` cannot be empty. */
+                name?: string;
+                offset?: number;
+                limit?: number;
+                order?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationPolicyResponsePage"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createVerificationPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Create verification policy object */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerificationPolicyInput"];
+            };
+        };
+        responses: {
+            /** @description Created verification policy entity */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationPolicyResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getVerificationPolicyById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Get the verification policy by id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationPolicyResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateVerificationPolicy: {
+        parameters: {
+            query: {
+                /** @description Nonce of the previous VerificationPolicy */
+                nonce: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Update verification policy object */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerificationPolicyInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationPolicyResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteVerificationPolicyById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Delete the verification policy by id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Verification policy deleted successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getConnections: {
+        parameters: {
+            query?: {
+                /** @description The number of items to skip before returning results. Default is 0 if not specified. */
+                offset?: number;
+                /** @description The maximum number of items to return. Defaults to 100 if not specified. */
+                limit?: number;
+                /** @description The `thid`, shared between the inviter and the invitee, that uniquely identifies a connection flow. */
+                thid?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The list of connection flow records available from the Agent's database */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionsPage"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createConnection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description JSON object required for the connection creation. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateConnectionRequest"];
+            };
+        };
+        responses: {
+            /** @description The connection record was created successfully, and is returned in the response body. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Connection"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getConnection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The `connectionId` uniquely identifying the connection flow record. */
+                connectionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The specific connection flow record. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Connection"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteConnection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The `connectionId` uniquely identifying the connection flow record. */
+                connectionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    acceptConnectionInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The request used by an invitee to accept a connection invitation received from an inviter, using out-of-band mechanism. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptConnectionInvitationRequest"];
+            };
+        };
+        responses: {
+            /** @description The invitation was successfully accepted. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Connection"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getDID: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Prism DID according to [the Prism DID method syntax](https://github.com/input-output-hk/prism-did-method-spec/blob/main/w3c-spec/PRISM-method.md#prism-did-method-syntax)
+                 * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff
+                 */
+                didRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/ld+json; profile=https://w3id.org/did-resolution": components["schemas"]["DIDResolutionResult"];
+                    "application/did+ld+json": components["schemas"]["DIDDocument"];
+                };
+            };
+            /** @description Invalid value */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/ld+json; profile=https://w3id.org/did-resolution": components["schemas"]["DIDResolutionResult"];
+                    "application/did+ld+json": string;
+                };
+            };
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/ld+json; profile=https://w3id.org/did-resolution": components["schemas"]["DIDResolutionResult"];
+                    "application/did+ld+json": string;
+                };
+            };
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/ld+json; profile=https://w3id.org/did-resolution": components["schemas"]["DIDResolutionResult"];
+                    "application/did+ld+json": string;
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/ld+json; profile=https://w3id.org/did-resolution": components["schemas"]["DIDResolutionResult"];
+                    "application/did+ld+json": string;
+                };
+            };
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/ld+json; profile=https://w3id.org/did-resolution": components["schemas"]["DIDResolutionResult"];
+                    "application/did+ld+json": string;
+                };
+            };
+        };
+    };
+    "getDid-registrarDids": {
+        parameters: {
+            query?: {
+                /** @description The number of items to skip before returning results. Default is 0 if not specified. */
+                offset?: number;
+                /** @description The maximum number of items to return. Defaults to 100 if not specified. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List the agent managed DIDs in the wallet */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagedDIDPage"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "postDid-registrarDids": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateManagedDidRequest"];
+            };
+        };
+        responses: {
+            /** @description Created an unpublished PRISM DID */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateManagedDIDResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "getDid-registrarDidsDidref": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Prism DID according to [the Prism DID method syntax](https://github.com/input-output-hk/prism-did-method-spec/blob/main/w3c-spec/PRISM-method.md#prism-did-method-syntax)
+                 * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff
+                 */
+                didRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Get a DID in the agent's wallet */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagedDID"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "postDid-registrarDidsDidrefPublications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Prism DID according to [the Prism DID method syntax](https://github.com/input-output-hk/prism-did-method-spec/blob/main/w3c-spec/PRISM-method.md#prism-did-method-syntax)
+                 * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff
+                 */
+                didRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Publishing DID to the VDR initiated */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DIDOperationResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "postDid-registrarDidsDidrefUpdates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Prism DID according to [the Prism DID method syntax](https://github.com/input-output-hk/prism-did-method-spec/blob/main/w3c-spec/PRISM-method.md#prism-did-method-syntax)
+                 * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff
+                 */
+                didRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateManagedDIDRequest"];
+            };
+        };
+        responses: {
+            /** @description DID update operation accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DIDOperationResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Cannot process due to conflict with current state of the resource */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "postDid-registrarDidsDidrefDeactivations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Prism DID according to [the Prism DID method syntax](https://github.com/input-output-hk/prism-did-method-spec/blob/main/w3c-spec/PRISM-method.md#prism-did-method-syntax)
+                 * @example did:prism:4a5b5cf0a513e83b598bbea25cd6196746747f361a73ef77068268bc9bd732ff
+                 */
+                didRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description DID deactivation operation accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DIDOperationResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createCredentialOffer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The credential offer object. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateIssueCredentialRecordRequest"];
+            };
+        };
+        responses: {
+            /** @description The issue credential record. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueCredentialRecord"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createCredentialOfferInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The credential offer object. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateIssueCredentialRecordRequest"];
+            };
+        };
+        responses: {
+            /** @description The issue credential record. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueCredentialRecord"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    acceptCredentialOfferInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The accept credential offer Invitation OOB message. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptCredentialOfferInvitation"];
+            };
+        };
+        responses: {
+            /** @description The issue credential offer Invitation was successfully accepted, and new record with RequestReceived state is returned in the response body. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueCredentialRecord"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getCredentialRecords: {
+        parameters: {
+            query?: {
+                /** @description The number of items to skip before returning results. Default is 0 if not specified. */
+                offset?: number;
+                /** @description The maximum number of items to return. Defaults to 100 if not specified. */
+                limit?: number;
+                /** @description The thread ID associated with a specific credential issue flow execution. */
+                thid?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The list of issue credential records available found in the Agent's database. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueCredentialRecordPage"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getCredentialRecord: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The `recordId` uniquely identifying the issue credential flow record. */
+                recordId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The specific issue credential flow record. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueCredentialRecord"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    acceptCredentialOffer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The `recordId` uniquely identifying the issue credential flow record. */
+                recordId: string;
+            };
+            cookie?: never;
+        };
+        /** @description The accept credential offer request object. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptCredentialOfferRequest"];
+            };
+        };
+        responses: {
+            /** @description The issue credential offer was successfully accepted, and the updated record is returned in the response body. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueCredentialRecord"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    issueCredential: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The `recordId` uniquely identifying the issue credential flow record. */
+                recordId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /**
+             * @description The issue credential request was successfully processed, and the updated record is returned in the response body.
+             *     The credential will be generated and sent to the holder Agent asynchronously.
+             */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueCredentialRecord"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getCredentialStatusListEndpoint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Globally unique identifier of the credential status list */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Status List credential with embedded proof found by ID */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusListCredential"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "patchCredential-statusRevoke-credentialId": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Revoke a credential by its ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getAllPresentation: {
+        parameters: {
+            query?: {
+                /** @description The number of items to skip before returning results. Default is 0 if not specified. */
+                offset?: number;
+                /** @description The maximum number of items to return. Defaults to 100 if not specified. */
+                limit?: number;
+                /** @description Filter by the DID Comm message's 'thid' of presentProof */
+                thid?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The list of proof presentation records. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PresentationStatusPage"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    requestPresentation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The present proof creation request. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestPresentationInput"];
+            };
+        };
+        responses: {
+            /** @description The proof presentation request was created successfully and will be sent asynchronously to the Prover. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PresentationStatus"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getPresentation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The unique identifier of the presentation record. */
+                presentationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The proof presentation record. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PresentationStatus"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updatePresentation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The unique identifier of the presentation record. */
+                presentationId: string;
+            };
+            cookie?: never;
+        };
+        /** @description The action to perform on the proof presentation record. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestPresentationAction"];
+            };
+        };
+        responses: {
+            /** @description The proof presentation record was successfully updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PresentationStatus"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createOOBRequestPresentationInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The present proof creation request. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestPresentationInput"];
+            };
+        };
+        responses: {
+            /** @description The proof presentation request invitation was created successfully and that can be delivered as out-of-band to a peer Agent.. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PresentationStatus"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    acceptRequestPresentationInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The action to perform on the proof presentation request invitation. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptRequestPresentationInvitation"];
+            };
+        };
+        responses: {
+            /** @description The proof presentation record was successfully updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PresentationStatus"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    verify: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description List of verifiable credentials to verify */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["VcVerificationRequest"][];
+            };
+        };
+        responses: {
+            /** @description List of verifiable credentials verification outcomes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VcVerificationResponse"][];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getPresentationDefinition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Presentation Definition retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PresentationDefinition"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listPresentationDefinition: {
+        parameters: {
+            query?: {
+                /** @description The number of items to skip before returning results. Default is 0 if not specified. */
+                offset?: number;
+                /** @description The maximum number of items to return. Defaults to 100 if not specified. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Presentation Definitions retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PresentationDefinitionPage"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createPresentationDefinition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePresentationDefinition"];
+            };
+        };
+        responses: {
+            /** @description Presentation Definition created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PresentationDefinition"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    systemHealth: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The health info object. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthInfo"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    systemMetrics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The metrics as plain strings. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getAllEntities: {
+        parameters: {
+            query?: {
+                /** @description The number of items to skip before returning results. Default is 0 if not specified. */
+                offset?: number;
+                /** @description The maximum number of items to return. Defaults to 100 if not specified. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Collection of Entity records */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntityResponsePage"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createEntity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description JSON object required for the entity creation */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEntityRequest"];
+            };
+        };
+        responses: {
+            /** @description The new entity is successfully created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntityResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateEntityName: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description JSON object required for the entity name update */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateEntityNameRequest"];
+            };
+        };
+        responses: {
+            /** @description The entity record is successfully updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntityResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateEntityWalletId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description JSON object required for the entity walletId update */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateEntityWalletIdRequest"];
+            };
+        };
+        responses: {
+            /** @description The entity record is successfully updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntityResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getEntityById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identifier of the entity */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Entity found by `id` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntityResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteEntityById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identifier of the entity */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Entity deleted successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    addEntityApiKeyAuthentication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description JSON object required for the registering the entity and `apikey` */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApiKeyAuthenticationRequest"];
+            };
+        };
+        responses: {
+            /** @description The new `apikey` is successfully registered for the entity */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteEntityApiKeyAuthentication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description JSON object required for the unregistering the entity and `apikey` */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApiKeyAuthenticationRequest"];
+            };
+        };
+        responses: {
+            /** @description The new `apikey` is successfully unregistered for the entity */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getWallets: {
+        parameters: {
+            query?: {
+                /** @description The number of items to skip before returning results. Default is 0 if not specified. */
+                offset?: number;
+                /** @description The maximum number of items to return. Defaults to 100 if not specified. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successfully list all permitted wallets */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WalletDetailPage"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createWallet: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWalletRequest"];
+            };
+        };
+        responses: {
+            /** @description Successfully create a new wallet */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WalletDetail"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getWalletsWalletid: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                walletId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successfully get the wallet */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WalletDetail"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createWalletUmaPermission: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                walletId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWalletUmaPermissionRequest"];
+            };
+        };
+        responses: {
+            /** @description UMA resource permission is created on an authorization server */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteWalletUmaPermission: {
+        parameters: {
+            query: {
+                subject: string;
+            };
+            header?: never;
+            path: {
+                walletId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description UMA resource permission is removed from an authorization server. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getEventsWebhooks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List wallet webhook notifications */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookNotificationPage"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    postEventsWebhooks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWebhookNotification"];
+            };
+        };
+        responses: {
+            /** @description Webhook notification has been created successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookNotification"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Cannot process due to conflict with current state of the resource */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteEventsWebhooksId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID of the webhook notification to delete. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Webhook notification has been deleted. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    oid4vciIssueCredential: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description An issuer identifier in the oid4vci protocol
+                 * @example f47ac10b-58cc-4372-a567-0e02b2c3d479
+                 */
+                issuerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CredentialRequest"];
+            };
+        };
+        responses: {
+            /** @description Credential issued successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialResponse"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtendedErrorResponse"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtendedErrorResponse"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtendedErrorResponse"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtendedErrorResponse"];
+                };
+            };
+        };
+    };
+    oid4vciCreateCredentialOffer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description An issuer identifier in the oid4vci protocol
+                 * @example f47ac10b-58cc-4372-a567-0e02b2c3d479
+                 */
+                issuerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CredentialOfferRequest"];
+            };
+        };
+        responses: {
+            /** @description CredentialOffer created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialOfferResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getNonce: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NonceRequest"];
+            };
+        };
+        responses: {
+            /** @description Nonce issued successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NonceResponse"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getCredentialIssuers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List the credential issuers */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialIssuerPage"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createCredentialIssuer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCredentialIssuerRequest"];
+            };
+        };
+        responses: {
+            /** @description Credential issuer created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialIssuer1"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteCredentialIssuer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description An issuer identifier in the oid4vci protocol
+                 * @example f47ac10b-58cc-4372-a567-0e02b2c3d479
+                 */
+                issuerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Credential issuer deleted successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateCredentialIssuer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description An issuer identifier in the oid4vci protocol
+                 * @example f47ac10b-58cc-4372-a567-0e02b2c3d479
+                 */
+                issuerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatchCredentialIssuerRequest"];
+            };
+        };
+        responses: {
+            /** @description Credential issuer updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialIssuer1"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createCredentialConfiguration: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description An issuer identifier in the oid4vci protocol
+                 * @example f47ac10b-58cc-4372-a567-0e02b2c3d479
+                 */
+                issuerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCredentialConfigurationRequest"];
+            };
+        };
+        responses: {
+            /** @description Credential configuration created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialConfiguration"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Cannot process due to conflict with current state of the resource */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getCredentialConfiguration: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description An issuer identifier in the oid4vci protocol
+                 * @example f47ac10b-58cc-4372-a567-0e02b2c3d479
+                 */
+                issuerId: string;
+                /**
+                 * @description An identifier for the credential configuration
+                 * @example UniversityDegree
+                 */
+                credentialConfigId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Get credential configuration successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialConfiguration"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteCredentialConfiguration: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description An issuer identifier in the oid4vci protocol
+                 * @example f47ac10b-58cc-4372-a567-0e02b2c3d479
+                 */
+                issuerId: string;
+                /**
+                 * @description An identifier for the credential configuration
+                 * @example UniversityDegree
+                 */
+                credentialConfigId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Credential configuration deleted successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getIssuerMetadata: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description An issuer identifier in the oid4vci protocol
+                 * @example f47ac10b-58cc-4372-a567-0e02b2c3d479
+                 */
+                issuerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Issuer Metadata successfully retrieved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuerMetadata"];
+                };
+            };
+            /** @description Invalid request parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource could not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unable to process the request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+}

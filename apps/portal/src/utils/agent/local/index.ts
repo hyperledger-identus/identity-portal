@@ -2,46 +2,87 @@ import {
     Apollo,
     Castor,
     Agent as LocalAgent,
+    Domain,
 } from "@hyperledger/identus-sdk";
-import { DB_ENCRYPTION_KEY, MONGODB_URI } from "../../../config";
-import { ExtendedPluto as Pluto } from "../../database";
+
+
+import {  MONGODB_URI } from "../../../config";
+import { AgentSession } from "..";
+import { MediatorConnection } from "@hyperledger/identus-sdk/plugins/didcomm";
 import { Agent } from "../types";
+import { MultiTenantPluto } from "./database";
 
 // The RIDB MongoDB backend reads its connection string from MONGODB_URL.
 process.env.MONGODB_URL = MONGODB_URI;
 
-export async function CreateLocalAgent(): Promise<Agent> {
-    const apollo = new Apollo();
-    const castor = new Castor(apollo);
-    const pluto = new Pluto({ dbName: "portal", password: DB_ENCRYPTION_KEY });
-    const agent =  LocalAgent.initialize({
-        apollo,
+
+type AgentOptions = {
+    tenantId: string,
+    castor: Castor;
+    pluto: MultiTenantPluto;
+}
+
+
+export async function createTenantAgent(options: AgentOptions): Promise<LocalAgent> {
+    const { castor, pluto } = options;
+    LocalAgent.prototype.start = async function start() {
+       try{
+        if (this.pluto.state === Domain.Startable.State.STOPPED) {
+            await this.pluto.start();
+        }
+        const mediators = await this.pluto.getAllMediators();
+        for (const mediator of mediators) {
+            const connection = new MediatorConnection(
+                mediator.mediatorDID.toString(),
+                mediator.hostDID.toString(),
+                mediator.routingDID.toString(),
+            );
+            this.connections.addMediator(connection);
+        }
+       } catch (error) {
+        console.error("Failed to start agent:", error);
+        throw error;
+       }
+        return Domain.Startable.State.RUNNING;
+    }
+    const agent = LocalAgent.initialize({
         castor,
         pluto,
         seed: async () => {
-            // A new seed is generated if it doesn't exist
-            // This is a remote encrypted database
-            // It can be restored later if the same encryption key is used
-            let seedHex = await pluto.getSetting("seed");
+            const seedHex = await pluto.getSetting("seed");
             if (!seedHex) {
-                const seed = apollo.createSeed(apollo.createRandomMnemonics(), "");
-                seedHex = Buffer.from(seed.value).toString("hex");
-                await pluto.setSetting("seed", seedHex);
+                throw new Error("Seed not found");
             }
             return Buffer.from(seedHex, "hex");
-        },
+        }
+    })
+    return agent;
+}
+
+
+
+
+
+export async function createLocalAgent(session: AgentSession): Promise<Agent> {
+    const apollo = new Apollo();
+    const castor = new Castor(apollo);
+    const pluto = new MultiTenantPluto(session.tenantId);
+    const agent = await createTenantAgent({
+        tenantId: session.tenantId,
+        castor,
+        pluto,
     })
     return {
         start: async () => {
-            await agent.start();
+            await agent.start()
         },
         stop: async () => {
-            await agent.stop();
+            await agent.stop()
         },
         dids: {
-            resolveDID: (did: string) => agent.castor.resolveDID(did),
-            // Add additional methods here to use create, update, publish methods
-            // First, types.ts Agent interface needs to be extended to support additional functionality
+            resolveDID: (did: string) => {
+                throw new Error("Not implemented");
+            }
         }
     }
 }
