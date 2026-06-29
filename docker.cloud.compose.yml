@@ -115,7 +115,7 @@ services:
       VDR_LEDGER_DRIVER: neoprism
       API_KEY_ENABLED: true
       API_KEY_AUTHENTICATE_AS_DEFAULT_USER: false
-      API_KEY_AUTO_PROVISIONING:
+      API_KEY_AUTO_PROVISIONING: true
       KEYCLOAK_ENABLED: true
       KEYCLOAK_URL: http://keycloak:8080
       KEYCLOAK_REALM: atala-demo
@@ -127,6 +127,8 @@ services:
         condition: service_healthy
       neoprism:
         condition: service_healthy
+      keycloak-init:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8085/_system/health"]
       interval: 30s
