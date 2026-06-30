@@ -33,6 +33,9 @@ export async function createCloudAgentClient(
   });
 
   return {
+    list: () => {
+      throw new Error("Not implemented");
+  },
     start: async () => {
       console.log("Starting Cloud Agent");
     },

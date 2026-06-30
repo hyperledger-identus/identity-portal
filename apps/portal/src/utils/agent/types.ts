@@ -25,6 +25,7 @@ export type Agent = {
     dids: {
         resolveDID: (did: string) => ReturnType<Domain.DIDResolver['resolve']>;
         prism: {
+            list: () => Promise<Domain.DID[]>;
             create: (keys: PrismDIDKeyCurves) => Promise<Domain.DID>;
             publish: (did: Domain.DID) => Promise<{did: Domain.DID, txId: string}>;
             deactivate: (did: Domain.DID) => Promise<{ txId: string}>

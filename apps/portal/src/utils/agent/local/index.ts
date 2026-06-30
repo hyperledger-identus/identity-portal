@@ -76,6 +76,9 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
         dids: {
             resolveDID: (did: string) => castor.resolveDID(did),
             prism: {
+                list: () => {
+                    throw new Error("Not implemented");
+                },
                 create: (keys: PrismDIDKeyCurves) => {
                     // PrismDIDKeyCurves keys are the types of keys we need to add to the DID
                     // values contain an array of Domain.Curves, we need to create a key with the specific
