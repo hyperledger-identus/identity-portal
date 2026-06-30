@@ -10,6 +10,7 @@ export const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://admin:admin@loc
 export const MEDIATOR_DID = process.env.MEDIATOR_DID ?? "did:peer:2.Ez6LSghwSE437wnDE1pt3X6hVDUQzSjsHzinpX3XFvMjRAm7y.Vz6Mkhh1e5CEYYq6JBUcTZ6Cp2ranCWRrv7Yax3Le4N59R6dd.SeyJ0IjoiZG0iLCJzIjp7InVyaSI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MCIsImEiOlsiZGlkY29tbS92MiJdfX0.SeyJ0IjoiZG0iLCJzIjp7InVyaSI6IndzOi8vbG9jYWxob3N0OjgwODAvd3MiLCJhIjpbImRpZGNvbW0vdjIiXX19";
 
 export const AGENT_MODE = process.env.AGENT_MODE ?? "local";
+export const RESOLVER_URL = process.env.RESOLVER_URL ?? "http://localhost:8081/api/dids/";
 
 /**
  * Redis connection used by the BullMQ task queue. Defaults to the local `redis`
