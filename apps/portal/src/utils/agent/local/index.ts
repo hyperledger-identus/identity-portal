@@ -3,14 +3,17 @@ import {
     Castor,
     Agent as LocalAgent,
     Domain,
+    PrismDIDMethod,
 } from "@hyperledger/identus-sdk";
 
 
-import {  MONGODB_URI } from "../../../config";
+import {  MONGODB_URI, RESOLVER_URL } from "../../../config";
 import { AgentSession } from "..";
 import { MediatorConnection } from "@hyperledger/identus-sdk/plugins/didcomm";
 import { Agent } from "../types";
 import { MultiTenantPluto } from "./database";
+import { CustomPrismDIDMethod } from "./prism-did-method";
+import { PRISM_DID_RESOLVERS } from "apps/portal/src/config/resolvers";
 
 // The RIDB MongoDB backend reads its connection string from MONGODB_URL.
 process.env.MONGODB_URL = MONGODB_URI;
@@ -65,7 +68,7 @@ export async function createTenantAgent(options: AgentOptions): Promise<LocalAge
 
 export async function createLocalAgent(session: AgentSession): Promise<Agent> {
     const apollo = new Apollo();
-    const castor = new Castor(apollo);
+    const castor = new Castor(apollo, PRISM_DID_RESOLVERS);
     const pluto = new MultiTenantPluto(session.tenantId);
     const agent = await createTenantAgent({
         tenantId: session.tenantId,
@@ -80,9 +83,7 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
             await agent.stop()
         },
         dids: {
-            resolveDID: (did: string) => {
-                throw new Error("Not implemented");
-            }
+            resolveDID: (did: string) => castor.resolveDID(did),
         }
     }
 }
