@@ -8,7 +8,7 @@ import {
 import {  MONGODB_URI } from "../../../config";
 import { AgentSession } from "..";
 import { MediatorConnection } from "@hyperledger/identus-sdk/plugins/didcomm";
-import { Agent } from "../types";
+import { Agent, PrismDIDKeyCurves } from "../types";
 import { MultiTenantPluto } from "./database";
 import { PRISM_DID_RESOLVERS } from "../../../config/resolvers";
 
@@ -75,6 +75,34 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
         },
         dids: {
             resolveDID: (did: string) => castor.resolveDID(did),
+            prism: {
+                create: (keys: PrismDIDKeyCurves) => {
+                    // PrismDIDKeyCurves keys are the types of keys we need to add to the DID
+                    // values contain an array of Domain.Curves, we need to create a key with the specific
+                    // curve and use the agent.createDID function directly
+                    throw new Error("Not implemented");
+                },
+                publish: (did: Domain.DID) => {
+                    /**
+                     * On SDK mode, we call agent.publishDID("prism", payload)
+                     * Payload should be { did: Domain.DID, key: PrivateKey }
+                     * I would fetch all the keys from the DID from storage and then grab the MASTER_KEY
+                     * 
+                     * This publishDID function returns a signed AtalaOperation
+                     * Which you need to send into the corresponding API call from neoprism
+                     */
+                    throw new Error("Not implemented");
+                },
+                deactivate: (did: Domain.DID) => {
+                    /**
+                     * The TS SDK does not support creating signed deactivate operations
+                     * We first need to make this feature in the TS-SDK.
+                     * 
+                     * Will then be accessible under agent.deactivateDID("prism")
+                     */
+                    throw new Error("Not implemented");
+                }
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 import { Domain } from "@hyperledger/identus-sdk";
 import { CLOUD_AGENT_BASE_URL } from "../../../config";
-import { Agent } from "../types";
+import { Agent, PrismDIDKeyCurves } from "../types";
 import { createClient } from "./client";
 import { toDetail } from "./api";
 import { HttpError } from "../../rest";
@@ -46,6 +46,35 @@ export async function createCloudAgentClient(
         // The agent's DID resolution endpoint is not yet wired here.
         throw new Error("resolveDID is not implemented for the Cloud Agent");
       },
+      prism: {
+        create: (keys: PrismDIDKeyCurves) => {
+          /**
+           * Use
+           * client.POST("/did-registrar/dids", { })
+           * 
+           * The Cloud-agent internally checks which masterKey to use and creates + published the operation for you
+           */
+          throw new Error("Not implemented");
+        },
+        publish: (did: Domain.DID) => {
+          /**
+           * Use
+           * client.POST("/did-registrar/dids/{didRef}/publications", { params: { didRef: 'did.toString()'}})
+           * 
+           * The Cloud-agent internally checks which masterKey to use and creates + published the operation for you
+           */
+          throw new Error("Not implemented");
+        },
+        deactivate: (did: Domain.DID) => {
+          /**
+           * Use
+           * client.POST("/did-registrar/dids/{didRef}/deactivations", { params: { didRef: 'did.toString()'}})
+           * 
+           * The Cloud-agent internally checks which masterKey to use and creates + published the operation for you
+           */
+          throw new Error("Not implemented");
+        }
+      }
     },
   };
 }
