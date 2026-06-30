@@ -2,8 +2,6 @@ import { Domain } from "@hyperledger/identus-sdk";
 import { CLOUD_AGENT_BASE_URL } from "../../../config";
 import { Agent, PrismDIDKeyCurves } from "../types";
 import { createClient } from "./client";
-import { toDetail } from "./api";
-import { HttpError } from "../../rest";
 
 export type CloudAgentOptions = {
   /**
