@@ -48,6 +48,9 @@ export async function createCloudAgentClient(
         throw new Error("resolveDID is not implemented for the Cloud Agent");
       },
       prism: {
+        list: () => {
+          throw new Error("Not implemented");
+      },
         create: (keys: PrismDIDKeyCurves) => {
           /**
            * Use
