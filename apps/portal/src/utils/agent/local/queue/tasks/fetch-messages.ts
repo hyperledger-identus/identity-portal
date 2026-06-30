@@ -16,6 +16,7 @@ import { StartFetchingMessages } from "@hyperledger/identus-sdk/plugins/didcomm"
 import { TENANT_MESSAGE_FETCH_INTERVAL_MS } from "../../../../../config";
 import { createTenantAgent } from "../..";
 import { MultiTenantPluto } from "../../database";
+import { PRISM_DID_RESOLVERS } from "../../../../../config/resolvers";
 
 export const fetchMessagesTask: TenantTask<TenantJobData> = {
   queueName: "tenant-fetch-messages",
@@ -25,7 +26,7 @@ export const fetchMessagesTask: TenantTask<TenantJobData> = {
   async process(job) {
     const { tenantId } = job.data;
     const apollo = new Apollo();
-    const castor = new Castor(apollo);
+    const castor = new Castor(apollo, PRISM_DID_RESOLVERS);
     await MultiTenantPluto.connect({ dbName: "portal" });
     const pluto = new MultiTenantPluto(tenantId);
     const agent = await createTenantAgent({

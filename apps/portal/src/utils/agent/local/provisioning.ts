@@ -14,12 +14,13 @@ import { createTenantAgent } from ".";
 import { createHostPeerDID } from "./mediation";
 import { MultiTenantPluto } from "./database";
 import { startFetchingMessages } from "./queue";
+import { PRISM_DID_RESOLVERS } from "../../../config/resolvers";
 
 export async function provisionTenant(options: { subject: string, accessToken: string, label?: string}): Promise<void> {
     const { subject } = options;
 
     const apollo = new Apollo();
-    const castor = new Castor(apollo);
+    const castor = new Castor(apollo, PRISM_DID_RESOLVERS);
     const pluto = new MultiTenantPluto(subject);
     await pluto.start();
 
