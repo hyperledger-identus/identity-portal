@@ -38,7 +38,7 @@
  */
 import { Request, Response, Router } from 'express';
 import swaggerUi from 'swagger-ui-express';
-import { type Context, restErrorHandler } from '../utils/rest';
+import { type ContextFactory, restErrorHandler } from '../utils/rest';
 import { generateOpenApiSpec, type RouterMount } from '../utils/openapi';
 import { routeGroups } from './registry';
 import { NODE_ENV, PORT } from '../config';
@@ -53,27 +53,28 @@ import packageJson from '../../package.json';
  *
  * @category API
  */
-export function buildRouterMounts(context: Context): RouterMount[] {
+export function buildRouterMounts(createContext: ContextFactory): RouterMount[] {
   return Object.entries(routeGroups).map(([basePath, factory]) => ({
     basePath,
-    router: factory(context),
+    router: factory(createContext),
   }));
 }
 
 /**
  * Creates the main API router with all route groups mounted.
  * 
- * @param context - The application context containing database and task manager
+ * @param createContext - Factory that builds the per-request {@link Context}
+ *   (resolves the authenticated agent for the current session).
  * @returns Express Router with all API routes
  * 
  * @category API
  */
-export async function createAPIRouter(context: Context) {
+export async function createAPIRouter(createContext: ContextFactory) {
   const apiRouter = Router();
   const router = Router();
 
   // Mount route groups from the registry (single source of truth)
-  const mounts = buildRouterMounts(context);
+  const mounts = buildRouterMounts(createContext);
   for (const { basePath, router: routerWithContext } of mounts) {
     apiRouter.use(basePath, routerWithContext.router);
   }

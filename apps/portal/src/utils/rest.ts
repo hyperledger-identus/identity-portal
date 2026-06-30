@@ -14,7 +14,7 @@
  * 
  * ### Usage
  * ```typescript
- * const router = createRestRouter({ context: { db, taskManager } });
+ * const router = createRestRouter({ createContext: (req, res) => ({ agent }) });
  * 
  * router.get('/users/:id', {
  *   input: z.object({ id: z.string() }),
@@ -32,12 +32,25 @@ import { type ZodSchema, ZodError } from 'zod';
 import { Agent } from './agent/types';
 
 /**
- * Lightweight REST validation framework.
- * Provides type-safe, validated endpoints with a clean builder API.
+ * Per-request dependencies handed to every route handler.
+ *
+ * The {@link Context.agent | agent} is always resolved for the *current* request
+ * (see {@link ContextFactory}); in cloud mode that means an HTTP client already
+ * authenticated as the logged-in user, so handlers never deal with tokens.
  */
 export type Context = {
   agent: Agent;
 };
+
+/**
+ * Builds the {@link Context} for a single request. Called once per request,
+ * right before the handler runs, so the returned dependencies (e.g. the agent)
+ * are always scoped to the authenticated caller.
+ */
+export type ContextFactory = (
+  req: Request,
+  res: Response,
+) => Context | Promise<Context>;
 
 export type OpenAPIConfig = {
   /** Human-readable name for the operation (used as summary) */
@@ -67,7 +80,8 @@ export type RouteConfig<TInput, TOutput> = {
 };
 
 export type CreateRouterOptions = {
-  context: Context;
+  /** Resolves the per-request {@link Context} (e.g. the authenticated agent). */
+  createContext: ContextFactory;
 };
 
 export class HttpError extends Error {
@@ -179,7 +193,8 @@ export function createRestRouter(options: CreateRouterOptions): RestRouter {
   ) => {
     return async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { context: ctx } = options;
+        // Build the context for this request (resolves the authenticated agent).
+        const ctx: Context = await options.createContext(req, res);
 
         // Merge query, params, and body for input
         const rawInput = {

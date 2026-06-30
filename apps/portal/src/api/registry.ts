@@ -19,7 +19,7 @@
  * @category API
  */
 import type {
-  Context,
+  ContextFactory,
   EndpointType,
   InferRoutes,
   RestRouter,
@@ -27,8 +27,8 @@ import type {
 
 import createDidsRouter from './dids';
 
-/** A factory that builds a validated router for a given application context. */
-export type RouteGroupFactory = (context: Context) => RestRouter;
+/** A factory that builds a validated router bound to a per-request context. */
+export type RouteGroupFactory = (createContext: ContextFactory) => RestRouter;
 
 /**
  * All API route groups, keyed by the base path they are mounted under

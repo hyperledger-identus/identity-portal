@@ -45,8 +45,8 @@ function GitHubIcon() {
  * code flow. Buttons are only shown for providers the server reports as enabled.
  */
 export function LoginPage() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("alice");
+  const [password, setPassword] = useState("1234");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [providers, setProviders] = useState<Providers>({ google: false, github: false });

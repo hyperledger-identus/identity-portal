@@ -7,9 +7,47 @@ export const IS_PRODUCTION = NODE_ENV === "production";
 export const VITE_CONFIG = process.env.VITE_CONFIG ?? path.resolve(process.cwd(), "apps/portal/vite.config.ts");
 export const UI_DIST = process.env.UI_DIST ?? path.resolve(process.cwd(), "dist/apps/portal/src/ui");
 export const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://admin:admin@localhost:27019/identus?authSource=admin';
-
+export const MEDIATOR_DID = process.env.MEDIATOR_DID ?? "did:peer:2.Ez6LSghwSE437wnDE1pt3X6hVDUQzSjsHzinpX3XFvMjRAm7y.Vz6Mkhh1e5CEYYq6JBUcTZ6Cp2ranCWRrv7Yax3Le4N59R6dd.SeyJ0IjoiZG0iLCJzIjp7InVyaSI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MCIsImEiOlsiZGlkY29tbS92MiJdfX0.SeyJ0IjoiZG0iLCJzIjp7InVyaSI6IndzOi8vbG9jYWxob3N0OjgwODAvd3MiLCJhIjpbImRpZGNvbW0vdjIiXX19";
 
 export const AGENT_MODE = process.env.AGENT_MODE ?? "local";
+
+/**
+ * Redis connection used by the BullMQ task queue. Defaults to the local `redis`
+ * service from the docker compose files; override with `REDIS_URL` in any real
+ * environment.
+ */
+export const REDIS_URL = process.env.REDIS_URL ?? "redis://localhost:6379";
+
+/**
+ * Interval (in milliseconds) of the per-tenant repeatable heartbeat task.
+ * Defaults to 60s.
+ */
+export const TENANT_HEARTBEAT_INTERVAL_MS = Number(
+  process.env.TENANT_HEARTBEAT_INTERVAL_MS ?? String(60 * 1000),
+);
+
+/**
+ * Interval (in milliseconds) of the per-tenant repeatable message-fetch task,
+ * which polls the mediator for new DIDComm messages. Defaults to 15s.
+ */
+export const TENANT_MESSAGE_FETCH_INTERVAL_MS = Number(
+  process.env.TENANT_MESSAGE_FETCH_INTERVAL_MS ?? String(15 * 1000),
+);
+
+/**
+ * Cloud Agent connection used by the BFF to auto-provision a wallet for each
+ * Keycloak user on their first login (see `utils/agent/cloud-agent/provisioning`).
+ *
+ * - `CLOUD_AGENT_BASE_URL`: where the BFF reaches the agent. `localhost:8085`
+ *   for `npm run dev`; `http://cloud-agent:8085` when the portal runs in Docker.
+ * - `CLOUD_AGENT_ADMIN_API_KEY`: matches the agent's `ADMIN_TOKEN`. In `DEV_MODE`
+ *   the agent defaults to `admin`; set an explicit value in any real environment.
+ * - `WALLET_AUTO_PROVISION_ENABLED`: master switch. Defaults on only in
+ *   cloud-agent mode (the local agent manages its own storage).
+ */
+export const CLOUD_AGENT_BASE_URL = process.env.CLOUD_AGENT_BASE_URL ?? "http://localhost:8085";
+export const CLOUD_AGENT_ADMIN_API_KEY = process.env.CLOUD_AGENT_ADMIN_API_KEY ?? "admin";
+export const WALLET_AUTO_PROVISION_ENABLED = true
 
 /**
  * OIDC / Keycloak authentication gateway settings.

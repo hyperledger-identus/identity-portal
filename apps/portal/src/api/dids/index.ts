@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
 import { errorResponseSchema } from "../../schemas/error";
-import { Context, createRestRouter } from "../../utils/rest";
+import { ContextFactory, createRestRouter } from "../../utils/rest";
 
-export default function createIssuerRouter(context: Context) {
-    return createRestRouter({ context })
+export default function createIssuerRouter(createContext: ContextFactory) {
+    return createRestRouter({ createContext })
       .get('/', {
         output: errorResponseSchema,
         openAPI: {

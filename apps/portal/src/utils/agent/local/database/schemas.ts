@@ -18,6 +18,29 @@ export const schemas = {
   messages: MessageSchema,
   "didkey-link": DIDKeyLinkSchema,
   "did-link": DIDLinkSchema,
-  settings: SettingsSchema,
+  settings: {
+    ...SettingsSchema,
+    properties: {
+      ...SettingsSchema.properties,
+      tenantId: {
+        type: "string",
+        description: "The tenant ID",
+      },
+    },
+  },
+  tenants: {
+    encrypted: ["tenantId"],
+    version: 0,
+    primaryKey: "uuid",
+    type: "object",
+    properties: {
+      uuid: {
+        type: "string",
+      },
+      tenantId: {
+        type: "string",
+      },
+    },
+  },
   issuance: IssuanceSchema,
 };

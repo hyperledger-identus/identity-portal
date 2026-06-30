@@ -15,4 +15,5 @@ export const migrations = {
   "did-link": {},
   settings: {},
   issuance: {},
+  tenants: {},
 };

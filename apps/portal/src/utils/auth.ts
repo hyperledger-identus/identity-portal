@@ -36,6 +36,7 @@ import { getIronSession, type IronSession, type SessionOptions } from 'iron-sess
 import { rateLimit, ipKeyGenerator } from 'express-rate-limit';
 import * as client from 'openid-client';
 import {
+  AGENT_MODE,
   AUTH_GITHUB_ENABLED,
   AUTH_GOOGLE_ENABLED,
   KEYCLOAK_ISSUER_URL,
@@ -49,6 +50,8 @@ import {
   SESSION_SECRET,
   SESSION_TTL,
 } from '../config';
+import { provisionTenant  as provisionTenantCloudAgent} from './agent/cloud-agent/provisioning';
+import { provisionTenant  as provisionTenantLocalAgent} from './agent/local/provisioning';
 
 const OIDC_SCOPE = 'openid profile email';
 /** Refresh the access token this many seconds before it actually expires. */
@@ -165,6 +168,38 @@ async function applyTokens(
   session.accessTokenExpiresAt = expiresIn !== undefined ? now + expiresIn : undefined;
   if (tokens.refresh_token) {
     session.refreshToken = tokens.refresh_token;
+  }
+}
+
+/**
+ * Best-effort: ensure the just-logged-in user owns a Cloud Agent wallet.
+ *
+ * Runs after the session is established (both the ROPC and OIDC-callback flows).
+ * Failures are logged but never block login — auth must still work if the agent
+ * is unreachable or auto-provisioning is disabled (the helper is a no-op then).
+ */
+async function provisionWalletForSession(session: PortalSession): Promise<void> {
+  if (!session.sub || !session.accessToken) {
+    return;
+  }
+
+  try {
+    if (AGENT_MODE === 'cloud-agent') {
+      await provisionTenantCloudAgent({
+        subject: session.sub,
+        accessToken: session.accessToken,
+        label: session.username ?? session.email ?? session.sub,
+      });
+    } else {
+      await provisionTenantLocalAgent({
+        subject: session.sub,
+        accessToken: session.accessToken,
+        label: session.username ?? session.email ?? session.sub,
+      });
+    }
+   
+  } catch (err) {
+    console.error('Wallet auto-provisioning failed (login still succeeds):', err);
   }
 }
 
@@ -407,6 +442,7 @@ export function createPublicAuthRouter(): Router {
       const session = await getSession(req, res);
       await applyTokens(session, tokens);
       await session.save();
+      await provisionWalletForSession(session);
       return res.json({ success: true, user: sessionUser(session) });
     } catch (err) {
       return respondGrantError(err, res, username);
@@ -454,7 +490,7 @@ export function createPublicAuthRouter(): Router {
       const session = await getSession(req, res);
       await applyTokens(session, tokens);
       await session.save();
-
+      await provisionWalletForSession(session);
       return res.redirect(returnTo);
     } catch (err) {
       console.error('OIDC callback failed:', err);

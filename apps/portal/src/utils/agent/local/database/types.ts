@@ -17,6 +17,5 @@ export type RIDBCollection = {
 
 export type PlutoOptions = {
     dbName: string, 
-    password: string
   }
   
