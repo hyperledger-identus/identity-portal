@@ -3,28 +3,23 @@ import {
     Castor,
     Agent as LocalAgent,
     Domain,
-    PrismDIDMethod,
 } from "@hyperledger/identus-sdk";
 
-
-import {  MONGODB_URI, RESOLVER_URL } from "../../../config";
+import {  MONGODB_URI } from "../../../config";
 import { AgentSession } from "..";
 import { MediatorConnection } from "@hyperledger/identus-sdk/plugins/didcomm";
 import { Agent } from "../types";
 import { MultiTenantPluto } from "./database";
-import { CustomPrismDIDMethod } from "./prism-did-method";
-import { PRISM_DID_RESOLVERS } from "apps/portal/src/config/resolvers";
+import { PRISM_DID_RESOLVERS } from "../../../config/resolvers";
 
 // The RIDB MongoDB backend reads its connection string from MONGODB_URL.
 process.env.MONGODB_URL = MONGODB_URI;
-
 
 type AgentOptions = {
     tenantId: string,
     castor: Castor;
     pluto: MultiTenantPluto;
 }
-
 
 export async function createTenantAgent(options: AgentOptions): Promise<LocalAgent> {
     const { castor, pluto } = options;
@@ -61,10 +56,6 @@ export async function createTenantAgent(options: AgentOptions): Promise<LocalAge
     })
     return agent;
 }
-
-
-
-
 
 export async function createLocalAgent(session: AgentSession): Promise<Agent> {
     const apollo = new Apollo();
