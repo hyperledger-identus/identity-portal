@@ -1,4 +1,4 @@
-import { Domain, } from "@hyperledger/identus-sdk";
+import { Domain, RequiredPrismDIDSecretKeys} from "@hyperledger/identus-sdk";
 
 
 /**
@@ -10,14 +10,25 @@ import { Domain, } from "@hyperledger/identus-sdk";
  * 
  * This interface needs to be replaced with a common, unified interface for both modes
  */
+
+
+//master key is ignored because MASTER_KEY is always required
+export type PrismDIDKeys = Exclude<keyof RequiredPrismDIDSecretKeys, 'MASTER_KEY'>;
+
+export type PrismDIDKeyCurves = {
+    [K in PrismDIDKeys]: Domain.Curve[]
+}
+
 export type Agent = {
     start: () => Promise<void>;
     stop: () => Promise<void>;
     dids: {
         resolveDID: (did: string) => ReturnType<Domain.DIDResolver['resolve']>;
-        // We need to add create prism did methods, create, publish
+        prism: {
+            list: () => Promise<Domain.DID[]>;
+            create: (keys: PrismDIDKeyCurves) => Promise<Domain.DID>;
+            publish: (did: Domain.DID) => Promise<{did: Domain.DID, txId: string}>;
+            deactivate: (did: Domain.DID) => Promise<{ txId: string}>
+        }
     },
-    // WE also need to extend these types in order to support additional functionality
-    // Credential issuance flows
-    // Credential verification flows
 };
