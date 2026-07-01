@@ -168,7 +168,7 @@ function inferTag(basePath: string): string {
  * Converts a Zod schema to JSON Schema, stripping metadata
  */
 function zodToOpenApiSchema(schema: ZodSchema): JsonSchema {
-  const jsonSchema = zodToJsonSchema(schema as any, {
+  const jsonSchema = zodToJsonSchema(schema as Parameters<typeof zodToJsonSchema>[0], {
     $refStrategy: 'none',
     target: 'openApi3',
   });

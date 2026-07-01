@@ -58,7 +58,7 @@ flowchart LR
 
 ## Application architecture
 
-Everything lives under `apps/portal/src`. The server boots in `main.ts`: it runs
+Everything lives under `src`. The server boots in `main.ts`: it runs
 `startAgent()` (in local mode this opens the store and starts the task-queue
 worker), then builds an `HttpServer`. The HTTP layer wraps the routers in the auth
 middleware and mounts two routers — the API (assembled from the route registry) and

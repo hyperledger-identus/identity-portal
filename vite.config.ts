@@ -11,7 +11,7 @@ export default defineConfig({
   root: resolve(projectRoot, "src/ui"),
   plugins: [react()],
   build: {
-    outDir: resolve(projectRoot, "../../dist/apps/portal/src/ui"),
+    outDir: resolve(projectRoot, "dist/ui"),
     emptyOutDir: true,
   },
 });

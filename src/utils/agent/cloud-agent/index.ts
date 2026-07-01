@@ -25,7 +25,8 @@ export async function createCloudAgentClient(
   options: CloudAgentOptions = {},
 ): Promise<Agent> {
 
-  const client = createClient({
+  // Created ahead of the (still unimplemented) endpoints that will use it.
+  const _client = createClient({
     baseUrl: CLOUD_AGENT_BASE_URL,
     headers: options.accessToken
       ? { Authorization: `Bearer ${options.accessToken}` }
@@ -33,9 +34,6 @@ export async function createCloudAgentClient(
   });
 
   return {
-    list: () => {
-      throw new Error("Not implemented");
-  },
     start: async () => {
       console.log("Starting Cloud Agent");
     },

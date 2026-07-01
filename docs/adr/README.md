@@ -16,6 +16,7 @@ history.
 | [0003](./0003-route-discovery-and-openapi.md) | Route discovery and generated OpenAPI                      | Superseded by 0005 |
 | [0004](./0004-multi-tenant-local-agent.md)    | Multi-tenancy over a shared local agent                    | Accepted           |
 | [0005](./0005-route-registry.md)              | Explicit route registry driving OpenAPI and a typed client | Accepted           |
+| [0006](./0006-flat-package-no-workspaces.md)  | Flat npm package instead of nx workspaces                  | Accepted           |
 
 ## Adding an ADR
 

@@ -469,7 +469,7 @@ export function createPublicAuthRouter(): Router {
   );
 
   // OIDC redirect target: exchange the code, establish the session.
-  router.get('/auth/callback', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/auth/callback', async (req: Request, res: Response, _next: NextFunction) => {
     try {
       const cfg = await getOidcConfig();
       const tx = await getTxSession(req, res);

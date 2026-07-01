@@ -1,0 +1,16 @@
+node_modules
+dist
+build
+coverage
+.git
+.github
+.nx
+tmp
+docs/api
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+Dockerfile
+.dockerignore
