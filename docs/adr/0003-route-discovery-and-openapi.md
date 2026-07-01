@@ -1,6 +1,6 @@
 # 0003. Route discovery and generated OpenAPI
 
-- Status: Accepted
+- Status: Superseded by [ADR-0005](./0005-route-registry.md)
 - Date: 2026-06-25
 
 ## Context
