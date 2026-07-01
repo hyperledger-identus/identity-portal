@@ -9,11 +9,13 @@ history.
 
 ## Index
 
-| #                                             | Title                                       | Status   |
-| --------------------------------------------- | ------------------------------------------- | -------- |
-| [0001](./0001-single-application.md)          | Single application for API and UI           | Accepted |
-| [0002](./0002-agent-abstraction.md)           | Agent abstraction for local and cloud modes | Accepted |
-| [0003](./0003-route-discovery-and-openapi.md) | Route discovery and generated OpenAPI       | Accepted |
+| #                                             | Title                                                      | Status             |
+| --------------------------------------------- | ---------------------------------------------------------- | ------------------ |
+| [0001](./0001-single-application.md)          | Single application for API and UI                          | Accepted           |
+| [0002](./0002-agent-abstraction.md)           | Agent abstraction for local and cloud modes                | Accepted           |
+| [0003](./0003-route-discovery-and-openapi.md) | Route discovery and generated OpenAPI                      | Superseded by 0005 |
+| [0004](./0004-multi-tenant-local-agent.md)    | Multi-tenancy over a shared local agent                    | Accepted           |
+| [0005](./0005-route-registry.md)              | Explicit route registry driving OpenAPI and a typed client | Accepted           |
 
 ## Adding an ADR
 
