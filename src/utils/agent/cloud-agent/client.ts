@@ -13,7 +13,7 @@
  *
  * Regenerate the underlying types from the running Cloud Agent with:
  *   curl -s http://localhost:8085/docs/docs.yaml -o prism-openapi.yaml
- *   npx openapi-typescript ./prism-openapi.yaml -o ./apps/portal/src/api/schema.d.ts
+ *   npx openapi-typescript ./prism-openapi.yaml -o ./src/api/schema.d.ts
  *
  * @category API
  */

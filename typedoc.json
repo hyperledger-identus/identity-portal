@@ -1,9 +1,9 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "name": "Identity Portal API",
-  "entryPoints": ["apps/portal/src"],
+  "entryPoints": ["src"],
   "entryPointStrategy": "expand",
-  "tsconfig": "apps/portal/tsconfig.app.json",
+  "tsconfig": "tsconfig.json",
   "out": "docs/api",
   "exclude": [
     "**/node_modules/**",

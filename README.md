@@ -39,7 +39,11 @@ at Keycloak's broker endpoint, then set the credentials in `.env` before running
 
 ## Instructions
 
-Install this workspace with ```npm i```
+Install dependencies with ```npm i```
+
+This is a single, private Node/React project (no monorepo or workspaces). All
+source lives under [src/](./src): the Express server boots in
+[src/main.ts](./src/main.ts) and serves the React UI from [src/ui/](./src/ui).
 
 The application provides a unified user interface for the identus agent, can either work with a local agent using TS-SDK, or use a remote agent like the Cloud-Agent.
 
@@ -67,3 +71,30 @@ Start the environment with: ```npm run cloud-agent:up```
 Check the logs with: ```npm run cloud-agent:logs```
 
 And Destroy the env with  ```npm run cloud-agent:down```
+
+## Running with Docker
+
+The [Dockerfile](./Dockerfile) builds a standalone production image: it bundles
+the Express server (`dist/main.cjs`) and the pre-built React UI (`dist/ui`) and
+runs both from a single Node process on port `3000`.
+
+```bash
+docker build -t identity-portal .
+```
+
+The image expects its supporting services (MongoDB, Redis, neoprism, the
+mediator, and Keycloak) to be reachable — start them with `npm run local:up`
+and point the container at them via environment variables (see
+[.env.example](./.env.example)). On macOS/Windows, reach host services with
+`host.docker.internal`:
+
+```bash
+docker run --rm -p 3000:3000 \
+  -e NODE_ENV=production \
+  -e MONGODB_URI="mongodb://admin:admin@host.docker.internal:27019/identus?authSource=admin" \
+  -e REDIS_URL="redis://host.docker.internal:6379" \
+  -e NEOPRISM_BASE_URL="http://host.docker.internal:8081" \
+  -e KEYCLOAK_ISSUER_URL="http://host.docker.internal:9980/realms/atala-demo" \
+  -e SESSION_SECRET="$(openssl rand -hex 32)" \
+  identity-portal
+```

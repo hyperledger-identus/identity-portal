@@ -16,9 +16,10 @@ is structured, see [architecture.md](./architecture.md).
 npm i
 ```
 
-This installs the workspace (npm workspaces: `apps/*`). No `.env` file is required
-to start — `src/config/index.ts` provides working defaults that target the local
-Docker stack; override only what you need (see [Configuration](#configuration)).
+This is a single, flat project (no npm/nx workspaces) — all source lives under
+`src/`. No `.env` file is required to start — `src/config/index.ts` provides
+working defaults that target the local Docker stack; override only what you need
+(see [Configuration](#configuration)).
 
 ## Running
 
@@ -152,17 +153,19 @@ Read from the environment in `src/config/index.ts` (DID resolvers in
 
 ## Scripts
 
-| Script                                       | What it does                                   |
-| -------------------------------------------- | ---------------------------------------------- |
-| `npm run dev`                                | Run the portal (Express + React) via nx.       |
-| `npm run build`                              | Build all projects.                            |
-| `npm run typecheck`                          | Type-check (`nx run-many --target=typecheck`). |
-| `npm run lint`                               | Lint.                                          |
-| `npm run test`                               | Run tests.                                     |
-| `npm run format` / `format:check`            | Prettier write / check.                        |
-| `npm run docs:api`                           | Generate the TypeDoc API reference.            |
-| `npm run local:up` / `:down` / `:logs`       | Local-mode docker services.                    |
-| `npm run cloud-agent:up` / `:down` / `:logs` | Cloud-mode docker services.                    |
+| Script                                       | What it does                                              |
+| -------------------------------------------- | --------------------------------------------------------- |
+| `npm run dev`                                | Run the portal (Express + React) in watch mode via `tsx`. |
+| `npm run build`                              | Build the UI (`vite` → `dist/ui`) and bundle the server (`esbuild` → `dist/main.cjs`). |
+| `npm run build:ui` / `build:server`          | Build only the UI / only the server bundle.               |
+| `npm start`                                  | Run the built server (`node dist/main.cjs`).              |
+| `npm run typecheck`                          | Type-check (`tsc --noEmit`).                              |
+| `npm run lint`                               | Lint (`eslint`).                                          |
+| `npm run test`                               | Run tests (`vitest`).                                     |
+| `npm run format` / `format:check`            | Prettier write / check.                                   |
+| `npm run docs:api`                           | Generate the TypeDoc API reference.                       |
+| `npm run local:up` / `:down` / `:logs`       | Local-mode docker services.                               |
+| `npm run cloud-agent:up` / `:down` / `:logs` | Cloud-mode docker services.                               |
 
 ## Adding code
 

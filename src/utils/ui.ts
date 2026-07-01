@@ -1,6 +1,6 @@
 import path from "node:path";
 import fs from "node:fs/promises";
-import express, { type Express, type Request, type Response, type NextFunction, Router } from "express";
+import express, { type Request, type Response, type NextFunction, Router } from "express";
 import type { ViteDevServer } from "vite";
 import { IS_PRODUCTION, UI_DIST, VITE_CONFIG } from "../config";
 

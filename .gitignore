@@ -1,5 +1,4 @@
 node_modules/
-.nx/
 dist/
 build/
 coverage/
@@ -11,9 +10,6 @@ coverage/
 !.env.example
 !.env.docker
 
-apps/**/dist/
-packages/**/dist/
-packages/**/build/
 tmp
 
 # Generated API docs (typedoc)

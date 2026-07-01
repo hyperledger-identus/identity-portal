@@ -4,8 +4,8 @@ export const PORT = process.env.PORT ?? "3000";
 export const DB_ENCRYPTION_KEY = process.env.DB_ENCRYPTION_KEY ?? "CHANGEMECHANGEMECHANGEMECHANGEMECHANGEMECHANGEMECHANGEMECHANGEMECHANGEMECHANGEMECHANGEMECHANGEMECHANGEMECHANGEMECHANGEMECHANGEMECHANGEMECHANGEMECHANGEME";
 export const NODE_ENV = process.env.NODE_ENV ?? "development";
 export const IS_PRODUCTION = NODE_ENV === "production";
-export const VITE_CONFIG = process.env.VITE_CONFIG ?? path.resolve(process.cwd(), "apps/portal/vite.config.ts");
-export const UI_DIST = process.env.UI_DIST ?? path.resolve(process.cwd(), "dist/apps/portal/src/ui");
+export const VITE_CONFIG = process.env.VITE_CONFIG ?? path.resolve(process.cwd(), "vite.config.ts");
+export const UI_DIST = process.env.UI_DIST ?? path.resolve(process.cwd(), "dist/ui");
 export const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://admin:admin@localhost:27019/identus?authSource=admin';
 export const MEDIATOR_DID = process.env.MEDIATOR_DID ?? "did:peer:2.Ez6LSghwSE437wnDE1pt3X6hVDUQzSjsHzinpX3XFvMjRAm7y.Vz6Mkhh1e5CEYYq6JBUcTZ6Cp2ranCWRrv7Yax3Le4N59R6dd.SeyJ0IjoiZG0iLCJzIjp7InVyaSI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MCIsImEiOlsiZGlkY29tbS92MiJdfX0.SeyJ0IjoiZG0iLCJzIjp7InVyaSI6IndzOi8vbG9jYWxob3N0OjgwODAvd3MiLCJhIjpbImRpZGNvbW0vdjIiXX19";
 
