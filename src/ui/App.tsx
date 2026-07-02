@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Provider } from "react-redux";
-import { createPortalStore } from "./store";
-import { LoginPage } from "./LoginPage";
-import { LoggedOutPage } from "./LoggedOutPage";
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Provider } from 'react-redux';
+import { createPortalStore } from './store';
+import { LoginPage } from './LoginPage';
+import { LoggedOutPage } from './LoggedOutPage';
+import { DidResolver } from './DidResolver';
 
 type SessionUser = {
   sub?: string;
@@ -12,9 +13,9 @@ type SessionUser = {
 };
 
 type SessionState =
-  | { status: "loading" }
-  | { status: "authenticated"; user: SessionUser }
-  | { status: "unauthenticated" };
+  | { status: 'loading' }
+  | { status: 'authenticated'; user: SessionUser }
+  | { status: 'unauthenticated' };
 
 /**
  * Reads the current session from the BFF gateway (`GET /api/auth/me`). The
@@ -23,28 +24,28 @@ type SessionState =
  * fallback for sessions that expire while the app is open).
  */
 function useSession(): SessionState {
-  const [state, setState] = useState<SessionState>({ status: "loading" });
+  const [state, setState] = useState<SessionState>({ status: 'loading' });
 
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
       try {
-        const res = await fetch("/api/auth/me", {
-          headers: { Accept: "application/json" },
-          credentials: "include",
+        const res = await fetch('/api/auth/me', {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
         });
         if (cancelled) return;
 
         if (res.status === 401) {
-          setState({ status: "unauthenticated" });
+          setState({ status: 'unauthenticated' });
           return;
         }
 
         const body = await res.json();
-        setState({ status: "authenticated", user: body.user ?? {} });
+        setState({ status: 'authenticated', user: body.user ?? {} });
       } catch {
-        if (!cancelled) setState({ status: "unauthenticated" });
+        if (!cancelled) setState({ status: 'unauthenticated' });
       }
     })();
 
@@ -69,15 +70,15 @@ function Dashboard({ user }: { user: SessionUser }) {
               Identity Portal
             </h1>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-700">
-              A reference dashboard for offline-first Edge Agent workflows and optional
-              Cloud Agent operation.
+              A reference dashboard for offline-first Edge Agent workflows and
+              optional Cloud Agent operation.
             </p>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-slate-700">
-              Signed in as{" "}
+              Signed in as{' '}
               <span className="font-semibold text-ink">
-                {user.username ?? user.email ?? "user"}
+                {user.username ?? user.email ?? 'user'}
               </span>
             </span>
             <a
@@ -88,6 +89,7 @@ function Dashboard({ user }: { user: SessionUser }) {
             </a>
           </div>
         </header>
+        <DidResolver />
       </div>
     </main>
   );
@@ -95,7 +97,9 @@ function Dashboard({ user }: { user: SessionUser }) {
 
 /** Only allow same-origin relative paths as a redirect target. */
 function safeReturnTo(value: string | null): string {
-  return value && value.startsWith("/") && !value.startsWith("//") ? value : "/";
+  return value && value.startsWith('/') && !value.startsWith('//')
+    ? value
+    : '/';
 }
 
 function LoadingScreen() {
@@ -106,19 +110,21 @@ export function App() {
   const store = useMemo(() => createPortalStore(), []);
   const session = useSession();
 
-  const path = typeof window !== "undefined" ? window.location.pathname : "/";
-  const isLoginRoute = path === "/login";
-  const isLoggedOutRoute = path === "/logged-out";
+  const path = typeof window !== 'undefined' ? window.location.pathname : '/';
+  const isLoginRoute = path === '/login';
+  const isLoggedOutRoute = path === '/logged-out';
 
   useEffect(() => {
-    if (session.status === "loading") {
+    if (session.status === 'loading') {
       return;
     }
 
-    if (session.status === "authenticated") {
+    if (session.status === 'authenticated') {
       // Logged-in users shouldn't sit on the login page; send them to returnTo.
       if (isLoginRoute) {
-        const returnTo = new URLSearchParams(window.location.search).get("returnTo");
+        const returnTo = new URLSearchParams(window.location.search).get(
+          'returnTo',
+        );
         window.location.assign(safeReturnTo(returnTo));
       }
       return;
@@ -139,8 +145,9 @@ export function App() {
   } else if (isLoginRoute) {
     // Render the form only once we know the visitor is unauthenticated; otherwise
     // show a neutral screen while loading or while redirecting an authed user.
-    content = session.status === "unauthenticated" ? <LoginPage /> : <LoadingScreen />;
-  } else if (session.status === "authenticated") {
+    content =
+      session.status === 'unauthenticated' ? <LoginPage /> : <LoadingScreen />;
+  } else if (session.status === 'authenticated') {
     content = <Dashboard user={session.user} />;
   } else {
     // Loading, or unauthenticated and being redirected to /login.
