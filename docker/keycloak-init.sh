@@ -137,6 +137,9 @@ function create_user() {
 	local username=$2
 	local password=$3
 
+	# email/lastName/emailVerified are required by the declarative user profile
+	# that Keycloak 24+ enables by default. Without them the account is deemed
+	# "not fully set up" and the direct-access-grant (ROPC) login fails.
 	curl --request POST "$KEYCLOAK_BASE_URL/admin/realms/$REALM_NAME/users" \
 		--fail -s \
 		-H "Authorization: Bearer $access_token" \
@@ -145,6 +148,9 @@ function create_user() {
 			\"id\": \"$username\",
 			\"username\": \"$username\",
 			\"firstName\": \"$username\",
+			\"lastName\": \"Demo\",
+			\"email\": \"$username@example.com\",
+			\"emailVerified\": true,
 			\"enabled\": true,
 			\"credentials\": [{\"value\": \"$password\", \"temporary\": false}]
 		}"
