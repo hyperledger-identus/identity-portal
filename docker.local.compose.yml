@@ -31,7 +31,11 @@ services:
 
   keycloak-init:
     image: badouralix/curl-jq:ubuntu
-    command: ["/bin/bash", "/workspace/init-script.sh"]
+    # Strip CRLF before execution so Windows checkouts work in the Linux container.
+    command:
+      - /bin/bash
+      - -c
+      - sed 's/\r$//' /workspace/init-script.sh | bash
     environment:
       KEYCLOAK_BASE_URL: http://keycloak:8080
       KEYCLOAK_ADMIN_USER: admin
@@ -52,7 +56,7 @@ services:
         condition: service_completed_successfully
 
   neoprism:
-    image: docker.io/hyperledgeridentus/identus-neoprism:${NEOPRISM_VERSION:-0.13.0}
+    image: docker.io/hyperledgeridentus/identus-neoprism:${NEOPRISM_VERSION:-0.14.1}
     pull_policy: if_not_present
     command: ["dev"]
     ports:

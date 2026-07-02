@@ -18,13 +18,12 @@
  * - Zod
  * - Mongoose
 */
-import dotenv from "dotenv";
+import "./require-shim";
+import "dotenv/config";
 
 import { PORT } from "./config";
 import { HttpServer } from "./utils/http";
 import { startAgent } from "./utils/agent";
-
-dotenv.config();
 
 async function onClose() {
   console.log('SIGTERM signal received. Shutting down gracefully...');
