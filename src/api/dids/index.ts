@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { errorResponseSchema } from '../../schemas/error';
 import { ContextFactory, createRestRouter } from '../../utils/rest';
+import { PrismDIDKeyCurves } from 'src/utils/agent/types';
 
 export default function createIssuerRouter(createContext: ContextFactory) {
   return createRestRouter({ createContext })
@@ -19,9 +20,16 @@ export default function createIssuerRouter(createContext: ContextFactory) {
     })
     .post('/', {
       input: z.object({
-        did: z.string().min(1),
+        ISSUING_KEY: z.array(z.string()).min(1),
+        KEY_AGREEMENT_KEY: z.array(z.string()).min(1),
+        AUTHENTICATION_KEY: z.array(z.string()).min(1),
+        REVOCATION_KEY: z.array(z.string()).min(1),
+        CAPABILITY_INVOCATION_KEY: z.array(z.string()).min(1),
+        CAPABILITY_DELEGATION_KEY: z.array(z.string()).min(1),
       }),
-      output: errorResponseSchema,
+      output: z.object({
+        did: z.string()
+      }),
       openAPI: {
         name: 'POST DIDS',
         description: `
@@ -29,7 +37,10 @@ export default function createIssuerRouter(createContext: ContextFactory) {
         tags: ['dids'],
       },
       handler: async ({ input, ctx }) => {
-        throw new Error('Not implemented');
+        const did = await ctx.agent.dids.prism.create(input as PrismDIDKeyCurves)
+        return {
+          did: did.toString()
+        };
       },
     })
     .get('/resolve/:did', {

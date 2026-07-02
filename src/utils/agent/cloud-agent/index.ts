@@ -1,4 +1,4 @@
-import { Domain } from '@hyperledger/identus-sdk';
+import { DIDKeys, Domain } from '@hyperledger/identus-sdk';
 import { CLOUD_AGENT_BASE_URL } from '../../../config';
 import { Agent, PrismDIDKeyCurves } from '../types';
 import { createClient } from './client';
@@ -60,14 +60,78 @@ export async function createCloudAgentClient(
         list: () => {
           throw new Error('Not implemented');
         },
-        create: (keys: PrismDIDKeyCurves) => {
+        create: async (keys: PrismDIDKeyCurves) => {
           /**
            * Use
            * client.POST("/did-registrar/dids", { })
            *
            * The Cloud-agent internally checks which masterKey to use and creates + published the operation for you
-           */
-          throw new Error('Not implemented');
+          */
+
+          const publicKeys = Object.keys(keys).reduce((allPublicKeys, keyType) => {
+            const curves = keys[keyType as keyof DIDKeys]!
+            return [
+              ...allPublicKeys,
+              ...curves.map((curve, i) => {
+                if (keyType === 'ISSUING_KEY') {
+                  return {
+                    "id": `${keyType}-${i}`,
+                    "purpose": "assertionMethod" as const,
+                    "curve": curve.toString().toLowerCase()
+                  }
+                }
+                if (keyType === 'AUTHENTICATION_KEY') {
+                  return {
+                    "id": `${keyType}-${i}`,
+                    "purpose": "authentication" as const,
+                    "curve": curve.toString().toLowerCase()
+                  }
+                }
+                if (keyType === 'CAPABILITY_DELEGATION_KEY') {
+                  return {
+                    "id": `${keyType}-${i}`,
+                    "purpose": "capabilityDelegation" as const,
+                    "curve": curve.toString().toLowerCase()
+                  }
+                }
+                if (keyType === 'CAPABILITY_INVOCATION_KEY') {
+                  return {
+                    "id": `${keyType}-${i}`,
+                    "purpose": "capabilityInvocation" as const,
+                    "curve": curve.toString().toLowerCase()
+                  }
+                }
+                if (keyType === 'KEY_AGREEMENT_KEY') {
+                  return {
+                    "id": `${keyType}-${i}`,
+                    "purpose": "keyAgreement" as const,
+                    "curve": curve.toString().toLowerCase()
+                  }
+                }
+                throw new Error("Key type not supported");
+              })
+            ]
+          }, [] as { id: string, purpose: any, curve: any }[])
+
+
+
+
+          const { data, error, response } = await client.POST("/did-registrar/dids", {
+            body: {
+              "documentTemplate": {
+                "publicKeys": publicKeys,
+                "services": []
+              }
+            }
+          });
+
+          if (!response.ok || error) {
+            throw new Error(
+              `Cloud Agent could not create DID (HTTP ${response.status})`,
+            );
+          }
+          const payload = typeof data === 'string' ? JSON.parse(data) : data;
+          return Domain.DID.fromString(payload.longFormDid)
         },
         publish: (did: Domain.DID) => {
           /**

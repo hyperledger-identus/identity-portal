@@ -3,12 +3,18 @@ import {
     Castor,
     Agent as LocalAgent,
     Domain,
+    PrismKeyPathIndexTask,
 } from "@hyperledger/identus-sdk";
 
-import {  MONGODB_URI } from "../../../config";
+import { MONGODB_URI } from "../../../config";
 import { AgentSession } from "..";
 import { MediatorConnection } from "@hyperledger/identus-sdk/plugins/didcomm";
-import { Agent, PrismDIDKeyCurves } from "../types";
+import {
+    Agent,
+    MutablePrismDIDSecretKeys,
+    PrismDIDKeyCurves,
+    typedEntries,
+} from "../types";
 import { MultiTenantPluto } from "./database";
 import { PRISM_DID_RESOLVERS } from "../../../config/resolvers";
 
@@ -24,23 +30,23 @@ type AgentOptions = {
 export async function createTenantAgent(options: AgentOptions): Promise<LocalAgent> {
     const { castor, pluto } = options;
     LocalAgent.prototype.start = async function start() {
-       try{
-        if (this.pluto.state === Domain.Startable.State.STOPPED) {
-            await this.pluto.start();
+        try {
+            if (this.pluto.state === Domain.Startable.State.STOPPED) {
+                await this.pluto.start();
+            }
+            const mediators = await this.pluto.getAllMediators();
+            for (const mediator of mediators) {
+                const connection = new MediatorConnection(
+                    mediator.mediatorDID.toString(),
+                    mediator.hostDID.toString(),
+                    mediator.routingDID.toString(),
+                );
+                this.connections.addMediator(connection);
+            }
+        } catch (error) {
+            console.error("Failed to start agent:", error);
+            throw error;
         }
-        const mediators = await this.pluto.getAllMediators();
-        for (const mediator of mediators) {
-            const connection = new MediatorConnection(
-                mediator.mediatorDID.toString(),
-                mediator.hostDID.toString(),
-                mediator.routingDID.toString(),
-            );
-            this.connections.addMediator(connection);
-        }
-       } catch (error) {
-        console.error("Failed to start agent:", error);
-        throw error;
-       }
         return Domain.Startable.State.RUNNING;
     }
     const agent = LocalAgent.initialize({
@@ -79,11 +85,57 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
                 list: () => {
                     throw new Error("Not implemented");
                 },
-                create: (keys: PrismDIDKeyCurves) => {
+                create: async (keyTypeCurves: PrismDIDKeyCurves) => {
                     // PrismDIDKeyCurves keys are the types of keys we need to add to the DID
                     // values contain an array of Domain.Curves, we need to create a key with the specific
                     // curve and use the agent.createDID function directly
-                    throw new Error("Not implemented");
+
+                    const seedHex = await pluto.getSetting("seed");
+                    if (!seedHex) {
+                        throw new Error("Seed not found");
+                    }
+                    const seed = Buffer.from(seedHex, "hex");
+                    const index = await agent.runTask(new PrismKeyPathIndexTask({}));
+
+                    const keys: MutablePrismDIDSecretKeys = {};
+
+                    // MASTER_KEY is mandatory and holds a single curve.
+                    const { ...extraCurves } = keyTypeCurves;
+
+                    const masterKeyDerivation = Domain.PrismDerivationPath.init(
+                        index, Domain.PrismDIDKeyUsage.MASTER_KEY
+                    );
+                    keys.MASTER_KEY = apollo.createPrivateKey({
+                        [Domain.KeyProperties.curve]: Domain.Curve.SECP256K1,
+                        [Domain.KeyProperties.seed]: seed,
+                        [Domain.KeyProperties.derivationPath]: masterKeyDerivation.toString(),
+                        [Domain.KeyProperties.derivationSchema]: Domain.PrismDerivationPathSchema
+                    });
+
+                    // Every other usage is optional and holds an array of keys.
+                    for (const [keyType, curves] of typedEntries(extraCurves)) {
+                        const keyUsage = Domain.PrismDIDKeyUsage[keyType];
+                        keys[keyType] = curves.map((curve, curveIndex) => {
+                            const derivation = Domain.PrismDerivationPath.init(
+                                index + curveIndex,
+                                keyUsage
+                            );
+                            return apollo.createPrivateKey({
+                                [Domain.KeyProperties.curve]: curve,
+                                [Domain.KeyProperties.seed]: seed,
+                                [Domain.KeyProperties.derivationPath]: derivation.toString(),
+                                [Domain.KeyProperties.derivationSchema]: Domain.PrismDerivationPathSchema
+                            });
+                        });
+                    }
+
+                    const { MASTER_KEY, ...optionalKeys } = keys;
+                    if (!MASTER_KEY) {
+                        throw new Error("MASTER_KEY is required");
+                    }
+                    return castor.createDID('prism', {
+                        keys: { MASTER_KEY, ...optionalKeys },
+                    });
                 },
                 publish: (did: Domain.DID) => {
                     /**
