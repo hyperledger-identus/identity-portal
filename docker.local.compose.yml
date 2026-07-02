@@ -31,7 +31,11 @@ services:
 
   keycloak-init:
     image: badouralix/curl-jq:ubuntu
-    command: ["/bin/bash", "/workspace/init-script.sh"]
+    # Strip CRLF before execution so Windows checkouts work in the Linux container.
+    command:
+      - /bin/bash
+      - -c
+      - sed 's/\r$//' /workspace/init-script.sh | bash
     environment:
       KEYCLOAK_BASE_URL: http://keycloak:8080
       KEYCLOAK_ADMIN_USER: admin

@@ -20,7 +20,11 @@ services:
 
   keycloak-init:
     image: badouralix/curl-jq:ubuntu
-    command: ["/bin/bash", "/workspace/init-script.sh"]
+    # Strip CRLF before execution so Windows checkouts work in the Linux container.
+    command:
+      - /bin/bash
+      - -c
+      - sed 's/\r$//' /workspace/init-script.sh | bash
     environment:
       KEYCLOAK_BASE_URL: http://keycloak:8080
       KEYCLOAK_ADMIN_USER: admin
@@ -61,7 +65,7 @@ services:
       retries: 20
 
   neoprism:
-    image: docker.io/hyperledgeridentus/identus-neoprism:${NEOPRISM_VERSION:-0.13.0}
+    image: docker.io/hyperledgeridentus/identus-neoprism:${NEOPRISM_VERSION:-0.14.1}
     pull_policy: if_not_present
     command: ["dev"]
     ports:
@@ -80,7 +84,7 @@ services:
       start_period: 30s
 
   cloud-agent:
-    image: docker.io/hyperledgeridentus/identus-cloud-agent:${CLOUD_AGENT_VERSION:-latest}
+    image: docker.io/hyperledgeridentus/identus-cloud-agent:2.2.0
     pull_policy: if_not_present
     ports:
       - "${CLOUD_AGENT_HTTP_PORT:-8085}:8085"
@@ -113,6 +117,7 @@ services:
       VDR_PRISM_NODE_DRIVER_ENABLED: "false"
       VDR_NEOPRISM_DRIVER_ENABLED: "true"
       VDR_LEDGER_DRIVER: neoprism
+      NODE_BACKEND: neoprism
       API_KEY_ENABLED: true
       API_KEY_AUTHENTICATE_AS_DEFAULT_USER: false
       API_KEY_AUTO_PROVISIONING: true

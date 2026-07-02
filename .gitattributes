@@ -1,0 +1,4 @@
+# Shell scripts and container init files must use LF; CRLF breaks bash in Linux containers.
+*.sh text eol=lf
+docker/*.js text eol=lf
+docker/*.sql text eol=lf
