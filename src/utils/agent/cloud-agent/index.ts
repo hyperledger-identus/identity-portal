@@ -1,7 +1,7 @@
-import { Domain } from "@hyperledger/identus-sdk";
-import { CLOUD_AGENT_BASE_URL } from "../../../config";
-import { Agent, PrismDIDKeyCurves } from "../types";
-import { createClient } from "./client";
+import { Domain } from '@hyperledger/identus-sdk';
+import { CLOUD_AGENT_BASE_URL } from '../../../config';
+import { Agent, PrismDIDKeyCurves } from '../types';
+import { createClient } from './client';
 
 export type CloudAgentOptions = {
   /**
@@ -24,9 +24,7 @@ export type CloudAgentOptions = {
 export async function createCloudAgentClient(
   options: CloudAgentOptions = {},
 ): Promise<Agent> {
-
-  // Created ahead of the (still unimplemented) endpoints that will use it.
-  const _client = createClient({
+  const client = createClient({
     baseUrl: CLOUD_AGENT_BASE_URL,
     headers: options.accessToken
       ? { Authorization: `Bearer ${options.accessToken}` }
@@ -35,48 +33,61 @@ export async function createCloudAgentClient(
 
   return {
     start: async () => {
-      console.log("Starting Cloud Agent");
+      console.log('Starting Cloud Agent');
     },
     stop: async () => {
-      console.log("Stopping Cloud Agent");
+      console.log('Stopping Cloud Agent');
     },
     dids: {
-      resolveDID: () => {
-        // The agent's DID resolution endpoint is not yet wired here.
-        throw new Error("resolveDID is not implemented for the Cloud Agent");
+      resolveDID: async (did: string) => {
+        // Mirrors the SDK's built-in Prism resolver: fetch the W3C DID document
+        // (did+ld+json) and parse it into a Domain.DIDDocument. The typed client
+        // returns non-JSON content as a text, so JSON.parse it before fromJSON.
+        const { data, error, response } = await client.GET('/dids/{didRef}', {
+          params: { didRef: did },
+          headers: { Accept: 'application/did+ld+json' },
+        });
+
+        if (!response.ok || error) {
+          throw new Error(
+            `Cloud Agent could not resolve ${did} (HTTP ${response.status})`,
+          );
+        }
+        const document = typeof data === 'string' ? JSON.parse(data) : data;
+        return Domain.DIDDocument.fromJSON(document);
       },
       prism: {
         list: () => {
-          throw new Error("Not implemented");
-      },
+          throw new Error('Not implemented');
+        },
         create: (keys: PrismDIDKeyCurves) => {
           /**
            * Use
            * client.POST("/did-registrar/dids", { })
-           * 
+           *
            * The Cloud-agent internally checks which masterKey to use and creates + published the operation for you
            */
-          throw new Error("Not implemented");
+          throw new Error('Not implemented');
         },
         publish: (did: Domain.DID) => {
           /**
            * Use
            * client.POST("/did-registrar/dids/{didRef}/publications", { params: { didRef: 'did.toString()'}})
-           * 
+           *
            * The Cloud-agent internally checks which masterKey to use and creates + published the operation for you
            */
-          throw new Error("Not implemented");
+          throw new Error('Not implemented');
         },
         deactivate: (did: Domain.DID) => {
           /**
            * Use
            * client.POST("/did-registrar/dids/{didRef}/deactivations", { params: { didRef: 'did.toString()'}})
-           * 
+           *
            * The Cloud-agent internally checks which masterKey to use and creates + published the operation for you
            */
-          throw new Error("Not implemented");
-        }
-      }
+          throw new Error('Not implemented');
+        },
+      },
     },
   };
 }
