@@ -27,7 +27,7 @@
     "cloud-agent:logs": "docker compose -f docker.cloud.compose.yml logs -f"
   },
   "dependencies": {
-    "@hyperledger/identus-sdk": "^8.0.0",
+    "@hyperledger/identus-sdk": "^8.1.0",
     "@meshsdk/core": "^1.9.0",
     "@meshsdk/react": "^2.0.0-beta.2",
     "@reduxjs/toolkit": "^2.12.0",
