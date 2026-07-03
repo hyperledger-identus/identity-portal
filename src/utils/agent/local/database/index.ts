@@ -1,5 +1,6 @@
 import { RIDB, WasmInternal } from "@trust0/ridb";
-import { TableName, Settings, Apollo, Pluto } from "@hyperledger/identus-sdk";
+import type { Doc } from "@trust0/ridb-core";
+import { TableName, Settings, Apollo, Pluto, CollectionMap } from "@hyperledger/identus-sdk";
 import { RIDBCollection, AppRIDB, PlutoOptions } from "./types";
 import { schemas } from "./schemas";
 import { migrations } from "./migrations";
@@ -8,12 +9,14 @@ import { DB_ENCRYPTION_KEY } from "../../../../config";
 import { createMongoDB } from "@trust0/ridb-mongodb";
 
 
-//Module augmentation to add tenants table
+//Module augmentation to add custom tables, with document types derived from their schema definitions
 declare module "@hyperledger/identus-sdk" {
   interface CollectionMap {
-    tenants: { uuid: string; tenantId: string };
+    tenants: Doc<(typeof schemas)["tenants"]>;
+    schemas: Doc<(typeof schemas)["schemas"]>;
   }
 }
+
 
 export class MultiTenantPluto extends Pluto {
 
@@ -151,6 +154,34 @@ export class MultiTenantPluto extends Pluto {
       uuid: randomUUID(),
       id: randomUUID()
     });
+  }
+
+  async createSchema(schema: CollectionMap['schemas']): Promise<string> {
+    const uuid = randomUUID();
+    await this.store.insert("schemas", { ...schema, uuid });
+    return uuid;
+  }
+
+  async getSchemas(): Promise<CollectionMap['schemas'][]> {
+    const results = await this.store.query("schemas");
+    return results
+  }
+
+  async getSchema(uuid: string): Promise<CollectionMap['schemas'] | undefined> {
+    const schemas = await this.getSchemas();
+    return schemas.find((schema) => schema.uuid === uuid);
+  }
+
+  async updateSchema(uuid: string, schema: Partial<CollectionMap['schemas']>): Promise<void> {
+    const existing = await this.getSchema(uuid);
+    if (!existing) {
+      throw new Error(`Schema with UUID ${uuid} not found`);
+    }
+    return this.store.update("schemas", { ...existing, ...schema, uuid });
+  }
+
+  async deleteSchema(uuid: string): Promise<void> {
+    return this.store.delete("schemas", uuid);
   }
 }
 

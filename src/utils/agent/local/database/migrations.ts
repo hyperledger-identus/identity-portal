@@ -16,4 +16,5 @@ export const migrations = {
   settings: {},
   issuance: {},
   tenants: {},
+  schemas: {},
 };
