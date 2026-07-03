@@ -1,4 +1,4 @@
-import { Domain, RequiredPrismDIDSecretKeys} from "@hyperledger/identus-sdk";
+import { Domain, RequiredPrismDIDSecretKeys } from "@hyperledger/identus-sdk";
 
 
 /**
@@ -16,7 +16,24 @@ import { Domain, RequiredPrismDIDSecretKeys} from "@hyperledger/identus-sdk";
 export type PrismDIDKeys = Exclude<keyof RequiredPrismDIDSecretKeys, 'MASTER_KEY'>;
 
 export type PrismDIDKeyCurves = {
-    [K in PrismDIDKeys]: Domain.Curve[]
+    [K in PrismDIDKeys]?: Domain.Curve[]
+}
+
+/**
+ * A `RequiredPrismDIDSecretKeys` under construction: every entry (including
+ * `MASTER_KEY`) is optional so the object can start empty and be populated
+ * incrementally, while still being strongly typed per key usage.
+ */
+export type MutablePrismDIDSecretKeys = Partial<RequiredPrismDIDSecretKeys>;
+
+/**
+ * `Object.entries` typed against the object's own key/value types instead of
+ * widening keys to `string`. Lets us iterate key maps without casting.
+ */
+export function typedEntries<K extends PropertyKey, V>(
+    obj: Partial<Record<K, V>>,
+): [K, V][] {
+    return Object.entries(obj) as [K, V][];
 }
 
 export type Agent = {
@@ -27,8 +44,8 @@ export type Agent = {
         prism: {
             list: () => Promise<Domain.DID[]>;
             create: (keys: PrismDIDKeyCurves) => Promise<Domain.DID>;
-            publish: (did: Domain.DID) => Promise<{did: Domain.DID, txId: string}>;
-            deactivate: (did: Domain.DID) => Promise<{ txId: string}>
+            publish: (did: Domain.DID) => Promise<{ did: Domain.DID, txId: string }>;
+            deactivate: (did: Domain.DID) => Promise<{ txId: string }>
         }
     },
 };
