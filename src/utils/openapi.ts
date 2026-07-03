@@ -13,6 +13,130 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 import type { RouterWithRoutes, RouteDefinition } from './rest';
 import { errorResponseSchema } from '../schemas/error';
 
+
+export type HttpMethod =
+  | 'get'
+  | 'put'
+  | 'post'
+  | 'delete'
+  | 'patch'
+  | 'head'
+  | 'options';
+
+/** Union of path strings in a spec that implement a given HTTP method. */
+export type PathsWithMethod<Paths, M extends HttpMethod> = {
+  [P in keyof Paths]: Paths[P] extends Record<M, unknown> ? P : never;
+}[keyof Paths];
+
+/** The OpenAPI operation object for a `path` + `method` within a spec. */
+export type OperationOf<
+  Paths,
+  P extends keyof Paths,
+  M extends HttpMethod,
+> = Paths[P] extends Record<M, infer O> ? O : never;
+
+/** `never`-ish detection: openapi-typescript emits empty objects for "no params". */
+type EmptyToUndefined<T> = T extends Record<string, never>
+  ? undefined
+  : keyof T extends never
+    ? undefined
+    : T;
+
+type PathParamsOf<O> = O extends { parameters: { path: infer T } }
+  ? EmptyToUndefined<T>
+  : undefined;
+
+type QueryParamsOf<O> = O extends { parameters: { query: infer T } }
+  ? EmptyToUndefined<T>
+  : undefined;
+
+type RequestBodyOf<O> = O extends {
+  requestBody: { content: { 'application/json': infer B } };
+}
+  ? B
+  : O extends { requestBody?: { content: { 'application/json': infer B } } }
+    ? B | undefined
+    : undefined;
+
+type SuccessStatus = 200 | 201 | 202 | 203 | 204;
+type JSONContentOf<R> = R extends { content: { 'application/json': infer B } }
+  ? B
+  : unknown;
+
+/** JSON body of the (first) success response, or `unknown` if none documented. */
+export type ResponseBodyOf<O> = O extends { responses: infer R }
+  ? [SuccessStatus & keyof R] extends [never]
+    ? unknown
+    : JSONContentOf<R[SuccessStatus & keyof R]>
+  : unknown;
+
+/** Per-request arguments, with required-ness derived from the spec. */
+type RequestArgs<O> = {
+  headers?: Record<string, string>;
+  signal?: AbortSignal;
+} & (PathParamsOf<O> extends undefined
+  ? { params?: undefined }
+  : { params: PathParamsOf<O> }) &
+  (QueryParamsOf<O> extends undefined
+    ? { query?: undefined }
+    : { query: QueryParamsOf<O> }) &
+  (RequestBodyOf<O> extends undefined
+    ? { body?: undefined }
+    : undefined extends RequestBodyOf<O>
+      ? { body?: RequestBodyOf<O> }
+      : { body: RequestBodyOf<O> });
+
+/** True when the request args object has at least one required key. */
+type HasRequiredKeys<T> = {
+  [K in keyof T]-?: Record<string, never> extends Pick<T, K> ? never : K;
+}[keyof T] extends never
+  ? false
+  : true;
+
+/** Makes the options argument optional unless the endpoint requires something. */
+type MaybeOptionalArgs<O> =
+  HasRequiredKeys<RequestArgs<O>> extends true
+    ? [options: RequestArgs<O>]
+    : [options?: RequestArgs<O>];
+
+/** Discriminated result, so callers can branch on `data` vs `error`. */
+export type FetchResult<O> =
+  | { data: ResponseBodyOf<O>; error?: undefined; response: Response }
+  | { data?: undefined; error: unknown; response: Response };
+
+export type ClientOptions = {
+  baseUrl: string;
+  headers?: Record<string, string>;
+  fetch?: typeof fetch;
+};
+
+type RuntimeArgs = {
+  params?: Record<string, string | number | boolean>;
+  query?: Record<string, string | number | boolean | undefined>;
+  body?: unknown;
+  headers?: Record<string, string>;
+  signal?: AbortSignal;
+};
+
+/** A method function bound to a spec's `Paths` and a single HTTP verb. */
+export type ClientMethod<Paths, M extends HttpMethod> = <
+  P extends PathsWithMethod<Paths, M>,
+>(
+  path: P,
+  ...args: MaybeOptionalArgs<OperationOf<Paths, P, M>>
+) => Promise<FetchResult<OperationOf<Paths, P, M>>>;
+
+/** The full client surface for a given spec's `Paths`. */
+export type OpenApiClient<Paths> = {
+  GET: ClientMethod<Paths, 'get'>;
+  PUT: ClientMethod<Paths, 'put'>;
+  POST: ClientMethod<Paths, 'post'>;
+  DELETE: ClientMethod<Paths, 'delete'>;
+  PATCH: ClientMethod<Paths, 'patch'>;
+  HEAD: ClientMethod<Paths, 'head'>;
+  OPTIONS: ClientMethod<Paths, 'options'>;
+};
+
 export type OpenApiConfig = {
   title: string;
   version: string;
@@ -349,5 +473,89 @@ export function generateOpenApiSpec(
       parameters: {},
     },
     paths,
+  };
+}
+
+
+function buildUrl(baseUrl: string, path: string, args: RuntimeArgs): string {
+  let resolved = path;
+  if (args.params) {
+    for (const [key, value] of Object.entries(args.params)) {
+      resolved = resolved.replace(
+        `{${key}}`,
+        encodeURIComponent(String(value)),
+      );
+    }
+  }
+  let query = '';
+  if (args.query) {
+    const search = new URLSearchParams();
+    for (const [key, value] of Object.entries(args.query)) {
+      if (value !== undefined) search.append(key, String(value));
+    }
+    const qs = search.toString();
+    if (qs) query = `?${qs}`;
+  }
+  return `${baseUrl.replace(/\/$/, '')}${resolved}${query}`;
+}
+
+/**
+ * Creates a type-safe OpenAPI client for the spec described by `Paths`.
+ *
+ * ```ts
+ * import type { paths } from './spec';
+ * const client = createOpenApiClient<paths>({ baseUrl: 'http://localhost:8080' });
+ * const { data, error } = await client.GET('/api/dids/{did}', {
+ *   params: { did: 'did:prism:...' },
+ * });
+ * ```
+ */
+export function createOpenApiClient<Paths>(
+  clientOptions: ClientOptions,
+): OpenApiClient<Paths> {
+  const doFetch = clientOptions.fetch ?? fetch;
+
+  async function request<O>(
+    method: HttpMethod,
+    path: string,
+    args: RuntimeArgs,
+  ): Promise<FetchResult<O>> {
+    const url = buildUrl(clientOptions.baseUrl, path, args);
+    const hasBody = args.body !== undefined && args.body !== null;
+    const response = await doFetch(url, {
+      method: method.toUpperCase(),
+      headers: {
+        ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
+        ...clientOptions.headers,
+        ...args.headers,
+      },
+      body: hasBody ? JSON.stringify(args.body) : undefined,
+      signal: args.signal,
+    });
+
+    const contentType = response.headers.get('content-type') ?? '';
+    const payload = contentType.includes('application/json')
+      ? await response.json().catch(() => undefined)
+      : await response.text().catch(() => undefined);
+
+    if (response.ok) {
+      return { data: payload as ResponseBodyOf<O>, response };
+    }
+    return { error: payload, response };
+  }
+
+  const method =
+    <M extends HttpMethod>(verb: M): ClientMethod<Paths, M> =>
+    (path, ...[options]) =>
+      request(verb, path as string, (options ?? {}) as RuntimeArgs);
+
+  return {
+    GET: method('get'),
+    PUT: method('put'),
+    POST: method('post'),
+    DELETE: method('delete'),
+    PATCH: method('patch'),
+    HEAD: method('head'),
+    OPTIONS: method('options'),
   };
 }
