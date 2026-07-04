@@ -3,6 +3,7 @@ import { Provider } from 'react-redux';
 import { createPortalStore } from './store';
 import { LoginPage } from './LoginPage';
 import { LoggedOutPage } from './LoggedOutPage';
+import { CreateDid } from './CreateDid';
 import { DidResolver } from './DidResolver';
 
 type SessionUser = {
@@ -89,7 +90,10 @@ function Dashboard({ user }: { user: SessionUser }) {
             </a>
           </div>
         </header>
-        <DidResolver />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <CreateDid />
+          <DidResolver />
+        </div>
       </div>
     </main>
   );

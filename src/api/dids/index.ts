@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { didDocumentSchema } from '../../schemas/did-document';
 import { errorResponseSchema } from '../../schemas/error';
 import { ContextFactory, createRestRouter } from '../../utils/rest';
 import { PrismDIDKeyCurves } from 'src/utils/agent/types';
@@ -47,7 +48,7 @@ export default function createIssuerRouter(createContext: ContextFactory) {
       input: z.object({
         did: z.string().min(1),
       }),
-      output: z.any(),
+      output: didDocumentSchema,
       openAPI: {
         name: 'RESOLVE DID',
         description: 'Resolves a DID to its DID document.',
