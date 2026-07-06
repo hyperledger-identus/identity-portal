@@ -268,21 +268,27 @@ The full table with defaults is in
 
 ## Phase 2: DID management
 
-The `Agent` contract exposes a `dids.prism` group for the full `did:prism`
-lifecycle:
+The `Agent` contract exposes `dids.resolveDID` plus a `dids.prism` group for the
+`did:prism` lifecycle. Current status:
 
-| Method            | Purpose                                           |
-| ----------------- | ------------------------------------------------- |
-| `list()`          | List the tenant's Prism DIDs.                     |
-| `create(keys)`    | Create a Prism DID with the requested key curves. |
-| `publish(did)`    | Publish a DID to neoprism (returns a `txId`).     |
-| `deactivate(did)` | Deactivate a published DID.                       |
+| Method            | Purpose                                           | Status                         |
+| ----------------- | ------------------------------------------------- | ------------------------------ |
+| `resolveDID(did)` | Resolve a DID to its DID document.                | Implemented (local and cloud). |
+| `create(keys)`    | Create a Prism DID with the requested key curves. | Implemented (local and cloud). |
+| `list()`          | List the tenant's Prism DIDs.                     | Not implemented yet.           |
+| `publish(did)`    | Publish a DID (returns a `txId`).                 | Not implemented yet.           |
+| `deactivate(did)` | Deactivate a published DID.                       | Not implemented yet.           |
 
-DID resolution (`dids.resolveDID`) is implemented in local mode. The `dids.prism`
-methods are scaffolded (they currently `throw "Not implemented"`) with inline notes
-on how each maps to the SDK (`agent.createDID` / `agent.publishDID`) or the Cloud
-Agent registrar; they are the work items of Phase 2 and must be implemented for
-both modes.
+`resolveDID` is implemented in both modes: local resolves `did:prism` through a
+custom NeoPRISM resolver, and cloud resolves through the Cloud Agent. `create` is
+implemented in both modes as well (local derives the keys and calls
+`castor.createDID`; cloud posts to the Cloud Agent's `/did-registrar/dids`).
+`list`, `publish` and `deactivate` are still scaffolded (they
+`throw "Not implemented"`) with inline notes on how each maps to the SDK or the
+Cloud Agent registrar — these are the remaining Phase 2 work items.
+
+Over REST, `GET /api/dids/resolve/:did` and `POST /api/dids` are wired to the
+agent; `GET /api/dids` (list) is present but not yet implemented.
 
 ## Runtime environments
 
