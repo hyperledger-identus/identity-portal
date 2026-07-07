@@ -1,4 +1,4 @@
-import { Domain, RequiredPrismDIDSecretKeys } from "@hyperledger/identus-sdk";
+import { CollectionMap, Domain, RequiredPrismDIDSecretKeys } from "@hyperledger/identus-sdk";
 
 
 /**
@@ -36,6 +36,18 @@ export function typedEntries<K extends PropertyKey, V>(
     return Object.entries(obj) as [K, V][];
 }
 
+/**
+ * The RIDB `schemas` collection model. The collection is augmented into
+ * `CollectionMap` by the local database module.
+ */
+export type CredentialSchema = CollectionMap['schemas'];
+
+/**
+ * Payload for creating a schema: `uuid` is generated on insert and
+ * `tenantId` is injected by the tenant-scoped store.
+ */
+export type CredentialSchemaInput = Omit<CredentialSchema, 'uuid' | 'tenantId'>;
+
 export type Agent = {
     start: () => Promise<void>;
     stop: () => Promise<void>;
@@ -47,5 +59,12 @@ export type Agent = {
             publish: (did: Domain.DID) => Promise<{ did: Domain.DID, txId: string }>;
             deactivate: (did: Domain.DID) => Promise<{ txId: string }>
         }
+    },
+    schemas: {
+        list: () => Promise<CredentialSchema[]>;
+        get: (uuid: string) => Promise<CredentialSchema | undefined>;
+        create: (schema: CredentialSchemaInput) => Promise<string>;
+        update: (uuid: string, schema: Partial<CredentialSchemaInput>) => Promise<void>;
+        delete: (uuid: string) => Promise<void>;
     },
 };

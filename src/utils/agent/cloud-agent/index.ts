@@ -1,6 +1,6 @@
 import { DIDKeys, Domain } from '@hyperledger/identus-sdk';
 import { CLOUD_AGENT_BASE_URL } from '../../../config';
-import { Agent, PrismDIDKeyCurves } from '../types';
+import { Agent, CredentialSchemaInput, PrismDIDKeyCurves } from '../types';
 import { createClient } from './client';
 
 export type CloudAgentOptions = {
@@ -151,6 +151,49 @@ export async function createCloudAgentClient(
            */
           throw new Error('Not implemented');
         },
+      },
+    },
+    schemas: {
+      list: () => {
+        /**
+         * Use
+         * client.GET('/schema-registry/schemas', {})
+         *
+         * Paginated response, map its contents to CollectionMap['schemas'] records
+         */
+        throw new Error('Not implemented');
+      },
+      get: (uuid: string) => {
+        /**
+         * Use
+         * client.GET('/schema-registry/schemas/{guid}', { params: { guid: uuid } })
+         */
+        throw new Error('Not implemented');
+      },
+      create: (schema: CredentialSchemaInput) => {
+        /**
+         * Use
+         * client.POST('/schema-registry/schemas', { body: ... })
+         *
+         * The Cloud-agent signs the schema and issues it from its own DID
+         */
+        throw new Error('Not implemented');
+      },
+      update: (uuid: string, schema: Partial<CredentialSchemaInput>) => {
+        /**
+         * Use
+         * client.PUT('/schema-registry/schemas/{id}', { params: { id: uuid }, body: ... })
+         *
+         * The registry publishes a new schema version, it does not edit in place
+         */
+        throw new Error('Not implemented');
+      },
+      delete: (uuid: string) => {
+        /**
+         * The schema registry is append-only, there is no DELETE endpoint.
+         * We need to decide if we block this in cloud mode or hide the action.
+         */
+        throw new Error('Not implemented');
       },
     },
   };

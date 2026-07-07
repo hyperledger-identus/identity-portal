@@ -156,7 +156,7 @@ export class MultiTenantPluto extends Pluto {
     });
   }
 
-  async createSchema(schema: CollectionMap['schemas']): Promise<string> {
+  async createSchema(schema: Omit<CollectionMap['schemas'], 'uuid'>): Promise<string> {
     const uuid = randomUUID();
     await this.store.insert("schemas", { ...schema, uuid });
     return uuid;
