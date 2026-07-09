@@ -42,4 +42,7 @@ COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000
 USER node
-CMD ["node", "dist/main.js"]
+# Preload the require-shim so `globalThis.require` exists before the Identus
+# SDK's ESM dependency graph evaluates (mirrors `npm run start`). Without it the
+# SDK crashes with `Dynamic require of "crypto" is not supported`.
+CMD ["node", "--import", "./dist/require-shim.js", "dist/main.js"]
