@@ -7,11 +7,16 @@ import * as esbuild from "esbuild";
 const isProduction = process.env.NODE_ENV === "production";
 
 await esbuild.build({
-  entryPoints: ["src/main.ts"],
-  outfile: "dist/main.cjs",
+  // `require-shim` is emitted as a standalone module so it can be loaded via
+  // `node --import ./dist/require-shim.js` ahead of `main.js`. Under ESM the
+  // SDK's dependency graph evaluates before `main.js`'s body, so an inline
+  // import of the shim runs too late — the preload guarantees `globalThis.require`
+  // exists before any SDK code that relies on it.
+  entryPoints: ["src/main.ts", "src/require-shim.ts"],
+  outdir: "dist",
   bundle: true,
   platform: "node",
-  format: "cjs",
+  format: "esm",
   target: "node22",
   packages: "external",
   sourcemap: !isProduction,
