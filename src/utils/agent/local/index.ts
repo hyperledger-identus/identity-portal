@@ -134,7 +134,7 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
                     if (!MASTER_KEY) {
                         throw new Error("MASTER_KEY is required");
                     }
-                    return castor.createDID('prism', {
+                    return agent.createDID('prism', {
                         keys: { MASTER_KEY, ...optionalKeys },
                     });
                 },
