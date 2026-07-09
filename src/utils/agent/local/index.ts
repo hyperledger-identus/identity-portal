@@ -11,6 +11,7 @@ import { AgentSession } from "..";
 import { MediatorConnection } from "@hyperledger/identus-sdk/plugins/didcomm";
 import {
     Agent,
+    CredentialSchemaInput,
     MutablePrismDIDSecretKeys,
     PrismDIDKeyCurves,
     typedEntries,
@@ -158,6 +159,14 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
                     throw new Error("Not implemented");
                 }
             }
+        },
+        schemas: {
+            // Records are tenant-scoped by MultiTenantPluto's store filters.
+            list: () => pluto.getSchemas(),
+            get: (uuid: string) => pluto.getSchema(uuid),
+            create: (schema: CredentialSchemaInput) => pluto.createSchema({ ...schema, tenantId: session.tenantId }),
+            update: (uuid: string, schema: Partial<CredentialSchemaInput>) => pluto.updateSchema(uuid, schema),
+            delete: (uuid: string) => pluto.deleteSchema(uuid),
         }
     }
 }
