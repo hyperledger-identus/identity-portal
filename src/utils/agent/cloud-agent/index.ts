@@ -57,8 +57,33 @@ export async function createCloudAgentClient(
         return Domain.DIDDocument.fromJSON(document);
       },
       prism: {
-        list: () => {
-          throw new Error('Not implemented');
+        list: async () => {
+          // The registrar paginates with `offset`/`limit` and returns 100 DIDs per
+          // page by default. The generic client cannot pass those parameters yet:
+          // the spec emits `query?` when every query parameter is optional, and
+          // `QueryParamsOf` in src/utils/openapi.ts only matches a required `query`.
+          // Until that is addressed this reads the first page, so a wallet holding
+          // more than 100 DIDs is truncated here.
+          const { data, error, response } = await client.GET(
+            '/did-registrar/dids',
+          );
+
+          if (!response.ok || error) {
+            throw new Error(
+              `Cloud Agent could not list DIDs (HTTP ${response.status})`,
+            );
+          }
+
+          return (data?.contents ?? []).map((managed) => {
+            // A published DID is identified by its canonical form. An unpublished
+            // one only resolves through its long form, which is also what create
+            // returns.
+            const value =
+              managed.status === 'PUBLISHED'
+                ? managed.did
+                : (managed.longFormDid ?? managed.did);
+            return Domain.DID.fromString(value);
+          });
         },
         create: async (keys: PrismDIDKeyCurves) => {
           /**
