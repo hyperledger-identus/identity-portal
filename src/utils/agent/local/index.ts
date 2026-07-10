@@ -83,8 +83,16 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
         dids: {
             resolveDID: (did: string) => castor.resolveDID(did),
             prism: {
-                list: () => {
-                    throw new Error("Not implemented");
+                list: async () => {
+                    // Pluto pairs each stored key with its DID, so a DID created with
+                    // seven keys comes back seven times. Deduplicate by DID string.
+                    // MultiTenantPluto scopes the read to the current tenant.
+                    const prismDIDs = await pluto.getAllPrismDIDs();
+                    const unique = new Map<string, Domain.DID>();
+                    for (const { did } of prismDIDs) {
+                        unique.set(did.toString(), did);
+                    }
+                    return [...unique.values()];
                 },
                 create: async (keyTypeCurves: PrismDIDKeyCurves) => {
                     // PrismDIDKeyCurves keys are the types of keys we need to add to the DID
