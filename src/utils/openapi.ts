@@ -46,8 +46,16 @@ type PathParamsOf<O> = O extends { parameters: { path: infer T } }
   ? EmptyToUndefined<T>
   : undefined;
 
-type QueryParamsOf<O> = O extends { parameters: { query: infer T } }
-  ? EmptyToUndefined<T>
+/**
+ * `query` is emitted as an optional property whenever every query parameter of
+ * the operation is optional, so it has to be matched optionally too. A path with
+ * no query parameters at all is emitted as `query?: never`, which collapses to
+ * `undefined` here.
+ */
+type QueryParamsOf<O> = O extends { parameters: { query?: infer T } }
+  ? [Exclude<T, undefined>] extends [never]
+    ? undefined
+    : EmptyToUndefined<Exclude<T, undefined>>
   : undefined;
 
 type RequestBodyOf<O> = O extends {
@@ -79,7 +87,9 @@ type RequestArgs<O> = {
   : { params: PathParamsOf<O> }) &
   (QueryParamsOf<O> extends undefined
     ? { query?: undefined }
-    : { query: QueryParamsOf<O> }) &
+    : Record<never, never> extends QueryParamsOf<O>
+      ? { query?: QueryParamsOf<O> }
+      : { query: QueryParamsOf<O> }) &
   (RequestBodyOf<O> extends undefined
     ? { body?: undefined }
     : undefined extends RequestBodyOf<O>
