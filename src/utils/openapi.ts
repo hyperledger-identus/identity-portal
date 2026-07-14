@@ -46,8 +46,12 @@ type PathParamsOf<O> = O extends { parameters: { path: infer T } }
   ? EmptyToUndefined<T>
   : undefined;
 
-type QueryParamsOf<O> = O extends { parameters: { query: infer T } }
-  ? EmptyToUndefined<T>
+// The query key is emitted as optional (`query?`) whenever every query
+// parameter is optional (e.g. pagination's `offset?`/`limit?`), and as required
+// only when at least one param is required. Match the optional key and strip the
+// `undefined` that optional-property inference introduces, so both shapes work.
+type QueryParamsOf<O> = O extends { parameters: { query?: infer T } }
+  ? EmptyToUndefined<NonNullable<T>>
   : undefined;
 
 type RequestBodyOf<O> = O extends {
@@ -79,7 +83,9 @@ type RequestArgs<O> = {
   : { params: PathParamsOf<O> }) &
   (QueryParamsOf<O> extends undefined
     ? { query?: undefined }
-    : { query: QueryParamsOf<O> }) &
+    : HasRequiredKeys<QueryParamsOf<O>> extends true
+      ? { query: QueryParamsOf<O> }
+      : { query?: QueryParamsOf<O> }) &
   (RequestBodyOf<O> extends undefined
     ? { body?: undefined }
     : undefined extends RequestBodyOf<O>
