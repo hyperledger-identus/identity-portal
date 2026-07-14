@@ -2,6 +2,7 @@ import { DIDKeys, Domain } from '@hyperledger/identus-sdk';
 import { CLOUD_AGENT_BASE_URL } from '../../../config';
 import { Agent, CredentialSchemaInput, PrismDIDKeyCurves } from '../types';
 import { createClient } from './client';
+import type { ManagedDID } from './api';
 
 export type CloudAgentOptions = {
   /**
@@ -12,6 +13,13 @@ export type CloudAgentOptions = {
    */
   accessToken?: string;
 };
+
+
+type PublicKeys = Array<{
+  id: string, 
+  purpose: "assertionMethod" | "authentication" | "capabilityDelegation" | "capabilityInvocation" | "keyAgreement", 
+  curve: "Ed25519" | "X25519" | "secp256k1"
+}>
 
 /**
  * Builds a Cloud Agent client. The returned client is *already authenticated*:
@@ -58,23 +66,32 @@ export async function createCloudAgentClient(
       },
       prism: {
         list: async () => {
-          // The registrar paginates with `offset`/`limit` and returns 100 DIDs per
-          // page by default. The generic client cannot pass those parameters yet:
-          // the spec emits `query?` when every query parameter is optional, and
-          // `QueryParamsOf` in src/utils/openapi.ts only matches a required `query`.
-          // Until that is addressed this reads the first page, so a wallet holding
-          // more than 100 DIDs is truncated here.
-          const { data, error, response } = await client.GET(
-            '/did-registrar/dids',
-          );
+          // The registrar paginates with `offset`/`limit`, returning 100 DIDs per
+          // page by default. Walk every page so wallets holding more than one page
+          // are not truncated.
+          const pageSize = 100;
+          const managedDids: ManagedDID[] = [];
 
-          if (!response.ok || error) {
-            throw new Error(
-              `Cloud Agent could not list DIDs (HTTP ${response.status})`,
+          for (let offset = 0; ; offset += pageSize) {
+            const { data, error, response } = await client.GET(
+              '/did-registrar/dids',
+              { query: { offset, limit: pageSize } },
             );
+
+            if (!response.ok || error) {
+              throw new Error(
+                `Cloud Agent could not list DIDs (HTTP ${response.status})`,
+              );
+            }
+
+            const contents = data?.contents ?? [];
+            managedDids.push(...contents);
+
+            // The last page is shorter than a full page (or empty).
+            if (contents.length < pageSize) break;
           }
 
-          return (data?.contents ?? []).map((managed) => {
+          return managedDids.map((managed) => {
             // A published DID is identified by its canonical form. An unpublished
             // one only resolves through its long form, which is also what create
             // returns.
@@ -97,46 +114,47 @@ export async function createCloudAgentClient(
             const curves = keys[keyType as keyof DIDKeys]!
             return [
               ...allPublicKeys,
-              ...curves.map((curve, i) => {
+              ...curves.map((keyCurve, i) => {
+                const curve = keyCurve.toString().toLowerCase() as "Ed25519" | "X25519" | "secp256k1";
                 if (keyType === 'ISSUING_KEY') {
                   return {
-                    "id": `${keyType}-${i}`,
-                    "purpose": "assertionMethod" as const,
-                    "curve": curve.toString().toLowerCase()
+                    id: `${keyType}-${i}`,
+                    purpose: "assertionMethod" as const,
+                    curve
                   }
                 }
                 if (keyType === 'AUTHENTICATION_KEY') {
                   return {
-                    "id": `${keyType}-${i}`,
-                    "purpose": "authentication" as const,
-                    "curve": curve.toString().toLowerCase()
+                    id: `${keyType}-${i}`,
+                      purpose: "authentication" as const,
+                    curve
                   }
                 }
                 if (keyType === 'CAPABILITY_DELEGATION_KEY') {
                   return {
-                    "id": `${keyType}-${i}`,
-                    "purpose": "capabilityDelegation" as const,
-                    "curve": curve.toString().toLowerCase()
+                    id: `${keyType}-${i}`,
+                    purpose: "capabilityDelegation" as const,
+                    curve
                   }
                 }
                 if (keyType === 'CAPABILITY_INVOCATION_KEY') {
                   return {
-                    "id": `${keyType}-${i}`,
-                    "purpose": "capabilityInvocation" as const,
-                    "curve": curve.toString().toLowerCase()
+                    id: `${keyType}-${i}`,
+                    purpose: "capabilityInvocation" as const,
+                    curve
                   }
                 }
                 if (keyType === 'KEY_AGREEMENT_KEY') {
                   return {
-                    "id": `${keyType}-${i}`,
-                    "purpose": "keyAgreement" as const,
-                    "curve": curve.toString().toLowerCase()
+                    id: `${keyType}-${i}`,
+                    purpose: "keyAgreement" as const,
+                    curve
                   }
                 }
                 throw new Error("Key type not supported");
               })
             ]
-          }, [] as { id: string, purpose: any, curve: any }[])
+          }, [] as PublicKeys)
 
 
 

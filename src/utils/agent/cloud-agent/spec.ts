@@ -399,11 +399,7 @@ export interface paths {
         get: operations["getConnection"];
         put?: never;
         post?: never;
-        /**
-         * Deletes a specific connection flow record from the Agent's database based on its unique `connectionId`.
-         * @description Delete a specific connection flow record from the Agent's database based in its unique `connectionId`.
-         */
-        delete: operations["deleteConnection"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -543,8 +539,8 @@ export interface paths {
          * @description Update DID in the agent's wallet and post the update operation to the VDR.
          *     Only the DID with status `PUBLISHED` can be updated.
          *     This endpoint updates the DID document from the last confirmed operation.
-         *     The update operation is asynchronous operation and the agent will reject
-         *     a new update request if the previous operation is not yet confirmed.
+         *     The update operation is asynchornous operation and the agent will reject
+         *     a new update request if the previous operation is not yet comfirmed.
          */
         post: operations["postDid-registrarDidsDidrefUpdates"];
         delete?: never;
@@ -1398,39 +1394,6 @@ export interface components {
          * @enum {string}
          */
         ActionType: "ADD_KEY" | "ADD_SERVICE" | "PATCH_CONTEXT" | "REMOVE_KEY" | "REMOVE_SERVICE" | "UPDATE_SERVICE";
-        /**
-         * AnonCredsVCPropertiesV1
-         * @description The properties of the AnonCreds verifiable credential that will be issued complied with AnonCreds 1.0.
-         */
-        AnonCredsVCPropertiesV1: {
-            /**
-             * @description The issuer Prism DID by which the verifiable credential will be issued. DID can be short for or long form.
-             * @example did:prism:3bb0505d13fcb04d28a48234edb27b0d4e6d7e18a81e2c1abab58f3bbc21ce6f
-             */
-            issuingDID: string;
-            /**
-             * Format: uuid
-             * @description The unique identifier (UUID) of the credential definition that will be used for this offer.
-             *     It should be the identifier of a credential definition that exists in the issuer agent's database.
-             * @example d9569cec-c81e-4779-aa86-0d5994d82676
-             */
-            credentialDefinitionId: string;
-            /**
-             * @description The set of claims that will be included in the issued credential.
-             *     The object should comply with the schema applicable for this offer (i.e. 'schemaId' or 'credentialDefinitionId').
-             * @example {
-             *       "firstname": "Alice",
-             *       "lastname": "Wonderland"
-             *     }
-             */
-            claims: unknown;
-            /**
-             * Format: double
-             * @description The validity period in seconds of the verifiable credential that will be issued.
-             * @example 3600
-             */
-            validityPeriod?: number;
-        };
         /** AnoncredCredentialProofV1 */
         AnoncredCredentialProofV1: {
             credential: string;
@@ -1596,7 +1559,7 @@ export interface components {
             metaRetries: number;
             /**
              * @description The last failure if any.
-             * @example ErrorResponse(404,NotFound,Not Found,Some(The requested resource was not found),error:instance:f47ac10b-58cc-4372-a567-0e02b2c3d479)
+             * @example ErrorResponse(404,error:Error:FailureInfo,Failure Info,Some(Not Found),error:instance:27727dd0-cd86-4d24-a23a-b9cc4eb4e848)
              */
             metaLastFailure?: components["schemas"]["ErrorResponse"];
             /**
@@ -1739,7 +1702,7 @@ export interface components {
              *     Note that this parameter only applies when the offer is of type 'JWT'.
              * @example https://agent-host.com/cloud-agent/schema-registry/schemas/d9569cec-c81e-4779-aa86-0d5994d82676/schema
              */
-            schemaId?: string;
+            schemaId?: string[] | string;
             /**
              * Format: uuid
              * @description The unique identifier (UUID) of the credential definition that will be used for this offer.
@@ -1761,7 +1724,7 @@ export interface components {
              *       "lastname": "Wonderland"
              *     }
              */
-            claims?: unknown;
+            claims: unknown;
             /**
              * @description Specifies whether or not the credential should be automatically generated and issued when receiving the `CredentialRequest` from the holder.
              *     If set to `false`, a manual approval by the issuer via another API call will be required for the VC to be issued.
@@ -1772,7 +1735,7 @@ export interface components {
              * @description The issuer Prism DID by which the verifiable credential will be issued. DID can be short for or long form.
              * @example did:prism:3bb0505d13fcb04d28a48234edb27b0d4e6d7e18a81e2c1abab58f3bbc21ce6f
              */
-            issuingDID?: string;
+            issuingDID: string;
             /**
              * @description Specified the key ID (kid) of the DID, it will be used to sign credential.
              *     User should specify just the partial identifier of the key. The full id of the kid MUST be "<issuingDID>#<kid>"
@@ -1802,15 +1765,6 @@ export interface components {
              * @example To issue a Faber College Graduate credential
              */
             goal?: string;
-            /**
-             * @description A string that specifies the intended scope or audience for the offer request. The 'domain' field binds the proof or presentation to a particular context (e.g., application, service, or verifier) to prevent misuse.
-             *      It is often used alongside a 'challenge' field to ensure the freshness and uniqueness of the proof. The 'domain' field adds context to validate the origin or purpose of the proof.
-             * @example faber-college-jwt-vc
-             */
-            domain?: string;
-            jwtVcPropertiesV1?: components["schemas"]["JwtVCPropertiesV1"];
-            anoncredsVcPropertiesV1?: components["schemas"]["AnonCredsVCPropertiesV1"];
-            sdJwtVcPropertiesV1?: components["schemas"]["SDJWTVCPropertiesV1"];
         };
         /** CreateManagedDIDResponse */
         CreateManagedDIDResponse: {
@@ -2259,22 +2213,6 @@ export interface components {
              */
             author: string;
         };
-        /**
-         * CredentialSchemaRef
-         * @example CredentialSchemaRef(https://agent-host.com/cloud-agent/schema-registry/schemas/d9569cec-c81e-4779-aa86-0d5994d82676,JsonSchemaValidator2018)
-         */
-        CredentialSchemaRef: {
-            /**
-             * @description The URL or DIDURL pointing to the credential schema that will be used for this offer.
-             * @example https://agent-host.com/cloud-agent/schema-registry/schemas/d9569cec-c81e-4779-aa86-0d5994d82676
-             */
-            id: string;
-            /**
-             * @description The type of the credential schema that will be used for this offer.
-             * @example JsonSchema
-             */
-            type: string;
-        };
         /** CredentialSchemaResponse */
         CredentialSchemaResponse: {
             /**
@@ -2425,7 +2363,7 @@ export interface components {
          */
         CredentialSubject: {
             /**
-             * @description Always equals to constant value - StatusList2021
+             * @description Always equals to constnat value - StatusList2021
              * @example StatusList2021
              */
             type: string;
@@ -2788,7 +2726,7 @@ export interface components {
              * @example JWT
              * @enum {string}
              */
-            credentialFormat: "JWT" | "SDJWT" | "AnonCreds";
+            credentialFormat: "JWT" | "AnonCreds";
             /**
              * @description The short-form subject Prism DID to which the JWT verifiable credential will be or has been issued.
              *     This parameter only applies if the offer is of type 'JWT' and will only exist in the cloud agent of the holder (it will be empty on the issuer side).
@@ -2820,7 +2758,7 @@ export interface components {
             /**
              * Format: date-time
              * @description The date and time when the issue credential record was created.
-             * @example 2023-01-01T00:00Z
+             * @example 2024-11-05T11:32:21.497676581Z
              */
             createdAt: string;
             /**
@@ -2853,13 +2791,11 @@ export interface components {
             issuingDID?: string;
             /**
              * @description A self-attested code the receiver may want to display to the user or use in automatically deciding what to do with the out-of-band message.
-             *     The goalCode is optional and can be included when the credential offer originates from an invitation for connectionless issuance
              * @example issue-vc
              */
             goalCode?: string;
             /**
              * @description A self-attested string that the receiver may want to display to the user about the context-specific goal of the out-of-band message.
-             *     The goal is optional and can be included when the credential offer originates from an invitation for connectionless issuance
              * @example To issue a Faber College Graduate credential
              */
             goal?: string;
@@ -2877,7 +2813,7 @@ export interface components {
             metaRetries: number;
             /**
              * @description The last failure if any.
-             * @example ErrorResponse(404,NotFound,Not Found,Some(The requested resource was not found),error:instance:f47ac10b-58cc-4372-a567-0e02b2c3d479)
+             * @example ErrorResponse(404,error:Error:FailureInfo,Failure Info,Some(Not Found),error:instance:087a52c7-4c06-48ba-870a-8f5b3b4e003f)
              */
             metaLastFailure?: components["schemas"]["ErrorResponse"];
         };
@@ -2945,41 +2881,6 @@ export interface components {
              */
             proof_type: "jwt";
             jwt: string;
-        };
-        /**
-         * JwtVCPropertiesV1
-         * @description The properties of the JWT verifiable credential that will be issued complied with VCDM 1.1.
-         */
-        JwtVCPropertiesV1: {
-            /**
-             * @description The issuer Prism DID by which the verifiable credential will be issued. DID can be short for or long form.
-             * @example did:prism:3bb0505d13fcb04d28a48234edb27b0d4e6d7e18a81e2c1abab58f3bbc21ce6f
-             */
-            issuingDID: string;
-            /**
-             * @description Specified the key ID (kid) of the DID, it will be used to sign credential.
-             *     User should specify just the partial identifier of the key. The full id of the kid MUST be "<issuingDID>#<kid>"
-             *     Note the cryto algorithm used with depend type of the key.
-             * @example kid1
-             */
-            issuingKid?: string;
-            /**
-             * Format: double
-             * @description The validity period in seconds of the verifiable credential that will be issued.
-             * @example 3600
-             */
-            validityPeriod?: number;
-            /**
-             * @description The set of claims that will be included in the issued credential.
-             *     The JSON object should comply with the schema applicable for this offer (i.e. 'schemaId' or 'credentialDefinitionId').
-             * @example {
-             *       "firstname": "Alice",
-             *       "lastname": "Wonderland"
-             *     }
-             */
-            claims: unknown;
-            /** @description The properties of the JWT verifiable credential that will be issued complied with VCDM 1.1. */
-            credentialSchema: components["schemas"]["CredentialSchemaRef"];
         };
         /** Ldp */
         Ldp: {
@@ -3210,27 +3111,17 @@ export interface components {
              */
             requestData?: string[];
             /**
-             * @description The set of claims disclosed from the issued credential, this field is applicable to credential type SDJWT only.
-             * @example {
-             *       "firstname": "Alice",
-             *       "lastname": "Wonderland"
-             *     }
-             */
-            disclosedClaims?: unknown;
-            /**
              * @description The unique identifier of an established connection between the verifier and the prover.
              * @example bc528dc8-69f1-4c5a-a508-5f8019047900
              */
             connectionId?: string;
             /**
              * @description A self-attested code the receiver may want to display to the user or use in automatically deciding what to do with the out-of-band message.
-             *     The goalcode is optional and can be included when the presentation request originates from an invitation for connectionless proof request
              * @example present-vp
              */
             goalCode?: string;
             /**
              * @description A self-attested string that the receiver may want to display to the user about the context-specific goal of the out-of-band message.
-             *     The goal is optional and can be included when the presentation request originates from an invitation for connectionless proof request
              * @example To verify a Peter College Graduate credential
              */
             goal?: string;
@@ -3248,7 +3139,7 @@ export interface components {
             metaRetries: number;
             /**
              * @description The last failure if any.
-             * @example ErrorResponse(404,NotFound,Not Found,Some(The requested resource was not found),error:instance:f47ac10b-58cc-4372-a567-0e02b2c3d479)
+             * @example ErrorResponse(404,error:Error:FailureInfo,Failure Info,Some(Not Found),error:instance:68e60a0f-8e08-4264-96c8-9e6f2dd59202)
              */
             metaLastFailure?: components["schemas"]["ErrorResponse"];
         };
@@ -3531,13 +3422,13 @@ export interface components {
         RequestPresentationInput: {
             /**
              * @description A self-attested code the receiver may want to display to the user or use in automatically deciding what to do with the out-of-band message.
-             *      goalcode is optional and can be included when the presentation request is from invitation for connectionless verification.
+             *      goalcode is optional and can be provided when the presentation request is from invitation for connectionless verification.
              * @example present-vp
              */
             goalCode?: string;
             /**
              * @description A self-attested string that the receiver may want to display to the user about the context-specific goal of the out-of-band message.
-             *      goal is optional and can be included when the presentation request is from invitation for connectionless verification.
+             *      goal is optional and can be provided when the presentation request is from invitation for connectionless verification.
              * @example Request proof of vaccine
              */
             goal?: string;
@@ -3573,44 +3464,6 @@ export interface components {
          * @enum {string}
          */
         ResourceResolutionMethod: "did" | "http";
-        /**
-         * SDJWTVCPropertiesV1
-         * @description The properties of the SDJWT verifiable credential that will be issued complied with SD-JWT specification and VCDM 1.1.
-         */
-        SDJWTVCPropertiesV1: {
-            /**
-             * @description The issuer Prism DID by which the verifiable credential will be issued. DID can be short for or long form.
-             * @example did:prism:3bb0505d13fcb04d28a48234edb27b0d4e6d7e18a81e2c1abab58f3bbc21ce6f
-             */
-            issuingDID: string;
-            /**
-             * @description Specified the key ID (kid) of the DID, it will be used to sign credential.
-             *     User should specify just the partial identifier of the key. The full id of the kid MUST be "<issuingDID>#<kid>"
-             *     Note the cryto algorithm used with depend type of the key.
-             * @example kid1
-             */
-            issuingKid?: string;
-            /**
-             * Format: double
-             * @description The validity period in seconds of the verifiable credential that will be issued.
-             * @example 3600
-             */
-            validityPeriod?: number;
-            /**
-             * @description The properties of the SD-JWT verifiable credential that will be issued complied with VCDM 1.1.
-             *     The current implementation of SD-JWT doesn't includ this property in the JWT payload, but the it is used to validate the credential.
-             */
-            credentialSchema: components["schemas"]["CredentialSchemaRef"];
-            /**
-             * @description The set of claims that will be included in the issued credential.
-             *     The JSON object should comply with the schema applicable for this offer (i.e. 'schemaId' or 'credentialDefinitionId').
-             * @example {
-             *       "firstname": "Alice",
-             *       "lastname": "Wonderland"
-             *     }
-             */
-            claims: unknown;
-        };
         /**
          * Service
          * @description A service that should appear in the DID document. https://www.w3.org/TR/did-core/#services
@@ -3665,7 +3518,7 @@ export interface components {
             /**
              * Format: date-time
              * @description Issuance timestamp of status list credential
-             * @example 2025-01-01T22:40:34.560891Z
+             * @example 2024-11-05T11:32:21.556400758Z
              */
             issuanceDate: string;
             credentialSubject: components["schemas"]["CredentialSubject"];
@@ -5785,15 +5638,6 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
             /** @description Forbidden */
             403: {
                 headers: {
@@ -5846,15 +5690,6 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
             /** @description Forbidden */
             403: {
                 headers: {
@@ -5898,80 +5733,6 @@ export interface operations {
             };
             /** @description Invalid request parameters */
             400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Resource could not be found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Internal server error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    deleteConnection: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The `connectionId` uniquely identifying the connection flow record. */
-                connectionId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Invalid request parameters */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6033,15 +5794,6 @@ export interface operations {
             };
             /** @description Invalid request parameters */
             400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
                 headers: {
                     [name: string]: unknown;
                 };
