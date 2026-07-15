@@ -117,6 +117,7 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
                     keys.MASTER_KEY = apollo.createPrivateKey({
                         [Domain.KeyProperties.curve]: Domain.Curve.SECP256K1,
                         [Domain.KeyProperties.seed]: seed,
+                        [Domain.KeyProperties.index]: index,
                         [Domain.KeyProperties.derivationPath]: masterKeyDerivation.toString(),
                         [Domain.KeyProperties.derivationSchema]: Domain.PrismDerivationPathSchema
                     });
@@ -132,6 +133,7 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
                             return apollo.createPrivateKey({
                                 [Domain.KeyProperties.curve]: curve,
                                 [Domain.KeyProperties.seed]: seed,
+                                [Domain.KeyProperties.index]: index + curveIndex,
                                 [Domain.KeyProperties.derivationPath]: derivation.toString(),
                                 [Domain.KeyProperties.derivationSchema]: Domain.PrismDerivationPathSchema
                             });
