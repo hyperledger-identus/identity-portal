@@ -1,22 +1,23 @@
 import { z } from 'zod';
 
 import { didDocumentSchema } from '../../schemas/did-document';
-import { errorResponseSchema } from '../../schemas/error';
 import { ContextFactory, createRestRouter } from '../../utils/rest';
 import { PrismDIDKeyCurves } from 'src/utils/agent/types';
 
 export default function createIssuerRouter(createContext: ContextFactory) {
   return createRestRouter({ createContext })
     .get('/', {
-      output: errorResponseSchema,
+      output: z.object({
+        dids: z.array(z.string()),
+      }),
       openAPI: {
         name: 'GET DIDS',
-        description: `
- Gets the DIDS from the agent`,
+        description: 'Lists the prism DIDs stored by the agent.',
         tags: ['dids'],
       },
-      handler: async ({ input, ctx }) => {
-        throw new Error('Not implemented');
+      handler: async ({ ctx }) => {
+        const dids = await ctx.agent.dids.prism.list();
+        return { dids: dids.map((did) => did.toString()) };
       },
     })
     .post('/', {
