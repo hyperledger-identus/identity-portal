@@ -5,6 +5,7 @@ import { LoginPage } from './LoginPage';
 import { LoggedOutPage } from './LoggedOutPage';
 import { CreateDid } from './CreateDid';
 import { DidResolver } from './DidResolver';
+import { DidList } from './DidList';
 
 type SessionUser = {
   sub?: string;
@@ -94,6 +95,7 @@ function Dashboard({ user }: { user: SessionUser }) {
           <CreateDid />
           <DidResolver />
         </div>
+        <DidList />
       </div>
     </main>
   );
