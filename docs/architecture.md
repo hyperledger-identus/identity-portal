@@ -125,11 +125,13 @@ flowchart LR
   iface -. "AGENT_MODE=cloud-agent" .-> cloud["createCloudAgentClient(session)<br/>authenticated HTTP client"]
 ```
 
-The contract covers `start`/`stop`, `dids.resolveDID`, and a `dids.prism` group for
-DID management (`list`, `create`, `publish`, `deactivate`) — see
-[Phase 2: DID management](#phase-2-did-management). Extending it is a deliberate
-three-step change: update the contract, then both implementations, then the
-endpoint that calls it. TypeScript enforces that neither mode is left behind.
+The contract covers `start`/`stop`, a `dids` group (`resolveDID` plus a `prism`
+group for the DID lifecycle: `list`, `create`, `publish`, `deactivate`) and a
+`schemas` group for credential schemas (`list`, `get`, `create`, `update`,
+`delete`) — see [Phase 2: DID management](#phase-2-did-management) and
+[Phase 3: Schema management](#phase-3-schema-management). Extending it is a
+deliberate three-step change: update the contract, then both implementations, then
+the endpoint that calls it. TypeScript enforces that neither mode is left behind.
 
 ### Multi-tenancy
 
@@ -226,6 +228,7 @@ sequenceDiagram
 | Path                              | Responsibility                                                                        |
 | --------------------------------- | ------------------------------------------------------------------------------------- |
 | `src/main.ts`                     | Entry point: `startAgent()` (store + queue), start `HttpServer`.                      |
+| `src/require-shim.ts`             | Global `require` shim so the SDK's ESM build can load Node built-ins.                 |
 | `src/utils/http.ts`               | `HttpServer`: Express app, auth middleware, API + UI routers.                         |
 | `src/utils/auth.ts`               | Keycloak BFF: login (ROPC + OIDC/PKCE), session cookie, `requireApiAuth` / `guardUi`. |
 | `src/api/index.ts`                | Builds the API router from the registry; serves Swagger / OpenAPI in dev.             |
@@ -238,6 +241,7 @@ sequenceDiagram
 | `src/utils/agent/`                | `Agent` contract and `getRequestAgent` mode switch.                                   |
 | `src/utils/agent/local/`          | Edge agent: SDK (Apollo/Castor/Pluto), provisioning, mediation, queue.                |
 | `src/utils/agent/local/database/` | `MultiTenantPluto` over RIDB + MongoDB (tenant-scoped rows).                          |
+| `src/utils/agent/local/neoprism/` | Generated, type-safe client for the neoprism node API.                                |
 | `src/utils/agent/local/queue/`    | BullMQ + Redis per-tenant recurring tasks.                                            |
 | `src/utils/agent/cloud-agent/`    | Cloud Agent HTTP client and wallet auto-provisioning.                                 |
 | `src/config/index.ts`             | Environment configuration.                                                            |
@@ -275,20 +279,57 @@ The `Agent` contract exposes `dids.resolveDID` plus a `dids.prism` group for the
 | ----------------- | ------------------------------------------------- | ------------------------------ |
 | `resolveDID(did)` | Resolve a DID to its DID document.                | Implemented (local and cloud). |
 | `create(keys)`    | Create a Prism DID with the requested key curves. | Implemented (local and cloud). |
-| `list()`          | List the tenant's Prism DIDs.                     | Not implemented yet.           |
+| `list()`          | List the tenant's Prism DIDs.                     | Implemented (local and cloud). |
 | `publish(did)`    | Publish a DID (returns a `txId`).                 | Not implemented yet.           |
 | `deactivate(did)` | Deactivate a published DID.                       | Not implemented yet.           |
 
-`resolveDID` is implemented in both modes: local resolves `did:prism` through a
-custom NeoPRISM resolver, and cloud resolves through the Cloud Agent. `create` is
-implemented in both modes as well (local derives the keys and calls
-`castor.createDID`; cloud posts to the Cloud Agent's `/did-registrar/dids`).
-`list`, `publish` and `deactivate` are still scaffolded (they
-`throw "Not implemented"`) with inline notes on how each maps to the SDK or the
-Cloud Agent registrar — these are the remaining Phase 2 work items.
+`resolveDID` resolves through the SDK's `PrismDIDMethod`, pointed at the neoprism
+node (`config/resolvers.ts`), in local mode, and through the Cloud Agent in cloud
+mode.
 
-Over REST, `GET /api/dids/resolve/:did` and `POST /api/dids` are wired to the
-agent; `GET /api/dids` (list) is present but not yet implemented.
+`create` derives the requested keys from the tenant's seed and calls the SDK's
+`agent.createDID` in local mode. It has to be the agent-level call rather than
+`castor.createDID`, because only that path also stores the DID and its private keys
+in Pluto. The stored keys carry the derivation index the next `create` builds on,
+so each call yields a distinct DID. In cloud mode `create` posts to the Cloud
+Agent's `/did-registrar/dids` and the agent manages the keys itself.
+
+`list` returns the tenant's DIDs. Local reads them from Pluto, which pairs every
+stored key with its DID, so the result is deduplicated by DID string; cloud walks
+each page of the registrar's `offset`/`limit` pagination. The local side still
+loads every DID at once — paginating it is a separate work item.
+
+`publish` and `deactivate` are still scaffolded (they `throw "Not implemented"`)
+with inline notes on how each maps to the SDK or the Cloud Agent registrar — these
+are the remaining Phase 2 work items.
+
+Over REST, `GET /api/dids` (list), `POST /api/dids` (create) and
+`GET /api/dids/resolve/:did` are wired to the agent.
+
+## Phase 3: Schema management
+
+The contract also exposes a `schemas` group for credential schemas. The record type
+is the store's `schemas` collection, which the local database module augments into
+the SDK's `CollectionMap`; `utils/agent/types.ts` re-exports it as
+`CredentialSchema`, with `CredentialSchemaInput` as the create payload (`uuid` is
+generated on insert and `tenantId` is injected by the tenant-scoped store).
+
+| Method                 | Purpose                             | Status                    |
+| ---------------------- | ----------------------------------- | ------------------------- |
+| `list()`               | List the tenant's schemas.          | Implemented (local only). |
+| `get(uuid)`            | Fetch a single schema by uuid.      | Implemented (local only). |
+| `create(schema)`       | Store a schema and return its uuid. | Implemented (local only). |
+| `update(uuid, schema)` | Update a stored schema.             | Implemented (local only). |
+| `delete(uuid)`         | Delete a stored schema.             | Implemented (local only). |
+
+Local delegates each call to `MultiTenantPluto`, so every record stays scoped to
+the caller's tenant. Cloud is scaffolded against the Cloud Agent's schema registry
+(`/schema-registry/schemas`), which is shaped differently: it is append-only, so it
+exposes no `DELETE`, and `PUT` publishes a new version instead of editing in place.
+A schema a credential was issued against cannot be removed without making that
+credential impossible to interpret, so deletion stays local-only for now.
+
+No REST endpoints or UI exist for schemas yet.
 
 ## Runtime environments
 
