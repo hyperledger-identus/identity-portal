@@ -14,7 +14,17 @@ import { SchemaFieldType } from "@trust0/ridb-core";
 export const schemas = {
   credentials: CredentialSchema,
   "credential-metadata": CredentialMetadataSchema,
-  dids: DIDSchema,
+  dids: {
+    ...DIDSchema,
+    properties: {
+      ...DIDSchema.properties,
+      transactionId: {
+        required: false,
+        type: SchemaFieldType.string,
+        description: "The transaction ID of the publish DID operation.",
+      },
+    },
+  },
   keys: KeySchema,
   messages: MessageSchema,
   "didkey-link": DIDKeyLinkSchema,

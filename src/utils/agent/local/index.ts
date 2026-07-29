@@ -17,6 +17,7 @@ import {
     typedEntries,
 } from "../types";
 import { MultiTenantPluto } from "./database";
+import { createNeoPrismClient } from "./neoprism";
 import { PRISM_DID_RESOLVERS } from "../../../config/resolvers";
 
 // The RIDB MongoDB backend reads its connection string from MONGODB_URL.
@@ -148,16 +149,35 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
                         keys: { MASTER_KEY, ...optionalKeys },
                     });
                 },
-                publish: (did: Domain.DID) => {
-                    /**
-                     * On SDK mode, we call agent.publishDID("prism", payload)
-                     * Payload should be { did: Domain.DID, key: PrivateKey }
-                     * I would fetch all the keys from the DID from storage and then grab the MASTER_KEY
-                     * 
-                     * This publishDID function returns a signed AtalaOperation
-                     * Which you need to send into the corresponding API call from neoprism
-                     */
-                    throw new Error("Not implemented");
+                publish: async (did: Domain.DID) => {
+                    // publishDID signs the create operation with the DID's master key.
+                    // Fetch the stored keys and pick the master by its derivation path
+                    // purpose segment (m/29'/29'/<didIndex>'/<keyPurpose>'/<keyIndex>').
+                    const privateKeys = await pluto.getDIDPrivateKeysByDID(did);
+                    const masterKey = privateKeys.find((key) => {
+                        const path = key.getProperty(Domain.KeyProperties.derivationPath);
+                        const keyPurpose = path ? Number.parseInt(path.split("/")[4], 10) : NaN;
+                        return keyPurpose === Domain.PrismDIDKeyUsage.MASTER_KEY;
+                    });
+                    if (!masterKey) {
+                        throw new Error("Master key not found for DID");
+                    }
+
+                    // Returns the signed Atala object bytes for the create operation.
+                    const atalaObject = await agent.publishDID("prism", { did, key: masterKey });
+
+                    // Submit the object to the neoprism submitter API as a hex string.
+                    const neoprism = createNeoPrismClient();
+                    const { data, error, response } = await neoprism.POST("/api/submissions/objects", {
+                        body: { object: Buffer.from(atalaObject).toString("hex") },
+                    });
+                    if (!response.ok || error || !data) {
+                        throw new Error(`neoprism rejected the publish object (HTTP ${response.status})`);
+                    }
+
+                    // Persist the transaction id; update/deactivate later need it.
+                    await pluto.setDIDPublished(did.toString(), data.tx_id);
+                    return { did, txId: data.tx_id };
                 },
                 deactivate: (did: Domain.DID) => {
                     /**

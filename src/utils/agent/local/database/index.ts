@@ -15,6 +15,9 @@ declare module "@hyperledger/identus-sdk" {
     tenants: Doc<(typeof schemas)["tenants"]>;
     schemas: Doc<(typeof schemas)["schemas"]>;
   }
+  interface DID {
+    transactionId?: string;
+  }
 }
 
 
@@ -154,6 +157,20 @@ export class MultiTenantPluto extends Pluto {
       uuid: randomUUID(),
       id: randomUUID()
     });
+  }
+
+  /**
+   * Records a DID as published: stores the publish transaction id and marks its
+   * status. The DID string is the collection's primary key (`uuid`), so the row
+   * is looked up by it; the read/write stay tenant-scoped through the store.
+   */
+  async setDIDPublished(did: string, transactionId: string): Promise<void> {
+    const rows = await this.store.query("dids", { selector: { uuid: did } });
+    const existing = rows[0];
+    if (!existing) {
+      throw new Error(`DID ${did} not found`);
+    }
+    await this.store.update("dids", { ...existing, transactionId, status: "published" });
   }
 
   async createSchema(schema: Omit<CollectionMap['schemas'], 'uuid'>): Promise<string> {
