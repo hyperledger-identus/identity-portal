@@ -26,6 +26,7 @@ import type {
 } from '../utils/rest';
 
 import createDidsRouter from './dids';
+import createSchemasRouter from './schemas';
 
 /** A factory that builds a validated router bound to a per-request context. */
 export type RouteGroupFactory = (createContext: ContextFactory) => RestRouter;
@@ -36,6 +37,7 @@ export type RouteGroupFactory = (createContext: ContextFactory) => RestRouter;
  */
 export const routeGroups = {
   '/dids': createDidsRouter,
+  '/schemas': createSchemasRouter,
 } satisfies Record<string, RouteGroupFactory>;
 
 export type RouteGroups = typeof routeGroups;
