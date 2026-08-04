@@ -1,22 +1,10 @@
 /**
  * @packageDocumentation
- * 
- * Lace KYC Server runs as an HTTP server that provides a REST API layer using Express with Zod validation, and a powerful task queue system powered by BullMQ.
- * This service also runs on top of Hyperledger Identus SDK to manage the identity issuance and secure communication with the Lace wallet.
- * 
- * ## Dev stack
- * 
- * - Node.js
- * - TypeScript
- * - MongoDB
- * - Redis
- * 
- * Server dependencies:
- * - Hyperledger Identus SDK
- * - BullMQ
- * - Express
- * - Zod
- * - Mongoose
+ *
+ * The Hyperledger Identus identity portal. It serves a REST API built with
+ * Express and Zod, plus the React UI that consumes it. Identity operations go
+ * through one agent interface with two implementations, selected by
+ * `AGENT_MODE`: the Identus SDK with local storage, or a remote Cloud Agent.
 */
 import "./require-shim";
 import "dotenv/config";
