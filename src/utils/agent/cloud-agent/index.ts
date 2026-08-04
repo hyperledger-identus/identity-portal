@@ -176,23 +176,58 @@ export async function createCloudAgentClient(
           const payload = typeof data === 'string' ? JSON.parse(data) : data;
           return Domain.DID.fromString(payload.longFormDid)
         },
-        publish: (did: Domain.DID) => {
-          /**
-           * Use
-           * client.POST("/did-registrar/dids/{didRef}/publications", { params: { didRef: 'did.toString()'}})
-           *
-           * The Cloud-agent internally checks which masterKey to use and creates + published the operation for you
-           */
-          throw new Error('Not implemented');
+        publish: async (did: Domain.DID) => {
+          // The agent owns the DID's keys, so publishing is a plain call on the
+          // registrar: it picks the master key, builds the create operation and
+          // submits it. The registrar takes the canonical and the long form of
+          // the DID alike, so the value is passed on as it comes in.
+          const didRef = did.toString();
+          const { data, error, response } = await client.POST(
+            '/did-registrar/dids/{didRef}/publications',
+            { params: { didRef } },
+          );
+
+          if (!response.ok || error) {
+            throw new Error(
+              `Cloud Agent could not publish ${didRef} (HTTP ${response.status})`,
+            );
+          }
+
+          // The call is asynchronous: the agent answers 202 with the id of the
+          // scheduled operation and moves the DID to PUBLICATION_PENDING. That
+          // id is what we can report back, there is no ledger transaction yet.
+          const operationId = data?.scheduledOperation?.id;
+          if (!operationId) {
+            throw new Error(
+              `Cloud Agent scheduled no publication for ${didRef}`,
+            );
+          }
+
+          return { did, txId: operationId };
         },
-        deactivate: (did: Domain.DID) => {
-          /**
-           * Use
-           * client.POST("/did-registrar/dids/{didRef}/deactivations", { params: { didRef: 'did.toString()'}})
-           *
-           * The Cloud-agent internally checks which masterKey to use and creates + published the operation for you
-           */
-          throw new Error('Not implemented');
+        deactivate: async (did: Domain.DID) => {
+          // Same shape as publish, and the registrar only accepts it for a DID
+          // that is already PUBLISHED.
+          const didRef = did.toString();
+          const { data, error, response } = await client.POST(
+            '/did-registrar/dids/{didRef}/deactivations',
+            { params: { didRef } },
+          );
+
+          if (!response.ok || error) {
+            throw new Error(
+              `Cloud Agent could not deactivate ${didRef} (HTTP ${response.status})`,
+            );
+          }
+
+          const operationId = data?.scheduledOperation?.id;
+          if (!operationId) {
+            throw new Error(
+              `Cloud Agent scheduled no deactivation for ${didRef}`,
+            );
+          }
+
+          return { txId: operationId };
         },
       },
     },
