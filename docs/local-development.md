@@ -188,10 +188,24 @@ Read from the environment in `src/config/index.ts` (DID resolvers in
 - **Login fails / redirect loop right after `local:up`** — Keycloak takes a few
   seconds to boot and `keycloak-init` to seed the realm. Wait for both to finish
   (`npm run local:logs`) before logging in.
+- **`keycloak-init` exits with code `22`** — the realm already exists, so creating
+  it returns `409` and the one-shot container stops there. This is cosmetic:
+  Keycloak is healthy as long as
+  `http://localhost:9980/realms/atala-demo/.well-known/openid-configuration`
+  returns `200`. Run `npm run local:down` before `local:up` to start from a clean
+  realm.
 - **`using deprecated parameters for initSync()`** — a harmless warning from the
   SDK's wasm init; safe to ignore.
+- **`Dynamic require of "crypto" is not supported`** — the SDK's ESM build needs a
+  CommonJS `require` in scope. `src/require-shim.ts` installs one, and it has to be
+  evaluated before anything that pulls in the SDK: `main.ts` imports it first, and a
+  standalone script needs `import "./src/require-shim"` as its own first line.
 - **Cannot reach Mongo** — confirm `mongo-identus` is up (`docker ps`) and that
   `MONGODB_URI` points at port `27019`.
+- **Local data is gone after restarting Docker** — `mongo-identus` mounts its data
+  directory as `tmpfs`, so the store lives in memory and is wiped whenever the
+  container restarts. Log in again to re-provision the tenant; the new tenant gets a
+  new seed, so DIDs created before the restart cannot be derived again.
 - **Queue jobs don't run** — confirm `redis` is up; the per-tenant tasks need it.
 - **Local data looks empty after a key change** — the store is encrypted with
   `DB_ENCRYPTION_KEY`; data is tied to that key.
