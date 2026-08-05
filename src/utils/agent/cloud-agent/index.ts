@@ -369,42 +369,19 @@ export async function createCloudAgentClient(
         return data.guid;
       },
       update: async (uuid: string, schema: Partial<CredentialSchemaInput>) => {
-        // The registry publishes a new version instead of editing in place, and
-        // its PUT takes a whole record, not a patch. So read the current
-        // version, merge the patch into it, and address the PUT by `id`, which
-        // is the identifier the registry groups the versions of a schema under.
-        const current = await client.GET('/schema-registry/schemas/{guid}', {
-          params: { guid: uuid },
-        });
-
-        if (!current.response.ok || current.error || !current.data) {
-          throw new Error(
-            `Cloud Agent could not read schema ${uuid} (HTTP ${current.response.status})`,
-          );
-        }
-
-        const merged = {
-          ...toCredentialSchema(current.data, tenantId),
-          ...schema,
-        };
-
-        const { error, response } = await client.PUT(
-          '/schema-registry/schemas/{id}',
-          { params: { id: current.data.id }, body: toRegistryInput(merged) },
+        // The registry does have a PUT, but it publishes a NEW version under a
+        // new `guid` instead of editing in place, so the `uuid` the caller holds
+        // keeps resolving to the pre-patch snapshot and the call reads as a
+        // no-op from the interface's point of view.
+        throw new Error(
+          `Updating schema ${uuid} is not supported: schemas are immutable, and the registry keeps every published version, so that credentials issued against a schema stay readable.`,
         );
-
-        if (!response.ok || error) {
-          throw new Error(
-            `Cloud Agent could not update schema ${uuid} (HTTP ${response.status})`,
-          );
-        }
       },
       delete: async (uuid: string) => {
-        // The registry is append-only and has no DELETE endpoint: it keeps
-        // every published version, because a credential that was issued against
-        // a schema cannot be parsed once that schema is gone.
+        // The registry is append-only and has no DELETE endpoint at all, which
+        // is the same rule seen from the other side.
         throw new Error(
-          `Deleting schema ${uuid} is not supported on the cloud agent: the schema registry keeps every published version, so that credentials issued against a schema stay readable.`,
+          `Deleting schema ${uuid} is not supported: schemas are immutable, and the registry keeps every published version, so that credentials issued against a schema stay readable.`,
         );
       },
     },
