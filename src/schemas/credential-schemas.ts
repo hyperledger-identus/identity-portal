@@ -50,25 +50,7 @@ export const createCredentialSchemaSchema = z.object({
   tags: z.array(z.string()).optional(),
 });
 
-/**
- * Body of `PUT /api/schemas/:uuid` plus the path parameter. Every field of the
- * schema is optional: the agent merges what is sent into the stored record.
- */
-export const updateCredentialSchemaSchema = z.object({
-  uuid: z.string().min(1),
-  name: z.string().min(1).optional(),
-  version: z.string().min(1).optional(),
-  type: z.string().min(1).optional(),
-  schema: jsonSchemaSchema.optional(),
-  author: z.string().min(1).optional(),
-  description: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-});
-
 export type CredentialSchemaResponse = z.infer<typeof credentialSchemaSchema>;
 export type CreateCredentialSchemaInput = z.infer<
   typeof createCredentialSchemaSchema
->;
-export type UpdateCredentialSchemaInput = z.infer<
-  typeof updateCredentialSchemaSchema
 >;

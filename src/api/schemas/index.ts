@@ -3,7 +3,6 @@ import { z } from 'zod';
 import {
   createCredentialSchemaSchema,
   credentialSchemaSchema,
-  updateCredentialSchemaSchema,
   type CredentialSchemaResponse,
 } from '../../schemas/credential-schemas';
 import { ContextFactory, HttpError, createRestRouter } from '../../utils/rest';
@@ -32,6 +31,12 @@ function toResponse(schema: CredentialSchema): CredentialSchemaResponse {
   };
 }
 
+/**
+ * A published schema is immutable, so the API exposes list, get and create
+ * only. A credential that was issued against a schema cannot be parsed once
+ * that schema changes or is gone, which is why neither agent offers an update
+ * or a delete through this surface.
+ */
 export default function createSchemasRouter(createContext: ContextFactory) {
   return createRestRouter({ createContext })
     .get('/', {
@@ -94,52 +99,6 @@ export default function createSchemasRouter(createContext: ContextFactory) {
           updatedAt: now,
         });
         return { uuid };
-      },
-    })
-    .put('/:uuid', {
-      input: updateCredentialSchemaSchema,
-      output: z.object({
-        uuid: z.string(),
-      }),
-      openAPI: {
-        name: 'PUT SCHEMA',
-        description:
-          'Updates a credential schema. The local agent edits the stored record; the cloud agent publishes a new version of it.',
-        tags: ['schemas'],
-      },
-      handler: async ({ input, ctx }) => {
-        const { uuid, ...changes } = input;
-        await ctx.agent.schemas.update(uuid, changes);
-        return { uuid };
-      },
-    })
-    .delete('/:uuid', {
-      input: z.object({
-        uuid: z.string().min(1),
-      }),
-      output: z.object({
-        success: z.literal(true),
-      }),
-      openAPI: {
-        name: 'DELETE SCHEMA',
-        description:
-          'Deletes a credential schema. Only the local agent supports this; the cloud schema registry keeps every published version.',
-        tags: ['schemas'],
-      },
-      handler: async ({ input, ctx }) => {
-        try {
-          await ctx.agent.schemas.delete(input.uuid);
-        } catch (error) {
-          // The cloud agent refuses this with an explicit reason. Report it as
-          // "this backend cannot do it" and keep the reason, instead of letting
-          // it fall through as a plain 500.
-          const reason = error instanceof Error ? error.message : String(error);
-          if (reason.includes('not supported')) {
-            throw new HttpError(501, reason);
-          }
-          throw error;
-        }
-        return { success: true as const };
       },
     });
 }
