@@ -202,7 +202,7 @@ sequenceDiagram
   participant G as requireApiAuth (auth.ts)
   participant C as context.ts
   participant V as rest.ts (validation)
-  participant H as Handler (api/&lt;name&gt;)
+  participant H as Handler (api/[name])
   participant A as Agent (local | cloud)
 
   B->>E: GET /api/dids/... (session cookie)
@@ -211,7 +211,7 @@ sequenceDiagram
     G-->>B: 401 Unauthorized
   else session valid (token refreshed if needed)
     G->>C: build per-request context
-    C->>A: getRequestAgent({ tenantId: sub, accessToken }); agent.start()
+    C->>A: getRequestAgent({ tenantId: sub, accessToken }) then agent.start()
     C->>V: invoke route with { agent }
     V->>V: validate input (Zod)
     V->>H: handler({ input, ctx })
