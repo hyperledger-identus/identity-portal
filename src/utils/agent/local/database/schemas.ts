@@ -23,6 +23,12 @@ export const schemas = {
         type: SchemaFieldType.string,
         description: "The transaction ID of the publish DID operation.",
       },
+      operationHash: {
+        required: false,
+        type: SchemaFieldType.string,
+        description:
+          "Hex of the SHA-256 of the last Atala operation submitted for the DID, which the next one chains on.",
+      },
     },
   },
   keys: KeySchema,

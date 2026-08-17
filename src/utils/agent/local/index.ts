@@ -69,13 +69,20 @@ export async function createTenantAgent(options: AgentOptions): Promise<LocalAge
 }
 
 /**
- * Field number of `SignedPrismOperation.operation`, and the protobuf wire types
- * its sibling fields can use. See the PRISM protobuf definitions:
+ * Field numbers on the PRISM wire format, and the protobuf wire types the
+ * fields around them can use. An Atala object carries one block, a block
+ * carries the signed operations, and a signed operation carries the operation
+ * the chain hashes. See the PRISM protobuf definitions:
  * https://github.com/hyperledger-identus/neoprism/blob/main/lib/did-prism/proto/prism.proto
  */
+const ATALA_OBJECT_BLOCK_FIELD = 4;
+const ATALA_BLOCK_OPERATIONS_FIELD = 2;
 const OPERATION_FIELD = 3;
 const WIRE_TYPE_VARINT = 0;
 const WIRE_TYPE_LENGTH_DELIMITED = 2;
+
+/** Length of the SHA-256 an operation chains on. */
+const OPERATION_HASH_LENGTH = 32;
 
 /**
  * Picks a DID's master key out of the keys Pluto stored with it. The key purpose
@@ -119,20 +126,25 @@ function canonicalDID(did: Domain.DID): string {
 }
 
 /**
- * SHA-256 of the Atala operation a signed operation carries. The operation sits
- * in field 3 of `SignedPrismOperation`, so only the top-level fields are walked
- * to cut its bytes out; the operation itself is never parsed.
+ * Cuts the length-delimited fields with a given number out of a protobuf
+ * message. Only the top level is walked and the values are returned as they
+ * are, so nothing nested is parsed.
  *
- * The indexer's own `operation_id` is a different digest: it covers the signed
- * envelope, while operations chain on the hash of the operation inside it.
+ * Every read is bounds-checked. A truncated message throws here instead of
+ * reading past its end, where the arithmetic would quietly produce a value that
+ * belongs to nothing and the caller would chain on it.
  */
-function atalaOperationHash(signedOperationHex: string): Uint8Array {
-    const signedOperation = Buffer.from(signedOperationHex, "hex");
+function readMessageFields(message: Uint8Array, field: number): Uint8Array[] {
+    const values: Uint8Array[] = [];
     let offset = 0;
+
     const readVarint = () => {
         let value = 0;
         for (let shift = 0; ; shift += 7) {
-            const byte = signedOperation[offset++];
+            if (offset >= message.length) {
+                throw new Error("Truncated protobuf message: a varint runs past its end");
+            }
+            const byte = message[offset++];
             value += (byte & 0x7f) * 2 ** shift;
             if ((byte & 0x80) === 0) {
                 return value;
@@ -140,7 +152,7 @@ function atalaOperationHash(signedOperationHex: string): Uint8Array {
         }
     };
 
-    while (offset < signedOperation.length) {
+    while (offset < message.length) {
         const tag = readVarint();
         const wireType = tag & 0b111;
         if (wireType === WIRE_TYPE_VARINT) {
@@ -148,27 +160,71 @@ function atalaOperationHash(signedOperationHex: string): Uint8Array {
             continue;
         }
         if (wireType !== WIRE_TYPE_LENGTH_DELIMITED) {
-            throw new Error(`Cannot read field ${tag >> 3} of the signed operation`);
+            throw new Error(`Cannot read field ${tag >> 3} of the protobuf message`);
         }
         const length = readVarint();
         const start = offset;
         offset += length;
-        if (tag >> 3 === OPERATION_FIELD) {
-            const digest = createHash("sha256").update(signedOperation.subarray(start, offset)).digest();
-            return Uint8Array.from(digest);
+        if (offset > message.length) {
+            throw new Error(
+                `Truncated protobuf message: field ${tag >> 3} declares ${length} bytes and ${message.length - start} are left`,
+            );
+        }
+        if (tag >> 3 === field) {
+            values.push(message.subarray(start, offset));
         }
     }
-    throw new Error("The signed operation carries no Atala operation");
+    return values;
+}
+
+/**
+ * SHA-256 of the Atala operation a signed operation carries. The operation sits
+ * in field 3 of `SignedPrismOperation` and is hashed as it is, never parsed.
+ *
+ * The indexer's own `operation_id` is a different digest: it covers the signed
+ * envelope, while operations chain on the hash of the operation inside it.
+ */
+function atalaOperationHash(signedOperation: Uint8Array): Uint8Array {
+    const operation = readMessageFields(signedOperation, OPERATION_FIELD).at(0);
+    if (!operation) {
+        throw new Error("The signed operation carries no Atala operation");
+    }
+    if (operation.length === 0) {
+        throw new Error("The signed operation carries an empty Atala operation");
+    }
+    return Uint8Array.from(createHash("sha256").update(operation).digest());
+}
+
+/**
+ * SHA-256 of the operation an Atala object carries, read out of the bytes that
+ * are about to be submitted. An object built here wraps one block holding one
+ * signed operation, so anything else means these are not those bytes.
+ */
+function submittedOperationHash(atalaObject: Uint8Array): string {
+    const block = readMessageFields(atalaObject, ATALA_OBJECT_BLOCK_FIELD).at(0);
+    if (!block) {
+        throw new Error("The Atala object carries no block");
+    }
+    const operations = readMessageFields(block, ATALA_BLOCK_OPERATIONS_FIELD);
+    if (operations.length !== 1) {
+        throw new Error(
+            `Expected one signed operation in the Atala object, found ${operations.length}`,
+        );
+    }
+    return Buffer.from(atalaOperationHash(operations[0])).toString("hex");
 }
 
 /**
  * Hash of the last Atala operation submitted for a DID, which the next operation
- * has to chain on. The DID record keeps the id of the transaction that carried
- * it, and the indexer reports the operations of a transaction.
+ * has to chain on.
  *
- * `undefined` means the DID was never published, so the create operation is
- * still the last one: its hash is the DID's own state hash, which the SDK fills
- * in on its own.
+ * The hash is written on the DID's row in the same call that records the
+ * transaction, so the operation right after another one reads it from there and
+ * never waits for the indexer. A row written before that field existed carries
+ * only the transaction id, and the indexer is asked which operation it holds.
+ *
+ * `undefined` means the DID was never published, so it has no operation of its
+ * own to chain on.
  */
 async function getPreviousOperationHash(
     pluto: MultiTenantPluto,
@@ -177,6 +233,13 @@ async function getPreviousOperationHash(
     const record = await pluto.getDIDRecord(did.toString());
     if (!record?.transactionId) {
         return undefined;
+    }
+    if (record.operationHash) {
+        const hash = Buffer.from(record.operationHash, "hex");
+        if (hash.length !== OPERATION_HASH_LENGTH) {
+            throw new Error(`DID ${did.toString()} carries a malformed operation hash`);
+        }
+        return Uint8Array.from(hash);
     }
 
     const neoprism = createNeoPrismClient();
@@ -196,7 +259,75 @@ async function getPreviousOperationHash(
     if (!operation) {
         throw new Error(`Transaction ${record.transactionId} carries no operation for ${canonical}`);
     }
-    return atalaOperationHash(operation.signed_operation_data);
+    return atalaOperationHash(Buffer.from(operation.signed_operation_data, "hex"));
+}
+
+/**
+ * The tail of every DID's mutation queue, keyed by the canonical DID. It lives
+ * in the module and not in an agent, because each request builds its own agent
+ * and two requests touching the same DID have to meet somewhere.
+ */
+const didMutations = new Map<string, Promise<unknown>>();
+
+/**
+ * Runs a mutation after everything already queued for the same DID.
+ *
+ * A DID's operations are a chain: each one carries the hash of the one before
+ * it, so two operations built against the same state cannot both be applied,
+ * and which of them survives would come down to timing. Queueing turns them
+ * back into the steps in a row that they are.
+ *
+ * The queue covers this process. A second instance of the portal writing the
+ * same DID would need a lock both of them can see.
+ */
+function serializeDIDMutation<T>(did: Domain.DID, mutation: () => Promise<T>): Promise<T> {
+    const key = canonicalDID(did);
+    const result = (didMutations.get(key) ?? Promise.resolve()).then(mutation);
+
+    // A failed mutation must not block the ones behind it, so the queued tail
+    // swallows the failure while the caller still gets it. The entry goes once
+    // nothing is waiting on it.
+    const tail = result.catch(() => undefined);
+    didMutations.set(key, tail);
+    void tail.then(() => {
+        if (didMutations.get(key) === tail) {
+            didMutations.delete(key);
+        }
+    });
+    return result;
+}
+
+/**
+ * One step of a published DID's operation chain. An update and a deactivation
+ * both need the DID's master key and the hash of the operation they follow,
+ * both are meaningless before the DID is on the ledger, and both record the
+ * transaction and the operation hash in one write.
+ */
+function chainOperation(
+    pluto: MultiTenantPluto,
+    did: Domain.DID,
+    verb: string,
+    build: (masterKey: Domain.PrivateKey, previousOperationHash: Uint8Array) => Promise<Uint8Array>,
+    record: (transactionId: string, operationHash: string) => Promise<void>,
+): Promise<{ txId: string }> {
+    return serializeDIDMutation(did, async () => {
+        // Neither read depends on the other.
+        const [masterKey, previousOperationHash] = await Promise.all([
+            getMasterKey(pluto, did),
+            getPreviousOperationHash(pluto, did),
+        ]);
+        if (!previousOperationHash) {
+            throw new Error(`DID ${did.toString()} must be published before it can be ${verb}`);
+        }
+
+        const atalaObject = await build(masterKey, previousOperationHash);
+        // Reading the hash before the object leaves keeps a malformed one from
+        // being submitted, and makes the row describe what was actually sent.
+        const operationHash = submittedOperationHash(atalaObject);
+        const txId = await submitAtalaObject(atalaObject);
+        await record(txId, operationHash);
+        return { txId };
+    });
 }
 
 export async function createLocalAgent(session: AgentSession): Promise<Agent> {
@@ -283,55 +414,48 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
                         keys: { MASTER_KEY, ...optionalKeys },
                     });
                 },
-                publish: async (did: Domain.DID) => {
-                    // publishDID signs the create operation with the DID's master key
-                    // and returns the signed Atala object bytes.
-                    const masterKey = await getMasterKey(pluto, did);
-                    const atalaObject = await agent.publishDID("prism", { did, key: masterKey });
+                publish: (did: Domain.DID) =>
+                    // A publish is the first step of the DID's chain, so it takes no
+                    // previous hash, but it still queues with the rest of them.
+                    serializeDIDMutation(did, async () => {
+                        // publishDID signs the create operation with the DID's master
+                        // key and returns the signed Atala object bytes.
+                        const masterKey = await getMasterKey(pluto, did);
+                        const atalaObject = await agent.publishDID("prism", { did, key: masterKey });
 
-                    // Persist the transaction id; update/deactivate later need it.
-                    const txId = await submitAtalaObject(atalaObject);
-                    await pluto.setDIDPublished(did.toString(), txId);
-                    return { did, txId };
-                },
-                update: async (did: Domain.DID, actions: UpdateAction[]) => {
-                    // An update carries the hash of the operation it follows, so the
-                    // ledger applies it to the state the caller has seen. Leaving it
-                    // out makes the SDK chain on the create operation, which is what a
-                    // DID with no operations of its own needs.
-                    const masterKey = await getMasterKey(pluto, did);
-                    const previousOperationHash = await getPreviousOperationHash(pluto, did);
-                    const atalaObject = await agent.updateDID("prism", {
+                        // The transaction id and the hash of the operation it carries
+                        // are what update and deactivate chain on later.
+                        const operationHash = submittedOperationHash(atalaObject);
+                        const txId = await submitAtalaObject(atalaObject);
+                        await pluto.setDIDPublished(did.toString(), txId, operationHash);
+                        return { did, txId };
+                    }),
+                // An update carries the hash of the operation it follows, so the
+                // ledger applies it to the state the caller has seen. A DID that was
+                // never published has no such state, and the create operation it
+                // would chain on is not on the ledger either, so it is refused here
+                // rather than by the node.
+                update: (did: Domain.DID, actions: UpdateAction[]) =>
+                    chainOperation(
+                        pluto,
                         did,
-                        key: masterKey,
-                        actions,
-                        previousOperationHash,
-                    });
-
-                    // The DID stays published, only the transaction moves on.
-                    const txId = await submitAtalaObject(atalaObject);
-                    await pluto.setDIDUpdated(did.toString(), txId);
-                    return { txId };
-                },
-                deactivate: async (did: Domain.DID) => {
-                    // Unlike an update, a deactivation has no operation to fall back
-                    // on: the DID has to be on the ledger for it to have any effect.
-                    const masterKey = await getMasterKey(pluto, did);
-                    const previousOperationHash = await getPreviousOperationHash(pluto, did);
-                    if (!previousOperationHash) {
-                        throw new Error(`DID ${did.toString()} must be published before it can be deactivated`);
-                    }
-
-                    const atalaObject = await agent.deactivateDID("prism", {
+                        "updated",
+                        (key, previousOperationHash) =>
+                            agent.updateDID("prism", { did, key, actions, previousOperationHash }),
+                        (txId, operationHash) =>
+                            // The DID stays published, only the chain moves on.
+                            pluto.setDIDUpdated(did.toString(), txId, operationHash),
+                    ),
+                deactivate: (did: Domain.DID) =>
+                    chainOperation(
+                        pluto,
                         did,
-                        key: masterKey,
-                        previousOperationHash,
-                    });
-
-                    const txId = await submitAtalaObject(atalaObject);
-                    await pluto.setDIDDeactivated(did.toString(), txId);
-                    return { txId };
-                }
+                        "deactivated",
+                        (key, previousOperationHash) =>
+                            agent.deactivateDID("prism", { did, key, previousOperationHash }),
+                        (txId, operationHash) =>
+                            pluto.setDIDDeactivated(did.toString(), txId, operationHash),
+                    )
             }
         },
         schemas: {

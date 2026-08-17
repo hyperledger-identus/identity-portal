@@ -17,6 +17,7 @@ declare module "@hyperledger/identus-sdk" {
   }
   interface DID {
     transactionId?: string;
+    operationHash?: string;
   }
 }
 
@@ -178,27 +179,29 @@ export class MultiTenantPluto extends Pluto {
   }
 
   /**
-   * Records a DID as published: stores the publish transaction id and marks its
-   * status.
+   * Records a DID as published: stores the publish transaction id, the hash of
+   * the operation it carried and marks the status. The transaction and the hash
+   * describe the same operation, so they are written together.
    */
-  async setDIDPublished(did: string, transactionId: string): Promise<void> {
-    await this.#patchDIDRecord(did, { transactionId, status: "published" });
+  async setDIDPublished(did: string, transactionId: string, operationHash: string): Promise<void> {
+    await this.#patchDIDRecord(did, { transactionId, operationHash, status: "published" });
   }
 
   /**
-   * Stores the transaction id of a DID's latest update. The status stays
-   * `published`: an update changes the DID's document, not its lifecycle.
+   * Stores the transaction id and operation hash of a DID's latest update. The
+   * status stays `published`: an update changes the DID's document, not its
+   * lifecycle.
    */
-  async setDIDUpdated(did: string, transactionId: string): Promise<void> {
-    await this.#patchDIDRecord(did, { transactionId });
+  async setDIDUpdated(did: string, transactionId: string, operationHash: string): Promise<void> {
+    await this.#patchDIDRecord(did, { transactionId, operationHash });
   }
 
   /**
-   * Records a DID as deactivated: stores the deactivate transaction id and marks
-   * its status.
+   * Records a DID as deactivated: stores the deactivate transaction id, the hash
+   * of the operation it carried and marks the status.
    */
-  async setDIDDeactivated(did: string, transactionId: string): Promise<void> {
-    await this.#patchDIDRecord(did, { transactionId, status: "deactivated" });
+  async setDIDDeactivated(did: string, transactionId: string, operationHash: string): Promise<void> {
+    await this.#patchDIDRecord(did, { transactionId, operationHash, status: "deactivated" });
   }
 
   async createSchema(schema: Omit<CollectionMap['schemas'], 'uuid'>): Promise<string> {
