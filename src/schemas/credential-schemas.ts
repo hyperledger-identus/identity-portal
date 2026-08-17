@@ -5,16 +5,24 @@ import { z } from 'zod';
  * unknown keys pass through, so a valid JSON Schema is never cut down or
  * rejected on its way to the agent. It replaces a `z.any()` here, which would
  * leave the typed API client without a response type.
+ *
+ * `type` and `additionalProperties` are unions because JSON Schema gives them
+ * more than one shape: `type` is a string or an array of strings, and
+ * `additionalProperties` is a boolean or a nested schema. `passthrough` only
+ * keeps unknown keys, so a known key declared too narrow would still be a 400
+ * on create and a failed output validation on read.
  */
 const jsonSchemaSchema = z
   .object({
     $id: z.string().optional(),
     $schema: z.string().optional(),
     description: z.string().optional(),
-    type: z.string().optional(),
+    type: z.union([z.string(), z.array(z.string())]).optional(),
     properties: z.record(z.unknown()).optional(),
     required: z.array(z.string()).optional(),
-    additionalProperties: z.boolean().optional(),
+    additionalProperties: z
+      .union([z.boolean(), z.record(z.unknown())])
+      .optional(),
   })
   .passthrough();
 

@@ -91,7 +91,12 @@ export default function createSchemasRouter(createContext: ContextFactory) {
           name: input.name,
           version: input.version,
           type: input.type,
-          schema: input.schema,
+          // The stored type is derived from the RIDB collection definition,
+          // which spells the JSON Schema `type` as a string and
+          // `additionalProperties` as a boolean. JSON Schema allows more than
+          // that, and the store keeps the field encrypted and untouched, so
+          // the validated body goes in as it is.
+          schema: input.schema as CredentialSchema['schema'],
           author: input.author,
           description: input.description ?? '',
           tags: input.tags ?? [],
