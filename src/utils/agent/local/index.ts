@@ -66,7 +66,6 @@ export async function createTenantAgent(options: AgentOptions): Promise<LocalAge
     return agent;
 }
 
-
 /** Length of the SHA-256 an operation chains on. */
 const OPERATION_HASH_LENGTH = 32;
 
