@@ -1,8 +1,14 @@
 import { DIDKeys, Domain } from '@hyperledger/identus-sdk';
 import { CLOUD_AGENT_BASE_URL } from '../../../config';
-import { Agent, CredentialSchemaInput, PrismDIDKeyCurves } from '../types';
+import {
+  Agent,
+  CredentialSchema,
+  CredentialSchemaInput,
+  PrismDIDKeyCurves,
+} from '../types';
 import { createClient } from './client';
 import type { ManagedDID } from './api';
+import type { components } from './spec';
 
 export type CloudAgentOptions = {
   /**
@@ -12,7 +18,69 @@ export type CloudAgentOptions = {
    * for unauthenticated/public endpoints.
    */
   accessToken?: string;
+  /**
+   * The caller's tenant. The Cloud Agent scopes everything by wallet already,
+   * so nothing is sent to it; the value only fills the `tenantId` the agnostic
+   * schema record carries, which the local agent stores per tenant.
+   */
+  tenantId?: string;
 };
+
+/** A single schema version as the registry returns it. */
+type RegistrySchema = components['schemas']['CredentialSchemaResponse'];
+
+/** The payload the registry takes to publish a schema or a new version of it. */
+type RegistrySchemaInput = components['schemas']['CredentialSchemaInput'];
+
+/**
+ * Maps a registry record onto the agnostic schema record. The registry gives a
+ * schema version two identifiers: `guid` addresses that one version, `id`
+ * groups the versions of the same schema. The interface has a single `uuid`,
+ * and it is `guid`, so `get(uuid)` reads back exactly the version that `create`
+ * returned. The registry has no tenant of its own, so the caller's tenant is
+ * stamped on the record to keep the shape the local agent stores.
+ */
+function toCredentialSchema(
+  record: RegistrySchema,
+  tenantId: string,
+): CredentialSchema {
+  // RIDB keeps `createdAt` / `updatedAt` on the records the local agent stores,
+  // in seconds. The registry only reports when a version was authored, and a
+  // published version never changes after that, so both come from `authored`.
+  const authored = Date.parse(record.authored);
+  const authoredAt = Number.isNaN(authored) ? 0 : Math.floor(authored / 1000);
+
+  return {
+    uuid: record.guid,
+    tenantId,
+    name: record.name,
+    version: record.version,
+    description: record.description,
+    type: record.type,
+    schema: record.schema as CredentialSchema['schema'],
+    // The registry leaves `tags` out when a schema carries none.
+    tags: record.tags ?? [],
+    author: record.author,
+    createdAt: authoredAt,
+    updatedAt: authoredAt,
+  };
+}
+
+/**
+ * Strips the fields the registry does not know about: `uuid` and `tenantId`,
+ * and the `createdAt` / `updatedAt` that RIDB carries on a stored record.
+ */
+function toRegistryInput(schema: CredentialSchemaInput): RegistrySchemaInput {
+  return {
+    name: schema.name,
+    version: schema.version,
+    description: schema.description,
+    type: schema.type,
+    schema: schema.schema,
+    tags: schema.tags,
+    author: schema.author,
+  };
+}
 
 
 type PublicKeys = Array<{
@@ -38,6 +106,10 @@ export async function createCloudAgentClient(
       ? { Authorization: `Bearer ${options.accessToken}` }
       : undefined,
   });
+
+  // Every request already resolves to the caller's wallet, so a client built
+  // without a session (public endpoints) has no tenant to report.
+  const tenantId = options.tenantId ?? '';
 
   return {
     start: async () => {
@@ -232,46 +304,85 @@ export async function createCloudAgentClient(
       },
     },
     schemas: {
-      list: () => {
-        /**
-         * Use
-         * client.GET('/schema-registry/schemas', {})
-         *
-         * Paginated response, map its contents to CollectionMap['schemas'] records
-         */
-        throw new Error('Not implemented');
+      list: async () => {
+        // The registry paginates with `offset`/`limit` and returns 100 records
+        // per page by default, the same way the DID registrar does. Walk every
+        // page so a wallet holding more than one page is not truncated.
+        const pageSize = 100;
+        const records: RegistrySchema[] = [];
+
+        for (let offset = 0; ; offset += pageSize) {
+          const { data, error, response } = await client.GET(
+            '/schema-registry/schemas',
+            { query: { offset, limit: pageSize } },
+          );
+
+          if (!response.ok || error) {
+            throw new Error(
+              `Cloud Agent could not list schemas (HTTP ${response.status})`,
+            );
+          }
+
+          const contents = data?.contents ?? [];
+          records.push(...contents);
+
+          // The last page is shorter than a full page (or empty).
+          if (contents.length < pageSize) break;
+        }
+
+        return records.map((record) =>
+          toCredentialSchema(record, tenantId),
+        );
       },
-      get: (uuid: string) => {
-        /**
-         * Use
-         * client.GET('/schema-registry/schemas/{guid}', { params: { guid: uuid } })
-         */
-        throw new Error('Not implemented');
+      get: async (uuid: string) => {
+        const { data, error, response } = await client.GET(
+          '/schema-registry/schemas/{guid}',
+          { params: { guid: uuid } },
+        );
+
+        // The local agent answers `undefined` for a schema it does not hold,
+        // so an unknown schema is not an error here either.
+        if (response.status === 404) return undefined;
+
+        if (!response.ok || error || !data) {
+          throw new Error(
+            `Cloud Agent could not read schema ${uuid} (HTTP ${response.status})`,
+          );
+        }
+
+        return toCredentialSchema(data, tenantId);
       },
-      create: (schema: CredentialSchemaInput) => {
-        /**
-         * Use
-         * client.POST('/schema-registry/schemas', { body: ... })
-         *
-         * The Cloud-agent signs the schema and issues it from its own DID
-         */
-        throw new Error('Not implemented');
+      create: async (schema: CredentialSchemaInput) => {
+        // The agent signs the schema with its own keys and issues it from the
+        // DID given in `author`, which has to be a DID of the same wallet.
+        const { data, error, response } = await client.POST(
+          '/schema-registry/schemas',
+          { body: toRegistryInput(schema) },
+        );
+
+        if (!response.ok || error || !data) {
+          throw new Error(
+            `Cloud Agent could not create schema ${schema.name} (HTTP ${response.status})`,
+          );
+        }
+
+        return data.guid;
       },
-      update: (uuid: string, schema: Partial<CredentialSchemaInput>) => {
-        /**
-         * Use
-         * client.PUT('/schema-registry/schemas/{id}', { params: { id: uuid }, body: ... })
-         *
-         * The registry publishes a new schema version, it does not edit in place
-         */
-        throw new Error('Not implemented');
+      update: async (uuid: string, schema: Partial<CredentialSchemaInput>) => {
+        // The registry does have a PUT, but it publishes a NEW version under a
+        // new `guid` instead of editing in place, so the `uuid` the caller holds
+        // keeps resolving to the pre-patch snapshot and the call reads as a
+        // no-op from the interface's point of view.
+        throw new Error(
+          `Updating schema ${uuid} is not supported: schemas are immutable, and the registry keeps every published version, so that credentials issued against a schema stay readable.`,
+        );
       },
-      delete: (uuid: string) => {
-        /**
-         * The schema registry is append-only, there is no DELETE endpoint.
-         * We need to decide if we block this in cloud mode or hide the action.
-         */
-        throw new Error('Not implemented');
+      delete: async (uuid: string) => {
+        // The registry is append-only and has no DELETE endpoint at all, which
+        // is the same rule seen from the other side.
+        throw new Error(
+          `Deleting schema ${uuid} is not supported: schemas are immutable, and the registry keeps every published version, so that credentials issued against a schema stay readable.`,
+        );
       },
     },
   };
