@@ -1,4 +1,4 @@
-import { DIDKeys, Domain } from '@hyperledger/identus-sdk';
+import { DIDKeys, Domain, UpdateAction } from '@hyperledger/identus-sdk';
 import { CLOUD_AGENT_BASE_URL } from '../../../config';
 import {
   Agent,
@@ -276,6 +276,20 @@ export async function createCloudAgentClient(
           }
 
           return { did, txId: operationId };
+        },
+        update: (did: Domain.DID, actions: UpdateAction[]) => {
+          /**
+           * Use
+           * client.POST('/did-registrar/dids/{didRef}/updates', { params: { didRef }, body: { actions: ... } })
+           *
+           * The registrar signs and submits the operation itself, so it takes
+           * the actions as JSON and answers with a scheduled operation id, the
+           * way publish and deactivate do. An `addKey` action describes the key
+           * by id, purpose and curve and the agent generates it, so the SDK
+           * action, which carries a public key we hold ourselves, has no direct
+           * counterpart and needs a decision of its own.
+           */
+          throw new Error('Not implemented');
         },
         deactivate: async (did: Domain.DID) => {
           // Same shape as publish, and the registrar only accepts it for a DID

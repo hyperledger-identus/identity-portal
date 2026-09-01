@@ -4,8 +4,9 @@ import {
     Agent as LocalAgent,
     Domain,
     PrismKeyPathIndexTask,
+    UpdateAction,
+    getOperationHash
 } from "@hyperledger/identus-sdk";
-
 import { MONGODB_URI } from "../../../config";
 import { AgentSession } from "..";
 import { MediatorConnection } from "@hyperledger/identus-sdk/plugins/didcomm";
@@ -63,6 +64,129 @@ export async function createTenantAgent(options: AgentOptions): Promise<LocalAge
         }
     })
     return agent;
+}
+
+
+/** Length of the SHA-256 an operation chains on. */
+const OPERATION_HASH_LENGTH = 32;
+
+/**
+ * Picks a DID's master key out of the keys Pluto stored with it. The key purpose
+ * is the fifth segment of the derivation path
+ * (`m/29'/29'/<didIndex>'/<keyPurpose>'/<keyIndex>'`).
+ */
+async function getMasterKey(pluto: MultiTenantPluto, did: Domain.DID): Promise<Domain.PrivateKey> {
+    const privateKeys = await pluto.getDIDPrivateKeysByDID(did);
+    const masterKey = privateKeys.find((key) => {
+        const path = key.getProperty(Domain.KeyProperties.derivationPath);
+        const keyPurpose = path ? Number.parseInt(path.split("/")[4], 10) : NaN;
+        return keyPurpose === Domain.PrismDIDKeyUsage.MASTER_KEY;
+    });
+    if (!masterKey) {
+        throw new Error("Master key not found for DID");
+    }
+    return masterKey;
+}
+
+/**
+ * Submits a signed Atala object to the neoprism submitter API as a hex string
+ * and returns the id of the transaction carrying it.
+ */
+async function submitAtalaObject(atalaObject: Uint8Array): Promise<string> {
+    const neoprism = createNeoPrismClient();
+    const { data, error, response } = await neoprism.POST("/api/submissions/objects", {
+        body: { object: Buffer.from(atalaObject).toString("hex") },
+    });
+    if (!response.ok || error || !data) {
+        throw new Error(`neoprism rejected the submitted object (HTTP ${response.status})`);
+    }
+    return data.tx_id;
+}
+
+/**
+ * The canonical form of a Prism DID: its state hash, without the encoded state
+ * a long-form DID carries after the second `:`.
+ */
+function canonicalDID(did: Domain.DID): string {
+    return `${did.schema}:${did.method}:${did.methodId.split(":")[0]}`;
+}
+
+/**
+ * Hash of the last Atala operation submitted for a DID, which the next operation
+ * has to chain on.
+ *
+ * The hash is written on the DID's row in the same call that records the
+ * transaction, so the operation right after another one reads it from there and
+ * never waits for the indexer. A row written before that field existed carries
+ * only the transaction id, and the indexer is asked which operation it holds.
+ *
+ * `undefined` means the DID was never published, so it has no operation of its
+ * own to chain on.
+ */
+async function getPreviousOperationHash(
+    pluto: MultiTenantPluto,
+    did: Domain.DID,
+): Promise<Uint8Array | undefined> {
+    const record = await pluto.getDIDRecord(did.toString());
+    if (!record?.transactionId) {
+        return undefined;
+    }
+    if (record.operationHash) {
+        const hash = Buffer.from(record.operationHash, "hex");
+        if (hash.length !== OPERATION_HASH_LENGTH) {
+            throw new Error(`DID ${did.toString()} carries a malformed operation hash`);
+        }
+        return Uint8Array.from(hash);
+    }
+
+    const neoprism = createNeoPrismClient();
+    const { data, error, response } = await neoprism.GET("/api/transactions/{tx_id}", {
+        params: { tx_id: record.transactionId },
+    });
+    if (!response.ok || error || !data) {
+        throw new Error(
+            `neoprism has not indexed transaction ${record.transactionId} yet (HTTP ${response.status})`,
+        );
+    }
+
+    // A transaction can carry operations for more than one DID, and the indexer
+    // reports each of them under the canonical DID it applies to.
+    const shortFormDID = canonicalDID(did);
+    const operation = data.operations.filter((entry) => entry.did === shortFormDID).at(-1);
+    if (!operation) {
+        throw new Error(`Transaction ${record.transactionId} carries no operation for ${shortFormDID}`);
+    }
+    const operationHashHex = getOperationHash(Buffer.from(operation.signed_operation_data, "hex"));
+
+    return Buffer.from(operationHashHex, "hex");
+}
+
+
+/**
+ * One step of a published DID's operation chain. An update and a deactivation
+ * both need the DID's master key and the hash of the operation they follow,
+ * both are meaningless before the DID is on the ledger, and both record the
+ * transaction and the operation hash in one write.
+ */
+async function chainOperation(
+    pluto: MultiTenantPluto,
+    did: Domain.DID,
+    verb: string,
+    build: (masterKey: Domain.PrivateKey, previousOperationHash: Uint8Array) => Promise<{ operation: Uint8Array, operationHash: string }>,
+    record: (transactionId: string, operationHash: string) => Promise<void>,
+): Promise<{ txId: string }> {
+    // Neither read depends on the other.
+    const [masterKey, previousOperationHash] = await Promise.all([
+        getMasterKey(pluto, did),
+        getPreviousOperationHash(pluto, did),
+    ]);
+    if (!previousOperationHash) {
+        throw new Error(`DID ${did.toString()} must be published before it can be ${verb}`);
+    }
+    const {operation: atalaObject, operationHash} = await build(masterKey, previousOperationHash);
+    const txId = await submitAtalaObject(atalaObject);
+    await record(txId, operationHash);
+    return { txId };
 }
 
 export async function createLocalAgent(session: AgentSession): Promise<Agent> {
@@ -150,44 +274,38 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
                     });
                 },
                 publish: async (did: Domain.DID) => {
-                    // publishDID signs the create operation with the DID's master key.
-                    // Fetch the stored keys and pick the master by its derivation path
-                    // purpose segment (m/29'/29'/<didIndex>'/<keyPurpose>'/<keyIndex>').
-                    const privateKeys = await pluto.getDIDPrivateKeysByDID(did);
-                    const masterKey = privateKeys.find((key) => {
-                        const path = key.getProperty(Domain.KeyProperties.derivationPath);
-                        const keyPurpose = path ? Number.parseInt(path.split("/")[4], 10) : NaN;
-                        return keyPurpose === Domain.PrismDIDKeyUsage.MASTER_KEY;
-                    });
-                    if (!masterKey) {
-                        throw new Error("Master key not found for DID");
-                    }
-
-                    // Returns the signed Atala object bytes for the create operation.
-                    const atalaObject = await agent.publishDID("prism", { did, key: masterKey });
-
-                    // Submit the object to the neoprism submitter API as a hex string.
-                    const neoprism = createNeoPrismClient();
-                    const { data, error, response } = await neoprism.POST("/api/submissions/objects", {
-                        body: { object: Buffer.from(atalaObject).toString("hex") },
-                    });
-                    if (!response.ok || error || !data) {
-                        throw new Error(`neoprism rejected the publish object (HTTP ${response.status})`);
-                    }
-
-                    // Persist the transaction id; update/deactivate later need it.
-                    await pluto.setDIDPublished(did.toString(), data.tx_id);
-                    return { did, txId: data.tx_id };
+                    const masterKey = await getMasterKey(pluto, did);
+                    const { operation: atalaObject,  operationHash   } = await agent.publishDID("prism", { did, key: masterKey });
+                    const txId = await submitAtalaObject(atalaObject);
+                    await pluto.setDIDPublished(did.toString(), txId, operationHash);
+                    return { did, txId };
                 },
-                deactivate: (did: Domain.DID) => {
-                    /**
-                     * The TS SDK does not support creating signed deactivate operations
-                     * We first need to make this feature in the TS-SDK.
-                     * 
-                     * Will then be accessible under agent.deactivateDID("prism")
-                     */
-                    throw new Error("Not implemented");
-                }
+                // An update carries the hash of the operation it follows, so the
+                // ledger applies it to the state the caller has seen. A DID that was
+                // never published has no such state, and the create operation it
+                // would chain on is not on the ledger either, so it is refused here
+                // rather than by the node.
+                update: (did: Domain.DID, actions: UpdateAction[]) =>
+                    chainOperation(
+                        pluto,
+                        did,
+                        "updated",
+                        (key, previousOperationHash) =>
+                            agent.updateDID("prism", { did, key, actions, previousOperationHash }),
+                        (txId, operationHash) =>
+                            // The DID stays published, only the chain moves on.
+                            pluto.setDIDUpdated(did.toString(), txId, operationHash),
+                    ),
+                deactivate: (did: Domain.DID) =>
+                    chainOperation(
+                        pluto,
+                        did,
+                        "deactivated",
+                        (key, previousOperationHash) =>
+                            agent.deactivateDID("prism", { did, key, previousOperationHash }),
+                        (txId, operationHash) =>
+                            pluto.setDIDDeactivated(did.toString(), txId, operationHash),
+                    )
             }
         },
         schemas: {

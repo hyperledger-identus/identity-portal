@@ -1,4 +1,4 @@
-import { CollectionMap, Domain, RequiredPrismDIDSecretKeys } from "@hyperledger/identus-sdk";
+import { CollectionMap, Domain, RequiredPrismDIDSecretKeys, UpdateAction } from "@hyperledger/identus-sdk";
 
 
 /**
@@ -57,6 +57,13 @@ export type Agent = {
             list: () => Promise<Domain.DID[]>;
             create: (keys: PrismDIDKeyCurves) => Promise<Domain.DID>;
             publish: (did: Domain.DID) => Promise<{ did: Domain.DID, txId: string }>;
+            /**
+             * Applies a list of actions to a published DID, adding, removing or
+             * replacing the keys and services of its document. The actions are
+             * the SDK's own update model, so both agents describe a change the
+             * same way.
+             */
+            update: (did: Domain.DID, actions: UpdateAction[]) => Promise<{ txId: string }>;
             deactivate: (did: Domain.DID) => Promise<{ txId: string }>
         }
     },
