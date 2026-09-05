@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import {
     Apollo,
     Castor,
@@ -5,7 +7,6 @@ import {
     Domain,
     PrismKeyPathIndexTask,
     UpdateAction,
-    getOperationHash
 } from "@hyperledger/identus-sdk";
 import { MONGODB_URI } from "../../../config";
 import { AgentSession } from "..";
@@ -112,6 +113,74 @@ function canonicalDID(did: Domain.DID): string {
 }
 
 /**
+ * Field number of `SignedAtalaOperation.operation` and the protobuf wire types
+ * the fields beside it can use. See the PRISM protobuf definitions:
+ * https://github.com/hyperledger-identus/neoprism/blob/main/lib/did-prism/proto/prism.proto
+ */
+const OPERATION_FIELD = 3;
+const WIRE_TYPE_VARINT = 0;
+const WIRE_TYPE_LENGTH_DELIMITED = 2;
+
+/**
+ * SHA-256 of the Atala operation a signed operation carries. Only the top-level
+ * fields of `SignedAtalaOperation` are walked to cut field 3 out; the operation
+ * itself is hashed as it is, never parsed.
+ *
+ * The SDK ships `getOperationHash`, which does not fit here: it reads a
+ * serialised `AtalaObject` rather than the `SignedAtalaOperation` bytes the
+ * indexer returns, it hex-encodes that operation instead of hashing it, and it
+ * is re-exported as a type, so it is not there at runtime.
+ *
+ * Every read is bounds-checked. A truncated message throws instead of being read
+ * past its end, where the arithmetic would quietly produce a value that belongs
+ * to nothing and the caller would chain on it.
+ */
+function signedOperationHash(signedOperation: Uint8Array): Uint8Array {
+    let offset = 0;
+
+    const readVarint = () => {
+        let value = 0;
+        for (let shift = 0; ; shift += 7) {
+            if (offset >= signedOperation.length) {
+                throw new Error("Truncated signed operation: a varint runs past its end");
+            }
+            const byte = signedOperation[offset++];
+            value += (byte & 0x7f) * 2 ** shift;
+            if ((byte & 0x80) === 0) {
+                return value;
+            }
+        }
+    };
+
+    while (offset < signedOperation.length) {
+        const tag = readVarint();
+        const wireType = tag & 0b111;
+        if (wireType === WIRE_TYPE_VARINT) {
+            readVarint();
+            continue;
+        }
+        if (wireType !== WIRE_TYPE_LENGTH_DELIMITED) {
+            throw new Error(`Cannot read field ${tag >> 3} of the signed operation`);
+        }
+        const length = readVarint();
+        const start = offset;
+        offset += length;
+        if (offset > signedOperation.length) {
+            throw new Error(
+                `Truncated signed operation: field ${tag >> 3} declares ${length} bytes and ${signedOperation.length - start} are left`,
+            );
+        }
+        if (tag >> 3 === OPERATION_FIELD) {
+            if (length === 0) {
+                throw new Error("The signed operation carries an empty Atala operation");
+            }
+            return Uint8Array.from(createHash("sha256").update(signedOperation.subarray(start, offset)).digest());
+        }
+    }
+    throw new Error("The signed operation carries no Atala operation");
+}
+
+/**
  * Hash of the last Atala operation submitted for a DID, which the next operation
  * has to chain on.
  *
@@ -156,9 +225,12 @@ async function getPreviousOperationHash(
     if (!operation) {
         throw new Error(`Transaction ${record.transactionId} carries no operation for ${shortFormDID}`);
     }
-    const operationHashHex = getOperationHash(Buffer.from(operation.signed_operation_data, "hex"));
+    const hash = signedOperationHash(Buffer.from(operation.signed_operation_data, "hex"));
+    if (hash.length !== OPERATION_HASH_LENGTH) {
+        throw new Error(`Operation ${operation.operation_id} hashes to a malformed operation hash`);
+    }
 
-    return Buffer.from(operationHashHex, "hex");
+    return hash;
 }
 
 
