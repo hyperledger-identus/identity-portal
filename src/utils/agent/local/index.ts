@@ -359,13 +359,9 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
                 },
                 publish: async (did: Domain.DID) => {
                     const masterKey = await getMasterKey(pluto, did);
-                    debugger;
                     const { operation: atalaObject,  operationHash   } = await agent.publishDID("prism", { did, key: masterKey });
-                    debugger;
                     const txId = await submitAtalaObject(atalaObject);
-                    debugger;
                     await pluto.setDIDPublished(did.toString(), txId, operationHash);
-                    debugger;
                     return { did, txId };
                 },
                 // An update carries the hash of the operation it follows, so the

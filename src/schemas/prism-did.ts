@@ -1,3 +1,4 @@
+import { Domain } from '@hyperledger/identus-sdk';
 import { z } from 'zod';
 
 /** Portal lifecycle of a stored prism DID. */
@@ -23,14 +24,12 @@ const prismDIDKeyPurposeSchema = z.enum([
   'CAPABILITY_DELEGATION_KEY',
 ]);
 
-const prismDIDCurveSchema = z.enum(['secp256k1', 'Ed25519', 'X25519']);
-
 const addKeyActionSchema = z.object({
   actionType: z.literal('addKey'),
   addKey: z.object({
     id: z.string().min(1),
     purpose: prismDIDKeyPurposeSchema,
-    curve: prismDIDCurveSchema,
+    curve: z.nativeEnum(Domain.Curve),
   }),
 });
 

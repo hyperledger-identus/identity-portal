@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Domain } from '@hyperledger/identus-sdk';
 import type { AppRouter } from '../api/registry';
 import { api } from './utils/api';
 import type { EndpointAt, InputOf, OutputOf } from './utils/api/types';
@@ -18,7 +19,11 @@ const KEY_USAGES = [
   'CAPABILITY_DELEGATION_KEY',
 ] as const;
 
-const CURVES = ['secp256k1', 'Ed25519', 'X25519'] as const;
+const CURVES = [
+  Domain.Curve.SECP256K1,
+  Domain.Curve.ED25519,
+  Domain.Curve.X25519,
+] as const;
 
 const ACTION_TYPES = [
   'addKey',
@@ -254,7 +259,7 @@ function DidUpdateForm({
   const [actionType, setActionType] = useState<ActionType>('addKey');
   const [keyId, setKeyId] = useState('');
   const [purpose, setPurpose] = useState<KeyUsage>('ISSUING_KEY');
-  const [curve, setCurve] = useState<Curve>('secp256k1');
+  const [curve, setCurve] = useState<Curve>(Domain.Curve.SECP256K1);
   const [serviceId, setServiceId] = useState('');
   const [serviceType, setServiceType] = useState('LinkedDomains');
   const [serviceEndpoint, setServiceEndpoint] = useState('');

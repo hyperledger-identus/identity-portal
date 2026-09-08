@@ -5,6 +5,8 @@ import {
   CredentialSchema,
   CredentialSchemaInput,
   PrismDIDKeyCurves,
+  PrismDIDKeys,
+  PrismDIDUpdateAction,
   toPrismDIDStatus,
 } from '../types';
 import { createClient } from './client';
@@ -84,11 +86,85 @@ function toRegistryInput(schema: CredentialSchemaInput): RegistrySchemaInput {
 }
 
 
+type ManagedPurpose = components['schemas']['Purpose'];
+type ManagedCurve = components['schemas']['Curve'];
+type ManagedUpdateAction = components['schemas']['UpdateManagedDIDRequestAction'];
+
 type PublicKeys = Array<{
-  id: string, 
-  purpose: "assertionMethod" | "authentication" | "capabilityDelegation" | "capabilityInvocation" | "keyAgreement", 
-  curve: "Ed25519" | "X25519" | "secp256k1"
-}>
+  id: string;
+  purpose: ManagedPurpose;
+  curve: ManagedCurve;
+}>;
+
+/**
+ * Maps a portal key usage onto the verification-relationship name the registrar
+ * uses in a document template / `addKey` action. `REVOCATION_KEY` has no
+ * counterpart there and is refused.
+ */
+function toManagedPurpose(keyType: PrismDIDKeys | string): ManagedPurpose {
+  switch (keyType) {
+    case 'ISSUING_KEY':
+      return 'assertionMethod';
+    case 'AUTHENTICATION_KEY':
+      return 'authentication';
+    case 'CAPABILITY_DELEGATION_KEY':
+      return 'capabilityDelegation';
+    case 'CAPABILITY_INVOCATION_KEY':
+      return 'capabilityInvocation';
+    case 'KEY_AGREEMENT_KEY':
+      return 'keyAgreement';
+    default:
+      throw new Error(`Key type ${keyType} is not supported by the Cloud Agent`);
+  }
+}
+
+/**
+ * Maps a portal update action onto the registrar's update model. Action type
+ * names become the registrar's uppercase enums; `addKey` keeps id / purpose /
+ * curve so the agent can generate the key itself.
+ */
+function toManagedUpdateAction(action: PrismDIDUpdateAction): ManagedUpdateAction {
+  if (action.actionType === 'addKey') {
+    return {
+      actionType: 'ADD_KEY',
+      addKey: {
+        id: action.addKey.id,
+        purpose: toManagedPurpose(action.addKey.purpose),
+        curve: action.addKey.curve as ManagedCurve,
+      },
+    };
+  }
+  if (action.actionType === 'removeKey') {
+    return {
+      actionType: 'REMOVE_KEY',
+      removeKey: { id: action.removeKey.id },
+    };
+  }
+  if (action.actionType === 'addService') {
+    return {
+      actionType: 'ADD_SERVICE',
+      addService: {
+        id: action.addService.id,
+        type: action.addService.type,
+        serviceEndpoint: action.addService.serviceEndpoint,
+      },
+    };
+  }
+  if (action.actionType === 'removeService') {
+    return {
+      actionType: 'REMOVE_SERVICE',
+      removeService: { id: action.removeService.id },
+    };
+  }
+  return {
+    actionType: 'UPDATE_SERVICE',
+    updateService: {
+      id: action.updateService.id,
+      type: action.updateService.type,
+      serviceEndpoint: action.updateService.serviceEndpoint,
+    },
+  };
+}
 
 /**
  * Builds a Cloud Agent client. The returned client is *already authenticated*:
@@ -187,53 +263,17 @@ export async function createCloudAgentClient(
           */
 
           const publicKeys = Object.keys(keys).reduce((allPublicKeys, keyType) => {
-            const curves = keys[keyType as keyof DIDKeys]!
+            const curves = keys[keyType as keyof DIDKeys]!;
             return [
               ...allPublicKeys,
-              ...curves.map((keyCurve, i) => {
-                const curve = keyCurve.toString().toLowerCase() as "Ed25519" | "X25519" | "secp256k1";
-                if (keyType === 'ISSUING_KEY') {
-                  return {
-                    id: `${keyType}-${i}`,
-                    purpose: "assertionMethod" as const,
-                    curve
-                  }
-                }
-                if (keyType === 'AUTHENTICATION_KEY') {
-                  return {
-                    id: `${keyType}-${i}`,
-                      purpose: "authentication" as const,
-                    curve
-                  }
-                }
-                if (keyType === 'CAPABILITY_DELEGATION_KEY') {
-                  return {
-                    id: `${keyType}-${i}`,
-                    purpose: "capabilityDelegation" as const,
-                    curve
-                  }
-                }
-                if (keyType === 'CAPABILITY_INVOCATION_KEY') {
-                  return {
-                    id: `${keyType}-${i}`,
-                    purpose: "capabilityInvocation" as const,
-                    curve
-                  }
-                }
-                if (keyType === 'KEY_AGREEMENT_KEY') {
-                  return {
-                    id: `${keyType}-${i}`,
-                    purpose: "keyAgreement" as const,
-                    curve
-                  }
-                }
-                throw new Error("Key type not supported");
-              })
-            ]
-          }, [] as PublicKeys)
-
-
-
+              ...curves.map((keyCurve, i) => ({
+                id: `${keyType}-${i}`,
+                purpose: toManagedPurpose(keyType),
+                // Domain.Curve already matches the registrar's Curve enum.
+                curve: keyCurve as ManagedCurve,
+              })),
+            ];
+          }, [] as PublicKeys);
 
           const { data, error, response } = await client.POST("/did-registrar/dids", {
             body: {
@@ -281,19 +321,35 @@ export async function createCloudAgentClient(
 
           return { did, txId: operationId };
         },
-        update: () => {
-          /**
-           * Use
-           * client.POST('/did-registrar/dids/{didRef}/updates', { params: { didRef }, body: { actions: ... } })
-           *
-           * The registrar signs and submits the operation itself, so it takes
-           * the actions as JSON and answers with a scheduled operation id, the
-           * way publish and deactivate do. An `addKey` action describes the key
-           * by id, purpose and curve and the agent generates it, so the SDK
-           * action, which carries a public key we hold ourselves, has no direct
-           * counterpart and needs a decision of its own.
-           */
-          throw new Error('Not implemented');
+        update: async (did: Domain.DID, actions: PrismDIDUpdateAction[]) => {
+          // Same shape as publish / deactivate: the registrar signs and submits
+          // the operation, and answers with a scheduled operation id. Portal
+          // `addKey` already names id / purpose / curve, which is what the
+          // registrar's ManagedDIDKeyTemplate expects, so the agent generates
+          // the key itself.
+          const didRef = did.toString();
+          const { data, error, response } = await client.POST(
+            '/did-registrar/dids/{didRef}/updates',
+            {
+              params: { didRef },
+              body: { actions: actions.map(toManagedUpdateAction) },
+            },
+          );
+
+          if (!response.ok || error) {
+            throw new Error(
+              `Cloud Agent could not update ${didRef} (HTTP ${response.status})`,
+            );
+          }
+
+          const operationId = data?.scheduledOperation?.id;
+          if (!operationId) {
+            throw new Error(
+              `Cloud Agent scheduled no update for ${didRef}`,
+            );
+          }
+
+          return { txId: operationId };
         },
         deactivate: async (did: Domain.DID) => {
           // Same shape as publish, and the registrar only accepts it for a DID
