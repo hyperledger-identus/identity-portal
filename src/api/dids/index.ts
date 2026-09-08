@@ -48,7 +48,6 @@ export default function createIssuerRouter(createContext: ContextFactory) {
         ISSUING_KEY: z.array(z.string()).min(1),
         KEY_AGREEMENT_KEY: z.array(z.string()).min(1),
         AUTHENTICATION_KEY: z.array(z.string()).min(1),
-        REVOCATION_KEY: z.array(z.string()).min(1),
         CAPABILITY_INVOCATION_KEY: z.array(z.string()).min(1),
         CAPABILITY_DELEGATION_KEY: z.array(z.string()).min(1),
       }),
