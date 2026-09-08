@@ -11,7 +11,8 @@ import { z } from 'zod';
 import { didDocumentSchema } from '../../schemas/did-document';
 import { updateActionSchema, type UpdateActionInput } from '../../schemas/did-update-actions';
 import { ContextFactory, HttpError, createRestRouter } from '../../utils/rest';
-import { PrismDIDKeyCurves } from 'src/utils/agent/types';
+import { PrismDIDKeyCurves, PrismDIDUpdateAction } from '../../utils/agent/types';
+import { prismDIDListSchema } from '../../schemas/prism-did';
 
 /**
  * Reads the DID out of the path. `Domain.DID.fromString` throws a plain error on
@@ -103,17 +104,21 @@ function toUpdateAction(action: UpdateActionInput): UpdateAction {
 export default function createIssuerRouter(createContext: ContextFactory) {
   return createRestRouter({ createContext })
     .get('/', {
-      output: z.object({
-        dids: z.array(z.string()),
-      }),
+      output: prismDIDListSchema,
       openAPI: {
         name: 'GET DIDS',
-        description: 'Lists the prism DIDs stored by the agent.',
+        description: 'Lists the prism DIDs stored by the agent, with publication status.',
         tags: ['dids'],
       },
       handler: async ({ ctx }) => {
         const dids = await ctx.agent.dids.prism.list();
-        return { dids: dids.map((did) => did.toString()) };
+        return {
+          dids: dids.map((record) => ({
+            did: record.did.toString(),
+            status: record.status,
+            transactionId: record.transactionId,
+          })),
+        };
       },
     })
     .post('/', {
@@ -205,7 +210,7 @@ export default function createIssuerRouter(createContext: ContextFactory) {
       handler: async ({ input, ctx }) => {
         const { txId } = await ctx.agent.dids.prism.update(
           parseDID(input.did),
-          input.actions.map(toUpdateAction),
+          input.actions.map(toUpdateAction) as PrismDIDUpdateAction[],
         );
         return { txId };
       },

@@ -60,6 +60,9 @@ function useSession(): SessionState {
 }
 
 function Dashboard({ user }: { user: SessionUser }) {
+  const [listVersion, setListVersion] = useState(0);
+  const refreshList = () => setListVersion((version) => version + 1);
+
   return (
     <main className="min-h-screen bg-white text-ink">
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 px-6 py-6">
@@ -92,10 +95,10 @@ function Dashboard({ user }: { user: SessionUser }) {
           </div>
         </header>
         <div className="grid gap-6 lg:grid-cols-2">
-          <CreateDid />
+          <CreateDid onCreated={refreshList} />
           <DidResolver />
         </div>
-        <DidList />
+        <DidList refreshToken={listVersion} />
       </div>
     </main>
   );
