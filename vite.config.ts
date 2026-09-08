@@ -10,6 +10,17 @@ const projectRoot = dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   root: resolve(projectRoot, "src/ui"),
   plugins: [react()],
+  define: {
+    global: "globalThis",
+  },
+  resolve: {
+    alias: {
+      buffer: "buffer",
+    },
+  },
+  optimizeDeps: {
+    include: ["buffer"],
+  },
   build: {
     outDir: resolve(projectRoot, "dist/ui"),
     emptyOutDir: true,
