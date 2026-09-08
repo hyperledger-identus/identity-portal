@@ -1,10 +1,11 @@
-import { DIDKeys, Domain, UpdateAction } from '@hyperledger/identus-sdk';
+import { DIDKeys, Domain } from '@hyperledger/identus-sdk';
 import { CLOUD_AGENT_BASE_URL } from '../../../config';
 import {
   Agent,
   CredentialSchema,
   CredentialSchemaInput,
   PrismDIDKeyCurves,
+  toPrismDIDStatus,
 } from '../types';
 import { createClient } from './client';
 import type { ManagedDID } from './api';
@@ -171,7 +172,10 @@ export async function createCloudAgentClient(
               managed.status === 'PUBLISHED'
                 ? managed.did
                 : (managed.longFormDid ?? managed.did);
-            return Domain.DID.fromString(value);
+            return {
+              did: Domain.DID.fromString(value),
+              status: toPrismDIDStatus(managed.status),
+            };
           });
         },
         create: async (keys: PrismDIDKeyCurves) => {
@@ -277,7 +281,7 @@ export async function createCloudAgentClient(
 
           return { did, txId: operationId };
         },
-        update: (did: Domain.DID, actions: UpdateAction[]) => {
+        update: () => {
           /**
            * Use
            * client.POST('/did-registrar/dids/{didRef}/updates', { params: { didRef }, body: { actions: ... } })

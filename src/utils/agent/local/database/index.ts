@@ -126,7 +126,7 @@ export class MultiTenantPluto extends Pluto {
 
   async createTenant(tenantId: string): Promise<void> {
     try {
-      await this.store.insert("tenants", { uuid: randomUUID(), tenantId });
+      await this.store.insert("tenants", { uuid: randomUUID(), tenantId, createdAt: Date.now(), updatedAt: Date.now() });
     } catch (error) {
       console.error("Failed to create tenant:", error);
       throw error

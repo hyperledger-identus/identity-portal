@@ -5,6 +5,7 @@ import {
     Domain,
     PrismKeyPathIndexTask,
     UpdateAction,
+    UpdateActionType,
     getOperationHash
 } from "@hyperledger/identus-sdk";
 import { MONGODB_URI } from "../../../config";
@@ -15,6 +16,8 @@ import {
     CredentialSchemaInput,
     MutablePrismDIDSecretKeys,
     PrismDIDKeyCurves,
+    PrismDIDUpdateAction,
+    toPrismDIDStatus,
     typedEntries,
 } from "../types";
 import { MultiTenantPluto } from "./database";
@@ -65,7 +68,6 @@ export async function createTenantAgent(options: AgentOptions): Promise<LocalAge
     })
     return agent;
 }
-
 
 /** Length of the SHA-256 an operation chains on. */
 const OPERATION_HASH_LENGTH = 32;
@@ -189,6 +191,76 @@ async function chainOperation(
     return { txId };
 }
 
+/**
+ * Turns portal JSON update actions into SDK `UpdateAction`s. `addKey` is the
+ * one that cannot travel as JSON: a new private key is derived from the seed,
+ * stored on the DID, and its public key is what the ledger action carries.
+ */
+async function toSdkUpdateActions(
+    apollo: Apollo,
+    agent: LocalAgent,
+    pluto: MultiTenantPluto,
+    did: Domain.DID,
+    actions: PrismDIDUpdateAction[],
+): Promise<UpdateAction[]> {
+    const sdkActions: UpdateAction[] = [];
+    for (const action of actions) {
+        if (action.actionType === 'addKey') {
+            const seedHex = await pluto.getSetting("seed");
+            if (!seedHex) {
+                throw new Error("Seed not found");
+            }
+            const seed = Buffer.from(seedHex, "hex");
+            const index = await agent.runTask(new PrismKeyPathIndexTask({}));
+            const keyUsage = Domain.PrismDIDKeyUsage[action.addKey.purpose];
+            const derivation = Domain.PrismDerivationPath.init(index, keyUsage);
+            const privateKey = apollo.createPrivateKey({
+                [Domain.KeyProperties.curve]: action.addKey.curve,
+                [Domain.KeyProperties.seed]: seed,
+                [Domain.KeyProperties.index]: index,
+                [Domain.KeyProperties.derivationPath]: derivation.toString(),
+                [Domain.KeyProperties.derivationSchema]: Domain.PrismDerivationPathSchema,
+            });
+            await pluto.storeDID(did, privateKey);
+            sdkActions.push({
+                actionType: UpdateActionType.addKey,
+                addKey: {
+                    id: action.addKey.id,
+                    purpose: keyUsage,
+                    publicKey: privateKey.publicKey(),
+                },
+            });
+            continue;
+        }
+        if (action.actionType === 'removeKey') {
+            sdkActions.push({
+                actionType: UpdateActionType.removeKey,
+                removeKey: { id: action.removeKey.id },
+            });
+            continue;
+        }
+        if (action.actionType === 'addService') {
+            sdkActions.push({
+                actionType: UpdateActionType.addService,
+                addService: { ...action.addService },
+            });
+            continue;
+        }
+        if (action.actionType === 'removeService') {
+            sdkActions.push({
+                actionType: UpdateActionType.removeService,
+                removeService: { id: action.removeService.id },
+            });
+            continue;
+        }
+        sdkActions.push({
+            actionType: UpdateActionType.updateService,
+            updateService: { ...action.updateService },
+        });
+    }
+    return sdkActions;
+}
+
 export async function createLocalAgent(session: AgentSession): Promise<Agent> {
     const apollo = new Apollo();
     const castor = new Castor(apollo, PRISM_DID_RESOLVERS);
@@ -206,24 +278,36 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
             await agent.stop()
         },
         dids: {
-            resolveDID: (did: string) => castor.resolveDID(did),
+            resolveDID: async (did: string) => {
+                const didDocument = await castor.resolveDID(did);
+                return didDocument
+            },
             prism: {
                 list: async () => {
                     // Pluto pairs each stored key with its DID, so a DID created with
                     // seven keys comes back seven times. Deduplicate by DID string.
                     // MultiTenantPluto scopes the read to the current tenant.
                     const prismDIDs = await pluto.getAllPrismDIDs();
-                    const unique = new Map<string, Domain.DID>();
-                    for (const { did } of prismDIDs) {
-                        unique.set(did.toString(), did);
-                    }
-                    return [...unique.values()];
+                    const prismDIDStrings = prismDIDs.map(({ did }) => did.toString());
+                    const unique = [...new Set(prismDIDStrings)];
+
+                    const uniqueDIDRecords = unique.map(async (didString) => {
+                        const did = Domain.DID.fromString(didString);
+                        const record = await pluto.getDIDRecord(did.toString());
+                        return {
+                            did,
+                            status: toPrismDIDStatus(record?.status),
+                            transactionId: record?.transactionId,
+                        };
+                    })
+                    
+                    return Promise.all(uniqueDIDRecords);
                 },
                 create: async (keyTypeCurves: PrismDIDKeyCurves) => {
                     // PrismDIDKeyCurves keys are the types of keys we need to add to the DID
                     // values contain an array of Domain.Curves, we need to create a key with the specific
                     // curve and use the agent.createDID function directly
-
+                 
                     const seedHex = await pluto.getSetting("seed");
                     if (!seedHex) {
                         throw new Error("Seed not found");
@@ -275,9 +359,13 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
                 },
                 publish: async (did: Domain.DID) => {
                     const masterKey = await getMasterKey(pluto, did);
+                    debugger;
                     const { operation: atalaObject,  operationHash   } = await agent.publishDID("prism", { did, key: masterKey });
+                    debugger;
                     const txId = await submitAtalaObject(atalaObject);
+                    debugger;
                     await pluto.setDIDPublished(did.toString(), txId, operationHash);
+                    debugger;
                     return { did, txId };
                 },
                 // An update carries the hash of the operation it follows, so the
@@ -285,13 +373,19 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
                 // never published has no such state, and the create operation it
                 // would chain on is not on the ledger either, so it is refused here
                 // rather than by the node.
-                update: (did: Domain.DID, actions: UpdateAction[]) =>
+                update: (did: Domain.DID, actions: PrismDIDUpdateAction[]) =>
                     chainOperation(
                         pluto,
                         did,
                         "updated",
-                        (key, previousOperationHash) =>
-                            agent.updateDID("prism", { did, key, actions, previousOperationHash }),
+                        async (key, previousOperationHash) => {
+                            const sdkActions = await toSdkUpdateActions(
+                                apollo, agent, pluto, did, actions,
+                            );
+                            return agent.updateDID("prism", {
+                                did, key, actions: sdkActions, previousOperationHash,
+                            });
+                        },
                         (txId, operationHash) =>
                             // The DID stays published, only the chain moves on.
                             pluto.setDIDUpdated(did.toString(), txId, operationHash),

@@ -1,4 +1,4 @@
-import { CollectionMap, Domain, RequiredPrismDIDSecretKeys, UpdateAction } from "@hyperledger/identus-sdk";
+import { CollectionMap, Domain, RequiredPrismDIDSecretKeys } from "@hyperledger/identus-sdk";
 
 
 /**
@@ -48,22 +48,78 @@ export type CredentialSchema = CollectionMap['schemas'];
  */
 export type CredentialSchemaInput = Omit<CredentialSchema, 'uuid' | 'tenantId'>;
 
+/** Lifecycle of a prism DID as the portal presents it. */
+export const PRISM_DID_STATUSES = ['created', 'published', 'deactivated'] as const;
+export type PrismDIDStatus = (typeof PRISM_DID_STATUSES)[number];
+
+/**
+ * Maps a stored or registrar status onto the portal's three-state lifecycle.
+ * Missing values and cloud `CREATED` / `PUBLICATION_PENDING` become `created`.
+ */
+export function toPrismDIDStatus(status?: string): PrismDIDStatus {
+    const normalized = status?.toLowerCase();
+    if (normalized === 'published' || normalized === 'deactivated') {
+        return normalized;
+    }
+    return 'created';
+}
+
+/** A prism DID plus the fields the UI needs to gate publish / update / deactivate. */
+export type PrismDIDRecord = {
+    did: Domain.DID;
+    status: PrismDIDStatus;
+    transactionId?: string;
+};
+
+/**
+ * JSON-safe DID update actions. Unlike the SDK `UpdateAction`, `addKey` names a
+ * purpose and curve instead of carrying a `PublicKey`; the local agent derives
+ * that key itself.
+ */
+export type PrismDIDUpdateAction =
+    | {
+        actionType: 'addKey';
+        addKey: {
+            id: string;
+            purpose: PrismDIDKeys;
+            curve: Domain.Curve;
+        };
+    }
+    | {
+        actionType: 'removeKey';
+        removeKey: { id: string };
+    }
+    | {
+        actionType: 'addService';
+        addService: {
+            id: string;
+            type: string;
+            serviceEndpoint: string[];
+        };
+    }
+    | {
+        actionType: 'removeService';
+        removeService: { id: string };
+    }
+    | {
+        actionType: 'updateService';
+        updateService: {
+            id: string;
+            type: string;
+            serviceEndpoint: string[];
+        };
+    };
+
 export type Agent = {
     start: () => Promise<void>;
     stop: () => Promise<void>;
     dids: {
         resolveDID: (did: string) => ReturnType<Domain.DIDResolver['resolve']>;
         prism: {
-            list: () => Promise<Domain.DID[]>;
+            list: () => Promise<PrismDIDRecord[]>;
             create: (keys: PrismDIDKeyCurves) => Promise<Domain.DID>;
             publish: (did: Domain.DID) => Promise<{ did: Domain.DID, txId: string }>;
-            /**
-             * Applies a list of actions to a published DID, adding, removing or
-             * replacing the keys and services of its document. The actions are
-             * the SDK's own update model, so both agents describe a change the
-             * same way.
-             */
-            update: (did: Domain.DID, actions: UpdateAction[]) => Promise<{ txId: string }>;
+            update: (did: Domain.DID, actions: PrismDIDUpdateAction[]) => Promise<{ txId: string }>;
             deactivate: (did: Domain.DID) => Promise<{ txId: string }>
         }
     },
