@@ -65,7 +65,7 @@ services:
       retries: 20
 
   neoprism:
-    image: docker.io/hyperledgeridentus/identus-neoprism:${NEOPRISM_VERSION:-0.14.1}
+    image: docker.io/hyperledgeridentus/identus-neoprism:${NEOPRISM_VERSION:-0.14.2}
     pull_policy: if_not_present
     command: ["dev"]
     ports:
