@@ -119,6 +119,41 @@ function toManagedPurpose(keyType: PrismDIDKeys | string): ManagedPurpose {
 }
 
 /**
+ * Maps a portal curve onto the registrar's curve enum. The names match except
+ * for secp256k1, which the registrar spells in lower case while the portal
+ * carries the SDK's `Secp256k1`.
+ */
+function toManagedCurve(curve: string): ManagedCurve {
+  switch (curve) {
+    case Domain.Curve.SECP256K1:
+      return 'secp256k1';
+    case Domain.Curve.ED25519:
+      return 'Ed25519';
+    case Domain.Curve.X25519:
+      return 'X25519';
+    default:
+      throw new Error(`Curve ${curve} is not supported by the Cloud Agent`);
+  }
+}
+
+/**
+ * The registrar reports failures as a problem document whose `detail` names the
+ * exact cause (the field that failed to decode, the missing wallet). An error
+ * surfaced without it cannot be diagnosed from the portal side.
+ */
+function registrarDetail(error: unknown): string {
+  if (
+    error &&
+    typeof error === 'object' &&
+    'detail' in error &&
+    typeof (error as { detail: unknown }).detail === 'string'
+  ) {
+    return `: ${(error as { detail: string }).detail}`;
+  }
+  return '';
+}
+
+/**
  * Maps a portal update action onto the registrar's update model. Action type
  * names become the registrar's uppercase enums; `addKey` keeps id / purpose /
  * curve so the agent can generate the key itself.
@@ -130,7 +165,7 @@ function toManagedUpdateAction(action: PrismDIDUpdateAction): ManagedUpdateActio
       addKey: {
         id: action.addKey.id,
         purpose: toManagedPurpose(action.addKey.purpose),
-        curve: action.addKey.curve as ManagedCurve,
+        curve: toManagedCurve(action.addKey.curve),
       },
     };
   }
@@ -205,9 +240,15 @@ export async function createCloudAgentClient(
           headers: { Accept: 'application/did+ld+json' },
         });
 
+        // 410 is a resolution outcome, not a failure: the DID existed and was
+        // turned off. Losing that in a generic error hides the state the
+        // caller asked about.
+        if (response.status === 410) {
+          throw new Error(`DID ${did} is deactivated`);
+        }
         if (!response.ok || error) {
           throw new Error(
-            `Cloud Agent could not resolve ${did} (HTTP ${response.status})`,
+            `Cloud Agent could not resolve ${did} (HTTP ${response.status})${registrarDetail(error)}`,
           );
         }
         const document = typeof data === 'string' ? JSON.parse(data) : data;
@@ -229,7 +270,7 @@ export async function createCloudAgentClient(
 
             if (!response.ok || error) {
               throw new Error(
-                `Cloud Agent could not list DIDs (HTTP ${response.status})`,
+                `Cloud Agent could not list DIDs (HTTP ${response.status})${registrarDetail(error)}`,
               );
             }
 
@@ -269,8 +310,7 @@ export async function createCloudAgentClient(
               ...curves.map((keyCurve, i) => ({
                 id: `${keyType}-${i}`,
                 purpose: toManagedPurpose(keyType),
-                // Domain.Curve already matches the registrar's Curve enum.
-                curve: keyCurve as ManagedCurve,
+                curve: toManagedCurve(keyCurve),
               })),
             ];
           }, [] as PublicKeys);
@@ -286,7 +326,7 @@ export async function createCloudAgentClient(
 
           if (!response.ok || error) {
             throw new Error(
-              `Cloud Agent could not create DID (HTTP ${response.status})`,
+              `Cloud Agent could not create DID (HTTP ${response.status})${registrarDetail(error)}`,
             );
           }
           const payload = typeof data === 'string' ? JSON.parse(data) : data;
@@ -305,7 +345,7 @@ export async function createCloudAgentClient(
 
           if (!response.ok || error) {
             throw new Error(
-              `Cloud Agent could not publish ${didRef} (HTTP ${response.status})`,
+              `Cloud Agent could not publish ${didRef} (HTTP ${response.status})${registrarDetail(error)}`,
             );
           }
 
@@ -338,7 +378,7 @@ export async function createCloudAgentClient(
 
           if (!response.ok || error) {
             throw new Error(
-              `Cloud Agent could not update ${didRef} (HTTP ${response.status})`,
+              `Cloud Agent could not update ${didRef} (HTTP ${response.status})${registrarDetail(error)}`,
             );
           }
 
@@ -362,7 +402,7 @@ export async function createCloudAgentClient(
 
           if (!response.ok || error) {
             throw new Error(
-              `Cloud Agent could not deactivate ${didRef} (HTTP ${response.status})`,
+              `Cloud Agent could not deactivate ${didRef} (HTTP ${response.status})${registrarDetail(error)}`,
             );
           }
 
