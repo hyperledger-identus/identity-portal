@@ -110,9 +110,32 @@ export type PrismDIDUpdateAction =
         };
     };
 
+    export type Claims = {name: string, value: unknown}
+    export type  OfferPayload = {
+        id: string;
+        claims: Claims[];
+        credentialFormat: string;
+        //Always use automatic issuance for now
+        automaticIssuance: boolean;
+        issuingDID: string;
+    }
+
+
 export type Agent = {
     start: () => Promise<void>;
     stop: () => Promise<void>;
+    credentials: {
+        //get a credential by its ID
+        get: (credentialId: string) => Promise<Domain.Credential | undefined>;
+        //get all credentials
+        list: () => Promise<Domain.Credential[]>;
+        //create an out of band offer for a credential, returns oob URL
+        createOffer: (offer:OfferPayload) => Promise<string>;
+        //parse an out of band offer, returns OfferPayload to show in the UI (accept, reject)
+        parseOffer: (oobURL: string) => Promise<OfferPayload>;
+        //accept an out of band offer, creates a CredentialRequest and send's back to the issuer
+        acceptOffer: (oobURL: string) => Promise<void>;
+    },
     dids: {
         resolveDID: (did: string) => ReturnType<Domain.DIDResolver['resolve']>;
         prism: {
