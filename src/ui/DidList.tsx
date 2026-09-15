@@ -112,6 +112,16 @@ export function DidList({ refreshToken = 0 }: { refreshToken?: number }) {
       } else {
         setUpdatingDid(null);
         await load();
+        // The cloud registrar's list status tracks publication only, never the
+        // lifecycle, so a deactivated DID comes back as `PUBLISHED` forever.
+        // Mark the row that was just deactivated so its actions do not
+        // reappear; the local agent reports `deactivated` by itself and the
+        // mark changes nothing there.
+        setDids((prev) =>
+          prev.map((record) =>
+            record.did === did ? { ...record, status: 'deactivated' } : record,
+          ),
+        );
       }
     } catch {
       setError('Request failed.');
