@@ -5,7 +5,7 @@ import { RIDBCollection, AppRIDB, PlutoOptions } from "./types";
 import { schemas } from "./schemas";
 import { migrations } from "./migrations";
 import { randomUUID } from "node:crypto";
-import { DB_ENCRYPTION_KEY } from "../../../../config";
+import { DB_ENCRYPTION_KEY, PAGINATION_LIMIT } from "../../../../config";
 import { createMongoDB } from "@trust0/ridb-mongodb";
 
 
@@ -158,6 +158,11 @@ export class MultiTenantPluto extends Pluto {
       uuid: randomUUID(),
       id: randomUUID()
     });
+  }
+
+  async getPaginatedPrismDIDs(offset: number = 0, limit: number = PAGINATION_LIMIT): Promise<CollectionMap['dids'][]> {
+    const results = await this.store.query("dids", { offset, limit });
+    return results as CollectionMap['dids'][];
   }
 
   /**

@@ -124,7 +124,7 @@ export type PrismDIDUpdateAction =
 export type Agent = {
     start: () => Promise<void>;
     stop: () => Promise<void>;
-    issuer: {
+    issuer?: {
         credentials: {
             getOffers: () => Promise<OfferPayload[]>;
             getOffer: (offerId: string) => Promise<OfferPayload | undefined>;
@@ -134,7 +134,7 @@ export type Agent = {
     dids: {
         resolveDID: (did: string) => ReturnType<Domain.DIDResolver['resolve']>;
         prism: {
-            list: () => Promise<PrismDIDRecord[]>;
+            list: (offset: number, limit: number) => Promise<PrismDIDRecord[]>;
             create: (keys: PrismDIDKeyCurves) => Promise<Domain.DID>;
             publish: (did: Domain.DID) => Promise<{ did: Domain.DID, txId: string }>;
             update: (did: Domain.DID, actions: PrismDIDUpdateAction[]) => Promise<{ txId: string }>;

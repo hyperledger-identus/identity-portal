@@ -26,14 +26,19 @@ function parseDID(value: string): Domain.DID {
 export default function createIssuerRouter(createContext: ContextFactory) {
   return createRestRouter({ createContext })
     .get('/', {
+      input: z.object({
+        offset: z.coerce.number().int().min(0),
+        limit: z.coerce.number().int().min(1),
+      }),
       output: prismDIDListSchema,
       openAPI: {
         name: 'GET DIDS',
-        description: 'Lists the prism DIDs stored by the agent, with publication status.',
+        description:
+          'Lists the prism DIDs stored by the agent, with publication status. `offset` is the number of items to skip; `limit` is the page size.',
         tags: ['dids'],
       },
-      handler: async ({ ctx }) => {
-        const dids = await ctx.agent.dids.prism.list();
+      handler: async ({ input, ctx }) => {
+        const dids = await ctx.agent.dids.prism.list(input.offset, input.limit);
         return {
           dids: dids.map((record) => ({
             did: record.did.toString(),

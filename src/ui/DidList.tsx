@@ -65,7 +65,7 @@ export function DidList({ refreshToken = 0 }: { refreshToken?: number }) {
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await api.GET('/dids');
+      const { data, error } = await api.GET('/dids', { offset: 0, limit: 100 });
       if (error) {
         setError(apiErrorMessage(error, 'Could not load the DIDs.'));
       } else {

@@ -95,3 +95,6 @@ export const AUTH_GITHUB_ENABLED = process.env.AUTH_GITHUB_ENABLED
  */
 export const LOGIN_RATE_LIMIT_WINDOW_MS = Number(process.env.LOGIN_RATE_LIMIT_WINDOW_MS ?? String(15 * 60 * 1000));
 export const LOGIN_RATE_LIMIT_MAX = Number(process.env.LOGIN_RATE_LIMIT_MAX ?? "10");
+
+
+export const PAGINATION_LIMIT = Number(process.env.PAGINATION_LIMIT ?? "100");

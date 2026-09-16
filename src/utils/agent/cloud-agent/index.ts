@@ -1,5 +1,5 @@
 import { DIDKeys, Domain } from '@hyperledger/identus-sdk';
-import { CLOUD_AGENT_BASE_URL } from '../../../config';
+import { CLOUD_AGENT_BASE_URL, PAGINATION_LIMIT } from '../../../config';
 import {
   Agent,
   CredentialSchema,
@@ -255,31 +255,25 @@ export async function createCloudAgentClient(
         return Domain.DIDDocument.fromJSON(document);
       },
       prism: {
-        list: async () => {
+        list: async (offset: number = 0, limit: number = PAGINATION_LIMIT) => {
           // The registrar paginates with `offset`/`limit`, returning 100 DIDs per
           // page by default. Walk every page so wallets holding more than one page
           // are not truncated.
-          const pageSize = 100;
           const managedDids: ManagedDID[] = [];
 
-          for (let offset = 0; ; offset += pageSize) {
-            const { data, error, response } = await client.GET(
-              '/did-registrar/dids',
-              { query: { offset, limit: pageSize } },
+          const { data, error, response } = await client.GET(
+            '/did-registrar/dids',
+            { query: { offset, limit } },
+          );
+
+          if (!response.ok || error) {
+            throw new Error(
+              `Cloud Agent could not list DIDs (HTTP ${response.status})`,
             );
-
-            if (!response.ok || error) {
-              throw new Error(
-                `Cloud Agent could not list DIDs (HTTP ${response.status})${registrarDetail(error)}`,
-              );
-            }
-
-            const contents = data?.contents ?? [];
-            managedDids.push(...contents);
-
-            // The last page is shorter than a full page (or empty).
-            if (contents.length < pageSize) break;
           }
+
+          const contents = data?.contents ?? [];
+          managedDids.push(...contents);
 
           return managedDids.map((managed) => {
             // A published DID is identified by its canonical form. An unpublished
