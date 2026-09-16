@@ -6,6 +6,7 @@ import { LoggedOutPage } from './LoggedOutPage';
 import { CreateDid } from './CreateDid';
 import { DidResolver } from './DidResolver';
 import { DidList } from './DidList';
+import { SchemasSection } from './SchemasSection';
 
 type SessionUser = {
   sub?: string;
@@ -99,6 +100,7 @@ function Dashboard({ user }: { user: SessionUser }) {
           <DidResolver />
         </div>
         <DidList refreshToken={listVersion} />
+        <SchemasSection />
       </div>
     </main>
   );
