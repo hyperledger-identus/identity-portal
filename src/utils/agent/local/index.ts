@@ -8,7 +8,7 @@ import {
     UpdateActionType,
     getOperationHash
 } from "@hyperledger/identus-sdk";
-import { MONGODB_URI } from "../../../config";
+import { MONGODB_URI, PAGINATION_LIMIT } from "../../../config";
 import { AgentSession } from "..";
 import { MediatorConnection } from "@hyperledger/identus-sdk/plugins/didcomm";
 import {
@@ -283,14 +283,13 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
                 return didDocument
             },
             prism: {
-                list: async () => {
+                list: async (offset: number = 0, limit: number = PAGINATION_LIMIT) => {
                     // Pluto pairs each stored key with its DID, so a DID created with
                     // seven keys comes back seven times. Deduplicate by DID string.
                     // MultiTenantPluto scopes the read to the current tenant.
-                    const prismDIDs = await pluto.getAllPrismDIDs();
-                    const prismDIDStrings = prismDIDs.map(({ did }) => did.toString());
+                    const prismDIDs = await pluto.getPaginatedPrismDIDs(offset, limit);
+                    const prismDIDStrings = prismDIDs.map((did) => did.toString());
                     const unique = [...new Set(prismDIDStrings)];
-
                     const uniqueDIDRecords = unique.map(async (didString) => {
                         const did = Domain.DID.fromString(didString);
                         const record = await pluto.getDIDRecord(did.toString());

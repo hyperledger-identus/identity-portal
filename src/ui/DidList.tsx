@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Domain } from '@hyperledger/identus-sdk';
 import type { AppRouter } from '../api/registry';
 import { api } from './utils/api';
@@ -37,6 +37,8 @@ type ActionType = (typeof ACTION_TYPES)[number];
 type KeyUsage = (typeof KEY_USAGES)[number];
 type Curve = (typeof CURVES)[number];
 
+const DID_LIST_PAGE_SIZE = 10;
+
 function apiErrorMessage(error: unknown, fallback: string): string {
   if (error && typeof error === 'object' && 'error' in error) {
     return String((error as { error: unknown }).error);
@@ -60,27 +62,47 @@ export function DidList({ refreshToken = 0 }: { refreshToken?: number }) {
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [updatingDid, setUpdatingDid] = useState<string | null>(null);
+  const [offset, setOffset] = useState(0);
+  const seenRefreshToken = useRef(refreshToken);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await api.GET('/dids');
+      const { data, error } = await api.GET('/dids', {
+        offset,
+        limit: DID_LIST_PAGE_SIZE,
+      });
       if (error) {
         setError(apiErrorMessage(error, 'Could not load the DIDs.'));
       } else {
         setDids(data?.dids ?? []);
+        if ((data?.dids ?? []).length === 0 && offset > 0) {
+          setOffset((o) => Math.max(0, o - DID_LIST_PAGE_SIZE));
+        }
       }
     } catch {
       setError('Request failed.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [offset]);
 
   useEffect(() => {
     load();
-  }, [load, refreshToken]);
+  }, [load]);
+
+  useEffect(() => {
+    if (seenRefreshToken.current === refreshToken) {
+      return;
+    }
+    seenRefreshToken.current = refreshToken;
+    if (offset !== 0) {
+      setOffset(0);
+    } else {
+      load();
+    }
+  }, [refreshToken, offset, load]);
 
   const publish = async (did: string) => {
     setBusy(`${did}:publish`);
@@ -247,6 +269,35 @@ export function DidList({ refreshToken = 0 }: { refreshToken?: number }) {
             );
           })}
         </ul>
+      )}
+      {(dids.length > 0 || offset > 0) && (
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            aria-label="Previous page"
+            onClick={() =>
+              setOffset((o) => Math.max(0, o - DID_LIST_PAGE_SIZE))
+            }
+            disabled={offset === 0 || loading}
+            className="rounded-md border border-line px-4 py-2 text-sm font-medium text-ink transition hover:bg-slate-50 disabled:opacity-50"
+          >
+            Previous
+          </button>
+          {dids.length > 0 && (
+            <p className="text-sm text-slate-700">
+              Showing {offset + 1}–{offset + dids.length}
+            </p>
+          )}
+          <button
+            type="button"
+            aria-label="Next page"
+            onClick={() => setOffset((o) => o + DID_LIST_PAGE_SIZE)}
+            disabled={loading || dids.length < DID_LIST_PAGE_SIZE}
+            className="rounded-md border border-line px-4 py-2 text-sm font-medium text-ink transition hover:bg-slate-50 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
       )}
     </section>
   );
