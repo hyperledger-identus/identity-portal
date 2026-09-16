@@ -13,7 +13,7 @@ import { MediatorConnection } from "@hyperledger/identus-sdk/plugins/didcomm";
 import { createTenantAgent } from ".";
 import { createHostPeerDID } from "./mediation";
 import { MultiTenantPluto } from "./database";
-import { startFetchingMessages } from "./queue";
+import { startFetchingMessages, startProcessMessages } from "./queue";
 import { PRISM_DID_RESOLVERS } from "../../../config/resolvers";
 
 export async function provisionTenant(options: { subject: string, accessToken: string, label?: string}): Promise<void> {
@@ -71,4 +71,8 @@ export async function provisionTenant(options: { subject: string, accessToken: s
         await pluto.storeMediator(connection.asMediator());
         await startFetchingMessages(options.subject);
     }
+
+    // Existing tenants were provisioned before this scheduler existed.
+    // scheduleTask is idempotent, so repeating on every login is safe.
+    await startProcessMessages(options.subject);
 }

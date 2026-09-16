@@ -48,13 +48,28 @@ export function CreateSchema({ onCreated }: { onCreated?: () => void }) {
       setDidsLoading(true);
       setDidsError(null);
       try {
-        const { data, error } = await api.GET('/dids');
+        const { data, error } = await api.GET('/dids', { offset: 0, limit: 100 });
         if (error) {
           setDidsError(
             apiErrorMessage(error, 'Could not load DIDs for the author field.'),
           );
         } else {
-          setDids(data?.dids ?? []);
+          const refactorDids = data?.dids ?? [];
+          
+
+          setDids(refactorDids.map((did) => {
+
+            if (did.status === 'published') {
+              const shortForm = did.did.split(':').slice(0, 3).join(':');
+              return {
+                status: 'published',
+                did: shortForm,
+                transactionId: did.transactionId,
+              }
+            }
+
+            return did;
+          }));
         }
       } catch {
         setDidsError('Request failed.');

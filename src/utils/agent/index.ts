@@ -11,6 +11,7 @@ process.env.MONGODB_URL = MONGODB_URI;
 /** The session data the agent needs to authenticate a request. */
 export type AgentSession = {
   tenantId: string;
+  mediatorDID: string;
   accessToken?: string;
 };
 
