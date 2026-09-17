@@ -59,7 +59,47 @@ export const schemas = {
       },
     },
   },
-  issuance: IssuanceSchema,
+  issuance: {
+    ...IssuanceSchema,
+    properties: {
+      ...IssuanceSchema.properties,
+      tenantId: {
+        required: false,
+        type: SchemaFieldType.string,
+        description: "The tenant that owns this issuance record.",
+      },
+      thid: {
+        required: false,
+        type: SchemaFieldType.string,
+        description: "Issue Credential protocol thread id, shared issuer↔holder.",
+      },
+      role: {
+        required: false,
+        type: SchemaFieldType.string,
+        description: "Issuer or Holder.",
+      },
+      protocolState: {
+        required: false,
+        type: SchemaFieldType.string,
+        description: "Cloud Agent Issue Credential protocolState value.",
+      },
+      schemaId: {
+        required: false,
+        type: SchemaFieldType.string,
+        description: "Optional credential schema id or URL.",
+      },
+      invitationUrl: {
+        required: false,
+        type: SchemaFieldType.string,
+        description: "OOB invitation URL containing _oob=.",
+      },
+      subjectId: {
+        required: false,
+        type: SchemaFieldType.string,
+        description: "Holder subject Prism DID for JWT credentials.",
+      },
+    },
+  },
   schemas: {
     encrypted: ["schema"],
     version: 0,

@@ -10,10 +10,12 @@
  * @category Utils
  */
 import { fetchMessagesTask } from "./fetch-messages";
+import { processMessagesTask } from "./process-messages";
 import type { TenantTask } from "./types";
 
 /** All per-tenant tasks the queue runtime should run workers for. */
-export const tenantTasks: TenantTask[] = [fetchMessagesTask];
+export const tenantTasks: TenantTask[] = [fetchMessagesTask, processMessagesTask];
 
 export { fetchMessagesTask, startFetchingMessages, stopFetchingMessages } from "./fetch-messages";
+export { processMessagesTask, startProcessMessages, stopProcessMessages } from "./process-messages";
 export type { TenantTask, TenantJobData } from "./types";

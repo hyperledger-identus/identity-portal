@@ -21,6 +21,8 @@ import {
     typedEntries,
 } from "../types";
 import { MultiTenantPluto } from "./database";
+import { createLocalHolder } from "./holder";
+import { createLocalIssuer } from "./issuer";
 import { createNeoPrismClient } from "./neoprism";
 import { PRISM_DID_RESOLVERS } from "../../../config/resolvers";
 
@@ -31,6 +33,7 @@ type AgentOptions = {
     tenantId: string,
     castor: Castor;
     pluto: MultiTenantPluto;
+    mediatorDID: string;
 }
 
 export async function createTenantAgent(options: AgentOptions): Promise<LocalAgent> {
@@ -58,6 +61,7 @@ export async function createTenantAgent(options: AgentOptions): Promise<LocalAge
     const agent = LocalAgent.initialize({
         castor,
         pluto,
+        mediatorDID: options.mediatorDID,
         seed: async () => {
             const seedHex = await pluto.getSetting("seed");
             if (!seedHex) {
@@ -269,6 +273,7 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
         tenantId: session.tenantId,
         castor,
         pluto,
+        mediatorDID: session.mediatorDID,
     })
     return {
         start: async () => {
@@ -277,6 +282,16 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
         stop: async () => {
             await agent.stop()
         },
+        issuer: createLocalIssuer({
+            pluto,
+            agent,
+            tenantId: session.tenantId,
+        }),
+        holder: createLocalHolder({
+            pluto,
+            agent,
+            tenantId: session.tenantId,
+        }),
         dids: {
             resolveDID: async (did: string) => {
                 const didDocument = await castor.resolveDID(did);
@@ -288,7 +303,7 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
                     // seven keys comes back seven times. Deduplicate by DID string.
                     // MultiTenantPluto scopes the read to the current tenant.
                     const prismDIDs = await pluto.getPaginatedPrismDIDs(offset, limit);
-                    const prismDIDStrings = prismDIDs.map((did) => did.toString());
+                    const prismDIDStrings = prismDIDs.map((did) => did.uuid);
                     const unique = [...new Set(prismDIDStrings)];
                     const uniqueDIDRecords = unique.map(async (didString) => {
                         const did = Domain.DID.fromString(didString);

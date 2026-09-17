@@ -110,27 +110,138 @@ export type PrismDIDUpdateAction =
         };
     };
 
-    export type Claims = {name: string, value: unknown}
-    export type  OfferPayload = {
-        id: string;
-        claims: Claims[];
-        credentialFormat: string;
-        //Always use automatic issuance for now
-        automaticIssuance: boolean;
-        issuingDID: string;
-    }
+/**
+ * Issue Credential 3.0 protocol states as Cloud Agent reports them. Local
+ * mode maps SDK events onto the same strings so the UI never branches on
+ * `AGENT_MODE`.
+ */
+export const CREDENTIAL_PROTOCOL_STATES = [
+    'InvitationGenerated',
+    'OfferPending',
+    'OfferSent',
+    'OfferReceived',
+    'RequestPending',
+    'RequestGenerated',
+    'RequestSent',
+    'RequestReceived',
+    'CredentialPending',
+    'CredentialGenerated',
+    'CredentialSent',
+    'CredentialReceived',
+    'ProblemReportPending',
+    'ProblemReportSent',
+    'ProblemReportReceived',
+    'InvitationExpired',
+] as const;
 
+export type CredentialProtocolState = (typeof CREDENTIAL_PROTOCOL_STATES)[number];
+
+/** Short labels for protocol states. The API still returns the raw enum. */
+export function toProtocolStateLabel(state: CredentialProtocolState): string {
+    switch (state) {
+        case 'InvitationGenerated':
+        case 'OfferPending':
+            return 'Pending';
+        case 'OfferSent':
+            return 'Offer sent';
+        case 'OfferReceived':
+            return 'Offer received';
+        case 'RequestPending':
+        case 'RequestGenerated':
+        case 'RequestSent':
+            return 'Requesting';
+        case 'RequestReceived':
+            return 'Request received';
+        case 'CredentialPending':
+        case 'CredentialGenerated':
+            return 'Issuing';
+        case 'CredentialSent':
+            return 'Issued';
+        case 'CredentialReceived':
+            return 'Received';
+        case 'InvitationExpired':
+            return 'Expired';
+        case 'ProblemReportPending':
+        case 'ProblemReportSent':
+        case 'ProblemReportReceived':
+            return 'Problem';
+    }
+}
+
+export type CredentialOfferRole = 'Issuer' | 'Holder';
+
+/**
+ * A connectionless OOB credential offer as the portal presents it. Mapped
+ * from Cloud Agent `IssueCredentialRecord` or from the local issuance store.
+ */
+export type CredentialOfferRecord = {
+    recordId: string;
+    thid: string;
+    role: CredentialOfferRole;
+    protocolState: CredentialProtocolState;
+    credentialFormat: 'JWT';
+    claims: Record<string, unknown>;
+    issuingDID?: string;
+    subjectId?: string;
+    schemaId?: string;
+    automaticIssuance?: boolean;
+    invitationUrl?: string;
+    createdAt: string;
+    updatedAt?: string;
+};
+
+/** Body for creating a connectionless OOB offer. JWT only; issuance is automatic. */
+export type CreateOobOfferInput = {
+    claims: Record<string, unknown>;
+    issuingDID: string;
+    credentialFormat?: 'JWT';
+    schemaId?: string;
+    automaticIssuance?: boolean;
+    goalCode?: string;
+    goal?: string;
+};
+
+/** A verifiable credential already in the holder's wallet. */
+export type HolderCredential = {
+    id: string;
+    issuer?: string;
+    subject?: string;
+    format: string;
+    issuedAt?: string;
+    claims?: Record<string, unknown>;
+};
+
+/** Decoded OOB invitation, before the holder accepts or rejects it. */
+export type InvitationPreview = {
+    from?: string;
+    goalCode?: string;
+    goal?: string;
+    claims: Record<string, unknown>;
+    credentialFormat: string;
+    issuingDID?: string;
+    schemaId?: string;
+};
 
 export type Agent = {
     start: () => Promise<void>;
     stop: () => Promise<void>;
-    issuer?: {
+    issuer: {
         credentials: {
-            getOffers: () => Promise<OfferPayload[]>;
-            getOffer: (offerId: string) => Promise<OfferPayload | undefined>;
-            createOffer: (offer:OfferPayload) => Promise<string>;
-        }
-    },
+            createOobOffer: (input: CreateOobOfferInput) => Promise<CredentialOfferRecord>;
+            listOffers: (offset: number, limit: number) => Promise<CredentialOfferRecord[]>;
+            getOffer: (recordId: string) => Promise<CredentialOfferRecord | undefined>;
+        };
+    };
+    holder: {
+        credentials: {
+            list: (offset: number, limit: number) => Promise<HolderCredential[]>;
+        };
+        invitations: {
+            preview: (oob: string) => Promise<InvitationPreview>;
+            accept: (oob: string, opts?: { subjectId?: string }) => Promise<CredentialOfferRecord>;
+            reject: (oob: string) => Promise<void>;
+        };
+    };
     dids: {
         resolveDID: (did: string) => ReturnType<Domain.DIDResolver['resolve']>;
         prism: {

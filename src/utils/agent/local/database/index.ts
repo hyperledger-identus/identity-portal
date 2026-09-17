@@ -161,7 +161,7 @@ export class MultiTenantPluto extends Pluto {
   }
 
   async getPaginatedPrismDIDs(offset: number = 0, limit: number = PAGINATION_LIMIT): Promise<CollectionMap['dids'][]> {
-    const results = await this.store.query("dids", { offset, limit });
+    const results = await this.store.query("dids", { selector: {method: 'prism'}, offset, limit });
     return results as CollectionMap['dids'][];
   }
 
@@ -235,6 +235,53 @@ export class MultiTenantPluto extends Pluto {
 
   async deleteSchema(uuid: string): Promise<void> {
     return this.store.delete("schemas", uuid);
+  }
+
+  /**
+   * Portal issuance row. SDK `IssuanceSchema` only requires id, claims,
+   * credentialFormat and issuingDID; the extra fields are the protocol
+   * metadata both issuer and holder flows persist.
+   */
+  async insertIssuance(record: CollectionMap['issuance']): Promise<void> {
+    await this.store.insert("issuance", record);
+  }
+
+  async getIssuance(id: string): Promise<CollectionMap['issuance'] | undefined> {
+    const rows = await this.store.query("issuance", { selector: { id } });
+    return rows[0] as CollectionMap['issuance'] | undefined;
+  }
+
+  async getIssuanceByThid(
+    thid: string,
+    role?: 'Issuer' | 'Holder',
+  ): Promise<CollectionMap['issuance'] | undefined> {
+    const selector = (
+      role ? { thid, role } : { thid }
+    ) as Record<string, unknown>;
+    const rows = await this.store.query("issuance", { selector });
+    return rows[0] as CollectionMap['issuance'] | undefined;
+  }
+
+  async listIssuance(
+    offset: number = 0,
+    limit: number = PAGINATION_LIMIT,
+    role?: 'Issuer' | 'Holder',
+  ): Promise<CollectionMap['issuance'][]> {
+    // `role` is a portal field on the RIDB schema, not on the SDK Issuance type.
+    const selector = (role ? { role } : {}) as Record<string, unknown>;
+    const results = await this.store.query("issuance", { selector, offset, limit });
+    return results as CollectionMap['issuance'][];
+  }
+
+  async updateIssuance(
+    id: string,
+    patch: Partial<CollectionMap['issuance']>,
+  ): Promise<void> {
+    const existing = await this.getIssuance(id);
+    if (!existing) {
+      throw new Error(`Issuance record ${id} not found`);
+    }
+    await this.store.update("issuance", { ...existing, ...patch, id });
   }
 }
 

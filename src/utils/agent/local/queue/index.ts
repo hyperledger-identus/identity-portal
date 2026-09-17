@@ -42,4 +42,6 @@ export async function stopQueueWorker(): Promise<void> {
 export {
   startFetchingMessages,
   stopFetchingMessages,
+  startProcessMessages,
+  stopProcessMessages,
 } from "./tasks";

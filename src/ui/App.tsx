@@ -7,6 +7,9 @@ import { CreateDid } from './CreateDid';
 import { DidResolver } from './DidResolver';
 import { DidList } from './DidList';
 import { SchemasSection } from './SchemasSection';
+import { OffersSection } from './OffersSection';
+import { InvitationsSection } from './InvitationsSection';
+import { CredentialsSection } from './CredentialsSection';
 
 type SessionUser = {
   sub?: string;
@@ -62,6 +65,7 @@ function useSession(): SessionState {
 
 function Dashboard({ user }: { user: SessionUser }) {
   const [listVersion, setListVersion] = useState(0);
+  const [credentialsVersion, setCredentialsVersion] = useState(0);
   const refreshList = () => setListVersion((version) => version + 1);
 
   return (
@@ -101,6 +105,13 @@ function Dashboard({ user }: { user: SessionUser }) {
         </div>
         <DidList refreshToken={listVersion} />
         <SchemasSection />
+        <OffersSection />
+        <InvitationsSection
+          onAccepted={() =>
+            setCredentialsVersion((version) => version + 1)
+          }
+        />
+        <CredentialsSection refreshToken={credentialsVersion} />
       </div>
     </main>
   );

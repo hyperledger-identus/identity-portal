@@ -10,6 +10,8 @@ import {
   toPrismDIDStatus,
 } from '../types';
 import { createClient } from './client';
+import { createCloudHolder } from './holder';
+import { createCloudIssuer } from './issuer';
 import type { ManagedDID } from './api';
 import type { components } from './spec';
 
@@ -230,6 +232,8 @@ export async function createCloudAgentClient(
     stop: async () => {
       console.log('Stopping Cloud Agent');
     },
+    issuer: createCloudIssuer({ client, tenantId }),
+    holder: createCloudHolder({ client, tenantId }),
     dids: {
       resolveDID: async (did: string) => {
         // Mirrors the SDK's built-in Prism resolver: fetch the W3C DID document
