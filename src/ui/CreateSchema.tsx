@@ -28,7 +28,7 @@ function apiErrorMessage(error: unknown, fallback: string): string {
  * Create widget: metadata, author DID, and a field composer that POSTs a
  * credential schema through the portal API (`POST /api/schemas`).
  */
-export function CreateSchema({ onCreated }: { onCreated?: () => void }) {
+export function CreateSchema({ onCreated }: { onCreated?: (uuid: string) => void }) {
   const [name, setName] = useState('');
   const [version, setVersion] = useState(DEFAULT_VERSION);
   const [type, setType] = useState(DEFAULT_TYPE);
@@ -162,7 +162,9 @@ export function CreateSchema({ onCreated }: { onCreated?: () => void }) {
         setAuthor((current) =>
           dids.some((record) => record.did === current) ? current : '',
         );
-        onCreated?.();
+        if (data?.uuid) {
+          onCreated?.(data.uuid);
+        }
       }
     } catch {
       setError('Request failed.');
