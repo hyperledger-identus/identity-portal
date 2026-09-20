@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Domain } from '@hyperledger/identus-sdk';
-import type { AppRouter } from '../api/registry';
-import { api } from './utils/api';
-import type { EndpointAt, InputOf, OutputOf } from './utils/api/types';
+import type { AppRouter } from '../../../api/registry';
+import { api } from '../../utils/api';
+import type { EndpointAt, InputOf, OutputOf } from '../../utils/api/types';
 
-type PrismDIDRecord = OutputOf<EndpointAt<AppRouter, 'get', '/dids'>>['dids'][number];
 type PrismDIDUpdateAction = InputOf<
   EndpointAt<AppRouter, 'post', '/dids/:did/update'>
 >['actions'][number];
@@ -37,8 +37,6 @@ type ActionType = (typeof ACTION_TYPES)[number];
 type KeyUsage = (typeof KEY_USAGES)[number];
 type Curve = (typeof CURVES)[number];
 
-const DID_LIST_PAGE_SIZE = 10;
-
 function apiErrorMessage(error: unknown, fallback: string): string {
   if (error && typeof error === 'object' && 'error' in error) {
     return String((error as { error: unknown }).error);
@@ -46,259 +44,58 @@ function apiErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-function statusLabel(status: PrismDIDRecord['status']): string {
-  if (status === 'created') return 'Created';
-  if (status === 'published') return 'Published';
-  return 'Deactivated';
-}
-
 /**
- * Operations panel: lists prism DIDs with status and publish / update /
- * deactivate actions (`GET` / `POST /api/dids...`).
+ * `/dids/:did/update`: the update composer for one published DID
+ * (`POST /api/dids/:did/update`). A submitted update goes back to the list,
+ * where the row carries the new transaction.
  */
-export function DidList({ refreshToken = 0 }: { refreshToken?: number }) {
-  const [dids, setDids] = useState<PrismDIDRecord[]>([]);
+export function DidUpdatePage() {
+  const { did = '' } = useParams();
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [updatingDid, setUpdatingDid] = useState<string | null>(null);
-  const [offset, setOffset] = useState(0);
-  const seenRefreshToken = useRef(refreshToken);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { data, error } = await api.GET('/dids', {
-        offset,
-        limit: DID_LIST_PAGE_SIZE,
-      });
-      if (error) {
-        setError(apiErrorMessage(error, 'Could not load the DIDs.'));
-      } else {
-        setDids(data?.dids ?? []);
-        if ((data?.dids ?? []).length === 0 && offset > 0) {
-          setOffset((o) => Math.max(0, o - DID_LIST_PAGE_SIZE));
-        }
-      }
-    } catch {
-      setError('Request failed.');
-    } finally {
-      setLoading(false);
-    }
-  }, [offset]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  useEffect(() => {
-    if (seenRefreshToken.current === refreshToken) {
-      return;
-    }
-    seenRefreshToken.current = refreshToken;
-    if (offset !== 0) {
-      setOffset(0);
-    } else {
-      load();
-    }
-  }, [refreshToken, offset, load]);
-
-  const publish = async (did: string) => {
-    setBusy(`${did}:publish`);
-    setError(null);
-    try {
-      const { error } = await api.POST('/dids/:did/publish', { did });
-      if (error) {
-        setError(apiErrorMessage(error, 'Could not publish the DID.'));
-      } else {
-        await load();
-      }
-    } catch {
-      setError('Request failed.');
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const deactivate = async (did: string) => {
-    if (!window.confirm('Deactivate this DID? This cannot be undone.')) {
-      return;
-    }
-    setBusy(`${did}:deactivate`);
-    setError(null);
-    try {
-      const { error } = await api.POST('/dids/:did/deactivate', { did });
-      if (error) {
-        setError(apiErrorMessage(error, 'Could not deactivate the DID.'));
-      } else {
-        setUpdatingDid(null);
-        await load();
-        // The cloud registrar's list status tracks publication only, never the
-        // lifecycle, so a deactivated DID comes back as `PUBLISHED` forever.
-        // Mark the row that was just deactivated so its actions do not
-        // reappear; the local agent reports `deactivated` by itself and the
-        // mark changes nothing there.
-        setDids((prev) =>
-          prev.map((record) =>
-            record.did === did ? { ...record, status: 'deactivated' } : record,
-          ),
-        );
-      }
-    } catch {
-      setError('Request failed.');
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const submitUpdate = async (did: string, actions: PrismDIDUpdateAction[]) => {
-    setBusy(`${did}:update`);
+  const submitUpdate = async (actions: PrismDIDUpdateAction[]) => {
+    setBusy(true);
     setError(null);
     try {
       const { error } = await api.POST('/dids/:did/update', { did, actions });
       if (error) {
         setError(apiErrorMessage(error, 'Could not update the DID.'));
       } else {
-        setUpdatingDid(null);
-        await load();
+        navigate('/dids');
       }
     } catch {
       setError('Request failed.');
     } finally {
-      setBusy(null);
+      setBusy(false);
     }
   };
 
   return (
     <section className="flex flex-col gap-4 rounded-lg border border-line p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-ink">Your DIDs</h2>
-          <p className="mt-1 text-sm text-slate-700">
-            Prism DIDs stored by the active agent. Publish, update, or deactivate
-            from here.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={load}
-          disabled={loading}
-          className="rounded-md border border-line px-4 py-2 text-sm font-medium text-ink transition hover:bg-slate-50 disabled:opacity-50"
-        >
-          {loading ? 'Refreshing…' : 'Refresh'}
-        </button>
+      <div>
+        <p className="text-sm">
+          <Link to="/dids" className="text-slate-600 transition hover:text-ink">
+            ← DIDs
+          </Link>
+        </p>
+        <h2 className="mt-2 text-lg font-semibold text-ink">Update DID</h2>
+        <p className="mt-1 text-sm text-slate-700">
+          Queue one or more actions, then submit them as a single update
+          operation.
+        </p>
+        <p className="mt-3 overflow-auto rounded-md bg-slate-50 p-3 font-mono text-xs text-ink">
+          {did}
+        </p>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      {!error && !loading && dids.length === 0 && (
-        <p className="text-sm text-slate-700">
-          No DIDs yet. Create one with the Create widget.
-        </p>
-      )}
-      {dids.length > 0 && (
-        <ul className="flex flex-col gap-3">
-          {dids.map((record) => {
-            const isBusy = busy?.startsWith(`${record.did}:`) ?? false;
-            return (
-              <li
-                key={record.did}
-                className="flex flex-col gap-3 rounded-md bg-slate-50 p-3"
-              >
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="overflow-auto font-mono text-xs text-ink">
-                      {record.did}
-                    </p>
-                    <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-600">
-                      {statusLabel(record.status)}
-                      {record.transactionId
-                        ? ` · tx ${record.transactionId}`
-                        : ''}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {record.status === 'created' && (
-                      <button
-                        type="button"
-                        onClick={() => publish(record.did)}
-                        disabled={isBusy}
-                        className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white transition disabled:opacity-50"
-                      >
-                        {busy === `${record.did}:publish`
-                          ? 'Publishing…'
-                          : 'Publish'}
-                      </button>
-                    )}
-                    {record.status === 'published' && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setUpdatingDid((current) =>
-                              current === record.did ? null : record.did,
-                            )
-                          }
-                          disabled={isBusy}
-                          className="rounded-md border border-line px-3 py-1.5 text-sm font-medium text-ink transition hover:bg-white disabled:opacity-50"
-                        >
-                          {updatingDid === record.did ? 'Close' : 'Update'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deactivate(record.did)}
-                          disabled={isBusy}
-                          className="rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-50"
-                        >
-                          {busy === `${record.did}:deactivate`
-                            ? 'Deactivating…'
-                            : 'Deactivate'}
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-                {updatingDid === record.did && (
-                  <DidUpdateForm
-                    did={record.did}
-                    busy={busy === `${record.did}:update`}
-                    onSubmit={(actions) => submitUpdate(record.did, actions)}
-                    onCancel={() => setUpdatingDid(null)}
-                  />
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-      {(dids.length > 0 || offset > 0) && (
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            aria-label="Previous page"
-            onClick={() =>
-              setOffset((o) => Math.max(0, o - DID_LIST_PAGE_SIZE))
-            }
-            disabled={offset === 0 || loading}
-            className="rounded-md border border-line px-4 py-2 text-sm font-medium text-ink transition hover:bg-slate-50 disabled:opacity-50"
-          >
-            Previous
-          </button>
-          {dids.length > 0 && (
-            <p className="text-sm text-slate-700">
-              Showing {offset + 1}–{offset + dids.length}
-            </p>
-          )}
-          <button
-            type="button"
-            aria-label="Next page"
-            onClick={() => setOffset((o) => o + DID_LIST_PAGE_SIZE)}
-            disabled={loading || dids.length < DID_LIST_PAGE_SIZE}
-            className="rounded-md border border-line px-4 py-2 text-sm font-medium text-ink transition hover:bg-slate-50 disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-      )}
+      <DidUpdateForm
+        did={did}
+        busy={busy}
+        onSubmit={submitUpdate}
+        onCancel={() => navigate('/dids')}
+      />
     </section>
   );
 }

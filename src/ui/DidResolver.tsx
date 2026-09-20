@@ -1,20 +1,31 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from './utils/api';
 
 /**
  * Debug widget: resolves a DID to its DID document through the portal API
  * (`GET /api/dids/resolve/:did`), which dispatches to the active agent
  * (local edge or cloud). Shows the raw JSON result.
+ *
+ * `did` is the DID the owner wants resolved (the resolve page reads it from
+ * the address); it is resolved on mount and whenever it changes. `onRequest`
+ * receives a newly typed DID so the owner can put it in the address.
  */
-export function DidResolver() {
-  const [did, setDid] = useState('');
+export function DidResolver({
+  did: requested = '',
+  onRequest,
+}: {
+  did?: string;
+  onRequest?: (did: string) => void;
+}) {
+  const [did, setDid] = useState(requested);
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // Only the newest request may write its outcome.
+  const latest = useRef(0);
 
-  const resolve = async () => {
-    const value = did.trim();
-    if (!value) return;
+  const resolve = useCallback(async (value: string) => {
+    const request = ++latest.current;
     setLoading(true);
     setError(null);
     setResult(null);
@@ -22,6 +33,7 @@ export function DidResolver() {
       const { data, error } = await api.GET('/dids/resolve/:did', {
         did: value,
       });
+      if (request !== latest.current) return;
       if (error) {
         const message =
           error && typeof error === 'object' && 'error' in error
@@ -32,9 +44,31 @@ export function DidResolver() {
         setResult(data);
       }
     } catch {
-      setError('Request failed.');
+      if (request === latest.current) setError('Request failed.');
     } finally {
-      setLoading(false);
+      if (request === latest.current) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    setDid(requested);
+    if (requested) {
+      resolve(requested);
+      return;
+    }
+    latest.current += 1;
+    setResult(null);
+    setError(null);
+    setLoading(false);
+  }, [requested, resolve]);
+
+  const submit = () => {
+    const value = did.trim();
+    if (!value) return;
+    if (onRequest && value !== requested) {
+      onRequest(value);
+    } else {
+      resolve(value);
     }
   };
 
@@ -51,14 +85,14 @@ export function DidResolver() {
           value={did}
           onChange={(event) => setDid(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === 'Enter') resolve();
+            if (event.key === 'Enter') submit();
           }}
           placeholder="did:prism:..."
           className="flex-1 rounded-md border border-line px-3 py-2 text-sm text-ink"
         />
         <button
           type="button"
-          onClick={resolve}
+          onClick={submit}
           disabled={loading || did.trim().length === 0}
           className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition disabled:opacity-50"
         >

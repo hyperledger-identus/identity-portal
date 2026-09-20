@@ -11,7 +11,10 @@ import { createPortalStore } from './store';
 import { LoginPage } from './LoginPage';
 import { LoggedOutPage } from './LoggedOutPage';
 import { DashboardLayout } from './Layout';
-import { DidsPage } from './pages/DidsPage';
+import { DidListPage } from './pages/dids/DidListPage';
+import { DidCreatePage } from './pages/dids/DidCreatePage';
+import { DidResolvePage } from './pages/dids/DidResolvePage';
+import { DidUpdatePage } from './pages/dids/DidUpdatePage';
 import { SchemaListPage } from './pages/schemas/SchemaListPage';
 import { SchemaCreatePage } from './pages/schemas/SchemaCreatePage';
 import { SchemaDetailPage } from './pages/schemas/SchemaDetailPage';
@@ -127,7 +130,10 @@ function AppRoutes() {
       {session.status === 'authenticated' ? (
         <Route element={<DashboardLayout user={session.user} />}>
           <Route index element={<Navigate to="/dids" replace />} />
-          <Route path="/dids" element={<DidsPage />} />
+          <Route path="/dids" element={<DidListPage />} />
+          <Route path="/dids/new" element={<DidCreatePage />} />
+          <Route path="/dids/resolve" element={<DidResolvePage />} />
+          <Route path="/dids/:did/update" element={<DidUpdatePage />} />
           <Route path="/issuer/schemas" element={<SchemaListPage />} />
           <Route path="/issuer/schemas/new" element={<SchemaCreatePage />} />
           <Route path="/issuer/schemas/:uuid" element={<SchemaDetailPage />} />
