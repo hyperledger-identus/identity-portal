@@ -21,8 +21,9 @@ import { SchemaDetailPage } from './pages/schemas/SchemaDetailPage';
 import { OfferListPage } from './pages/offers/OfferListPage';
 import { OfferCreatePage } from './pages/offers/OfferCreatePage';
 import { OfferDetailPage } from './pages/offers/OfferDetailPage';
-import { InvitationsPage } from './pages/InvitationsPage';
-import { CredentialsPage } from './pages/CredentialsPage';
+import { InvitationAcceptPage } from './pages/invitations/InvitationAcceptPage';
+import { CredentialListPage } from './pages/credentials/CredentialListPage';
+import { CredentialDetailPage } from './pages/credentials/CredentialDetailPage';
 
 type SessionUser = {
   sub?: string;
@@ -142,8 +143,9 @@ function AppRoutes() {
           <Route path="/issuer/offers" element={<OfferListPage />} />
           <Route path="/issuer/offers/new" element={<OfferCreatePage />} />
           <Route path="/issuer/offers/:recordId" element={<OfferDetailPage />} />
-          <Route path="/holder/invitations" element={<InvitationsPage />} />
-          <Route path="/holder/credentials" element={<CredentialsPage />} />
+          <Route path="/holder/invitations" element={<InvitationAcceptPage />} />
+          <Route path="/holder/credentials" element={<CredentialListPage />} />
+          <Route path="/holder/credentials/:key" element={<CredentialDetailPage />} />
           {/* An address that matches nothing goes to the DID area, the front page. */}
           <Route path="*" element={<Navigate to="/dids" replace />} />
         </Route>
