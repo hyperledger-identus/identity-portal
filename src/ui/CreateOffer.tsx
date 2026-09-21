@@ -128,7 +128,7 @@ function claimsFromSchemaFields(
  * Create widget: pick an issuing Prism DID, optionally a schema, fill claims,
  * and POST a connectionless JWT OOB offer (`POST /api/offers`).
  */
-export function CreateOffer({ onCreated }: { onCreated?: () => void }) {
+export function CreateOffer({ onCreated }: { onCreated?: (recordId: string) => void }) {
   const [issuingDID, setIssuingDID] = useState('');
   const [schemaId, setSchemaId] = useState('');
   const [claimValues, setClaimValues] = useState<Record<string, string>>({});
@@ -249,7 +249,7 @@ export function CreateOffer({ onCreated }: { onCreated?: () => void }) {
         });
         setClaimValues({});
         setClaimsJson('{}');
-        onCreated?.();
+        onCreated?.(data.recordId);
       }
     } catch {
       setError('Request failed.');
