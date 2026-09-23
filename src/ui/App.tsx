@@ -18,7 +18,9 @@ import { DidUpdatePage } from './pages/dids/DidUpdatePage';
 import { SchemaListPage } from './pages/schemas/SchemaListPage';
 import { SchemaCreatePage } from './pages/schemas/SchemaCreatePage';
 import { SchemaDetailPage } from './pages/schemas/SchemaDetailPage';
-import { OffersPage } from './pages/OffersPage';
+import { OfferListPage } from './pages/offers/OfferListPage';
+import { OfferCreatePage } from './pages/offers/OfferCreatePage';
+import { OfferDetailPage } from './pages/offers/OfferDetailPage';
 import { InvitationsPage } from './pages/InvitationsPage';
 import { CredentialsPage } from './pages/CredentialsPage';
 
@@ -137,7 +139,9 @@ function AppRoutes() {
           <Route path="/issuer/schemas" element={<SchemaListPage />} />
           <Route path="/issuer/schemas/new" element={<SchemaCreatePage />} />
           <Route path="/issuer/schemas/:uuid" element={<SchemaDetailPage />} />
-          <Route path="/issuer/offers" element={<OffersPage />} />
+          <Route path="/issuer/offers" element={<OfferListPage />} />
+          <Route path="/issuer/offers/new" element={<OfferCreatePage />} />
+          <Route path="/issuer/offers/:recordId" element={<OfferDetailPage />} />
           <Route path="/holder/invitations" element={<InvitationsPage />} />
           <Route path="/holder/credentials" element={<CredentialsPage />} />
           {/* An address that matches nothing goes to the DID area, the front page. */}
