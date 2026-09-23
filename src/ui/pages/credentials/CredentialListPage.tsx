@@ -1,11 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { AppRouter } from '../api/registry';
-import { api } from './utils/api';
-import type { EndpointAt, OutputOf } from './utils/api/types';
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import type { AppRouter } from '../../../api/registry';
+import { api } from '../../utils/api';
+import type { EndpointAt, OutputOf } from '../../utils/api/types';
+import { credentialKey } from './credentialKey';
 
 type HolderCredentialRecord = OutputOf<
   EndpointAt<AppRouter, 'get', '/credentials'>
 >['credentials'][number];
+
+/** What the invitations page hands over after an approved invitation. */
+type RequestedNotice = { recordId: string; protocolState: string };
 
 const CREDENTIAL_LIST_PAGE_SIZE = 10;
 
@@ -16,21 +21,32 @@ function apiErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
+function formatIssuedAt(value: string | undefined): string {
+  if (!value) {
+    return '—';
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return date.toLocaleString();
+}
+
 /**
- * Dashboard card: lists verifiable credentials already in the holder wallet
- * (`GET /api/credentials`). Distinct from issuer OOB offers.
+ * `/holder/credentials`: the verifiable credentials already in the holder
+ * wallet (`GET /api/credentials`). Distinct from issuer OOB offers. Every row
+ * links to the credential's own page. A credential asked for on the
+ * invitations page shows up here once the issuer has answered; nothing polls.
  */
-export function CredentialList({
-  refreshToken = 0,
-}: {
-  refreshToken?: number;
-}) {
+export function CredentialListPage() {
+  const location = useLocation();
+  const requested =
+    (location.state as { requested?: RequestedNotice } | null)?.requested ??
+    null;
   const [credentials, setCredentials] = useState<HolderCredentialRecord[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
-  const seenRefreshToken = useRef(refreshToken);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -59,18 +75,6 @@ export function CredentialList({
     load();
   }, [load]);
 
-  useEffect(() => {
-    if (seenRefreshToken.current === refreshToken) {
-      return;
-    }
-    seenRefreshToken.current = refreshToken;
-    if (offset !== 0) {
-      setOffset(0);
-    } else {
-      load();
-    }
-  }, [refreshToken, offset, load]);
-
   return (
     <section className="flex flex-col gap-4 rounded-lg border border-line p-6">
       <div className="flex items-start justify-between gap-4">
@@ -78,7 +82,7 @@ export function CredentialList({
           <h2 className="text-lg font-semibold text-ink">Your credentials</h2>
           <p className="mt-1 text-sm text-slate-700">
             Verifiable credentials in the holder wallet. These are issued VCs,
-            not issuer offers.
+            not issuer offers. Open one for its claims.
           </p>
         </div>
         <button
@@ -90,61 +94,49 @@ export function CredentialList({
           {loading ? 'Refreshing…' : 'Refresh'}
         </button>
       </div>
+      {requested && (
+        <div className="flex flex-col gap-1 rounded-md border border-line p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-600">
+            Credential request sent
+          </p>
+          <p className="text-sm text-slate-700">
+            The credential shows up here once the issuer has answered. Use
+            Refresh.
+          </p>
+          <p className="overflow-auto font-mono text-xs text-ink">
+            {requested.recordId} · {requested.protocolState}
+          </p>
+        </div>
+      )}
       {error && <p className="text-sm text-red-600">{error}</p>}
       {!error && !loading && credentials.length === 0 && (
         <p className="text-sm text-slate-700">No credentials yet.</p>
       )}
       {credentials.length > 0 && (
         <ul className="flex flex-col gap-3">
-          {credentials.map((record) => {
-            const expanded = expandedId === record.id;
-            return (
-              <li
-                key={record.id}
-                className="flex flex-col gap-3 rounded-md bg-slate-50 p-3"
+          {credentials.map((record) => (
+            <li key={record.id}>
+              <Link
+                to={encodeURIComponent(credentialKey(record.id))}
+                className="flex flex-col gap-1 rounded-md bg-slate-50 p-3 transition hover:bg-slate-100"
               >
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-ink">
-                      {record.format}
-                    </p>
-                    <p className="mt-1 overflow-auto font-mono text-xs text-ink">
-                      Issuer {record.issuer ?? '—'}
-                    </p>
-                    <p className="overflow-auto font-mono text-xs text-ink">
-                      Subject {record.subject ?? '—'}
-                    </p>
-                    <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-600">
-                      {record.issuedAt ?? '—'}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setExpandedId((current) =>
-                          current === record.id ? null : record.id,
-                        )
-                      }
-                      className="rounded-md border border-line px-3 py-1.5 text-sm font-medium text-ink transition hover:bg-white"
-                    >
-                      {expanded ? 'Close' : 'Details'}
-                    </button>
-                  </div>
-                </div>
-                {expanded && (
-                  <div className="flex flex-col gap-3">
-                    <p className="overflow-auto font-mono text-xs text-ink">
-                      {record.id}
-                    </p>
-                    <pre className="overflow-auto rounded-md bg-white p-4 text-xs text-ink">
-                      {JSON.stringify(record.claims ?? {}, null, 2)}
-                    </pre>
-                  </div>
-                )}
-              </li>
-            );
-          })}
+                <span className="flex flex-wrap items-baseline justify-between gap-2">
+                  <span className="text-sm font-semibold text-ink">
+                    {record.format}
+                  </span>
+                  <span className="text-xs text-slate-600">
+                    {formatIssuedAt(record.issuedAt)}
+                  </span>
+                </span>
+                <span className="overflow-auto font-mono text-xs text-ink">
+                  Issuer {record.issuer ?? '—'}
+                </span>
+                <span className="overflow-auto font-mono text-xs text-ink">
+                  Subject {record.subject ?? '—'}
+                </span>
+              </Link>
+            </li>
+          ))}
         </ul>
       )}
       {(credentials.length > 0 || offset > 0) && (

@@ -70,7 +70,7 @@ export function AcceptInvitation({
   onAccepted,
   onRejected,
 }: {
-  onAccepted?: () => void;
+  onAccepted?: (record: AcceptResult) => void;
   onRejected?: () => void;
 }) {
   const [oob, setOob] = useState('');
@@ -175,7 +175,7 @@ export function AcceptInvitation({
         setError(apiErrorMessage(error, 'Could not accept the invitation.'));
       } else if (data) {
         setResult(data);
-        onAccepted?.();
+        onAccepted?.(data);
       }
     } catch {
       setError('Request failed.');
