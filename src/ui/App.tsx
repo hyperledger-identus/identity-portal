@@ -1,15 +1,21 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Provider } from 'react-redux';
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from 'react-router-dom';
 import { createPortalStore } from './store';
 import { LoginPage } from './LoginPage';
 import { LoggedOutPage } from './LoggedOutPage';
-import { CreateDid } from './CreateDid';
-import { DidResolver } from './DidResolver';
-import { DidList } from './DidList';
-import { SchemasSection } from './SchemasSection';
-import { OffersSection } from './OffersSection';
-import { InvitationsSection } from './InvitationsSection';
-import { CredentialsSection } from './CredentialsSection';
+import { DashboardLayout } from './Layout';
+import { DidsPage } from './pages/DidsPage';
+import { SchemasPage } from './pages/SchemasPage';
+import { OffersPage } from './pages/OffersPage';
+import { InvitationsPage } from './pages/InvitationsPage';
+import { CredentialsPage } from './pages/CredentialsPage';
 
 type SessionUser = {
   sub?: string;
@@ -63,60 +69,6 @@ function useSession(): SessionState {
   return state;
 }
 
-function Dashboard({ user }: { user: SessionUser }) {
-  const [listVersion, setListVersion] = useState(0);
-  const [credentialsVersion, setCredentialsVersion] = useState(0);
-  const refreshList = () => setListVersion((version) => version + 1);
-
-  return (
-    <main className="min-h-screen bg-white text-ink">
-      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 px-6 py-6">
-        <header className="flex flex-col gap-5 border-b border-line pb-6 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-sm font-medium uppercase tracking-wide text-brand">
-              Hyperledger Identus
-            </p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-ink md:text-5xl">
-              Identity Portal
-            </h1>
-            <p className="mt-3 max-w-3xl text-base leading-7 text-slate-700">
-              A reference dashboard for offline-first Edge Agent workflows and
-              optional Cloud Agent operation.
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-700">
-              Signed in as{' '}
-              <span className="font-semibold text-ink">
-                {user.username ?? user.email ?? 'user'}
-              </span>
-            </span>
-            <a
-              href="/auth/logout"
-              className="rounded-md border border-line px-4 py-2 text-sm font-medium text-ink transition hover:bg-slate-50"
-            >
-              Log out
-            </a>
-          </div>
-        </header>
-        <div className="grid gap-6 lg:grid-cols-2">
-          <CreateDid onCreated={refreshList} />
-          <DidResolver />
-        </div>
-        <DidList refreshToken={listVersion} />
-        <SchemasSection />
-        <OffersSection />
-        <InvitationsSection
-          onAccepted={() =>
-            setCredentialsVersion((version) => version + 1)
-          }
-        />
-        <CredentialsSection refreshToken={credentialsVersion} />
-      </div>
-    </main>
-  );
-}
-
 /** Only allow same-origin relative paths as a redirect target. */
 function safeReturnTo(value: string | null): string {
   return value && value.startsWith('/') && !value.startsWith('//')
@@ -128,13 +80,12 @@ function LoadingScreen() {
   return <main className="min-h-screen bg-panel" aria-busy="true" />;
 }
 
-export function App() {
-  const store = useMemo(() => createPortalStore(), []);
+function AppRoutes() {
   const session = useSession();
+  const location = useLocation();
 
-  const path = typeof window !== 'undefined' ? window.location.pathname : '/';
-  const isLoginRoute = path === '/login';
-  const isLoggedOutRoute = path === '/logged-out';
+  const isLoginRoute = location.pathname === '/login';
+  const isLoggedOutRoute = location.pathname === '/logged-out';
 
   useEffect(() => {
     if (session.status === 'loading') {
@@ -144,9 +95,7 @@ export function App() {
     if (session.status === 'authenticated') {
       // Logged-in users shouldn't sit on the login page; send them to returnTo.
       if (isLoginRoute) {
-        const returnTo = new URLSearchParams(window.location.search).get(
-          'returnTo',
-        );
+        const returnTo = new URLSearchParams(location.search).get('returnTo');
         window.location.assign(safeReturnTo(returnTo));
       }
       return;
@@ -156,25 +105,50 @@ export function App() {
     // gateway already does this for fresh loads; this covers sessions that
     // expire while the SPA is open.
     if (!isLoginRoute && !isLoggedOutRoute) {
-      const target = `${window.location.pathname}${window.location.search}`;
+      const target = `${location.pathname}${location.search}`;
       window.location.assign(`/login?returnTo=${encodeURIComponent(target)}`);
     }
-  }, [session.status, isLoginRoute, isLoggedOutRoute]);
+  }, [session.status, isLoginRoute, isLoggedOutRoute, location]);
 
-  let content: ReactNode;
-  if (isLoggedOutRoute) {
-    content = <LoggedOutPage />;
-  } else if (isLoginRoute) {
-    // Render the form only once we know the visitor is unauthenticated; otherwise
-    // show a neutral screen while loading or while redirecting an authed user.
-    content =
-      session.status === 'unauthenticated' ? <LoginPage /> : <LoadingScreen />;
-  } else if (session.status === 'authenticated') {
-    content = <Dashboard user={session.user} />;
-  } else {
-    // Loading, or unauthenticated and being redirected to /login.
-    content = <LoadingScreen />;
-  }
+  return (
+    <Routes>
+      <Route path="/logged-out" element={<LoggedOutPage />} />
+      <Route
+        path="/login"
+        element={
+          // Render the form only once we know the visitor is unauthenticated;
+          // otherwise show a neutral screen while loading or while redirecting
+          // an authed user.
+          session.status === 'unauthenticated' ? <LoginPage /> : <LoadingScreen />
+        }
+      />
+      {session.status === 'authenticated' ? (
+        <Route element={<DashboardLayout user={session.user} />}>
+          <Route index element={<Navigate to="/dids" replace />} />
+          <Route path="/dids" element={<DidsPage />} />
+          <Route path="/issuer/schemas" element={<SchemasPage />} />
+          <Route path="/issuer/offers" element={<OffersPage />} />
+          <Route path="/holder/invitations" element={<InvitationsPage />} />
+          <Route path="/holder/credentials" element={<CredentialsPage />} />
+          {/* An address that matches nothing goes to the DID area, the front page. */}
+          <Route path="*" element={<Navigate to="/dids" replace />} />
+        </Route>
+      ) : (
+        // Loading, or unauthenticated and being redirected to /login.
+        <Route path="*" element={<LoadingScreen />} />
+      )}
+    </Routes>
+  );
+}
 
-  return <Provider store={store}>{content}</Provider>;
+export function App() {
+  const store = useMemo(() => createPortalStore(), []);
+
+  return (
+    <Provider store={store}>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </Provider>
+  );
 }
