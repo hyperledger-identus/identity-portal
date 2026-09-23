@@ -31,7 +31,7 @@ const DEFAULT_CURVES: Record<KeyUsage, Curve> = {
  * (`POST /api/dids`), which dispatches to the active agent (local edge or
  * cloud). Each key usage takes one curve; the created DID is shown on success.
  */
-export function CreateDid({ onCreated }: { onCreated?: () => void }) {
+export function CreateDid({ onCreated }: { onCreated?: (did: string) => void }) {
   const [curves, setCurves] = useState<Record<KeyUsage, Curve>>(DEFAULT_CURVES);
   const [result, setResult] = useState<{ did: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +57,9 @@ export function CreateDid({ onCreated }: { onCreated?: () => void }) {
         setError(message);
       } else {
         setResult(data ?? null);
-        onCreated?.();
+        if (data?.did) {
+          onCreated?.(data.did);
+        }
       }
     } catch {
       setError('Request failed.');
