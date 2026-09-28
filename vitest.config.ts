@@ -1,4 +1,4 @@
-import { dirname, resolve } from "node:path";
+import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
@@ -12,7 +12,10 @@ export default defineConfig({
   root: projectRoot,
   plugins: [react()],
   test: {
-    include: [resolve(projectRoot, "src/**/*.{test,spec}.{ts,tsx}")],
+    // Relative to `root`: an absolute pattern from `resolve()` carries
+    // backslashes on Windows, which the glob matcher reads as escapes and
+    // then finds no test files at all.
+    include: ["src/**/*.{test,spec}.{ts,tsx}"],
     environment: "node",
     passWithNoTests: true,
   },
