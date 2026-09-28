@@ -23,6 +23,22 @@ function parseDID(value: string): Domain.DID {
   }
 }
 
+/**
+ * The local agent refuses to update or deactivate a DID that was never
+ * published, with a plain `Error` whose message says so. The request is well
+ * formed and the DID exists; its state does not allow the operation, so it is a
+ * 409, not a 500.
+ */
+function mapDIDStateError(error: unknown): never {
+  if (
+    error instanceof Error &&
+    / must be published before it can be /.test(error.message)
+  ) {
+    throw HttpError.Conflict(error.message);
+  }
+  throw error;
+}
+
 export default function createIssuerRouter(createContext: ContextFactory) {
   return createRestRouter({ createContext })
     .get('/', {
@@ -128,11 +144,15 @@ export default function createIssuerRouter(createContext: ContextFactory) {
         tags: ['dids'],
       },
       handler: async ({ input, ctx }) => {
-        const { txId } = await ctx.agent.dids.prism.update(
-          parseDID(input.did),
-          input.actions,
-        );
-        return { txId };
+        try {
+          const { txId } = await ctx.agent.dids.prism.update(
+            parseDID(input.did),
+            input.actions,
+          );
+          return { txId };
+        } catch (error) {
+          mapDIDStateError(error);
+        }
       },
     })
     .post('/:did/deactivate', {
@@ -149,8 +169,12 @@ export default function createIssuerRouter(createContext: ContextFactory) {
         tags: ['dids'],
       },
       handler: async ({ input, ctx }) => {
-        const { txId } = await ctx.agent.dids.prism.deactivate(parseDID(input.did));
-        return { txId };
+        try {
+          const { txId } = await ctx.agent.dids.prism.deactivate(parseDID(input.did));
+          return { txId };
+        } catch (error) {
+          mapDIDStateError(error);
+        }
       },
     });
 }
