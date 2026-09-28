@@ -90,8 +90,8 @@ function toStoredClaims(
 }
 
 /**
- * Reverse of `toStoredClaims`. Object/array values were JSON.stringified; parse
- * those back. Plain strings stay strings.
+ * Object/array values were JSON.stringified by `toStoredClaims`; parse those
+ * back. Plain strings stay strings.
  */
 function parseStoredClaimValue(value: string): unknown {
   const trimmed = value.trimStart();
@@ -105,12 +105,24 @@ function parseStoredClaimValue(value: string): unknown {
   return value;
 }
 
+/**
+ * Reverse of `toStoredClaims`. Numbers and booleans are restored from the
+ * stored `type`, the way `claimsObject` in the inbox restores them for the
+ * issued credential; everything else goes through `parseStoredClaimValue`.
+ */
 function claimsToRecord(
   claims: CollectionMap['issuance']['claims'],
 ): Record<string, unknown> {
   const record: Record<string, unknown> = {};
   for (const claim of claims) {
-    record[claim.name] = parseStoredClaimValue(claim.value);
+    if (claim.type === 'number') {
+      const value = Number(claim.value);
+      record[claim.name] = Number.isFinite(value) ? value : claim.value;
+    } else if (claim.type === 'boolean') {
+      record[claim.name] = claim.value === 'true';
+    } else {
+      record[claim.name] = parseStoredClaimValue(claim.value);
+    }
   }
   return record;
 }
