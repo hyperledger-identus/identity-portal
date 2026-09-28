@@ -2,6 +2,7 @@ import { Domain } from '@hyperledger/identus-sdk';
 import { z } from 'zod';
 
 import { didDocumentSchema } from '../../schemas/did-document';
+import { errorResponseSchema } from '../../schemas/error';
 import {
   prismDIDListSchema,
   prismDIDUpdateInputSchema,
@@ -9,6 +10,7 @@ import {
 } from '../../schemas/prism-did';
 import { ContextFactory, HttpError, createRestRouter } from '../../utils/rest';
 import { PrismDIDKeyCurves } from '../../utils/agent/types';
+import { mapDIDStateError } from './errors';
 
 /**
  * Reads the DID out of the path. `Domain.DID.fromString` throws a plain error on
@@ -126,13 +128,23 @@ export default function createIssuerRouter(createContext: ContextFactory) {
           'For `addKey` the caller names a purpose and curve; the agent generates and stores the key.',
         ].join(' '),
         tags: ['dids'],
+        extraResponses: {
+          409: {
+            description: 'The DID is not published yet, so it cannot be updated.',
+            schema: errorResponseSchema,
+          },
+        },
       },
       handler: async ({ input, ctx }) => {
-        const { txId } = await ctx.agent.dids.prism.update(
-          parseDID(input.did),
-          input.actions,
-        );
-        return { txId };
+        try {
+          const { txId } = await ctx.agent.dids.prism.update(
+            parseDID(input.did),
+            input.actions,
+          );
+          return { txId };
+        } catch (error) {
+          mapDIDStateError(error);
+        }
       },
     })
     .post('/:did/deactivate', {
@@ -147,10 +159,20 @@ export default function createIssuerRouter(createContext: ContextFactory) {
         description:
           'Deactivates a published DID and returns the id of the transaction carrying the operation. The DID stops resolving once the operation is indexed.',
         tags: ['dids'],
+        extraResponses: {
+          409: {
+            description: 'The DID is not published yet, so it cannot be deactivated.',
+            schema: errorResponseSchema,
+          },
+        },
       },
       handler: async ({ input, ctx }) => {
-        const { txId } = await ctx.agent.dids.prism.deactivate(parseDID(input.did));
-        return { txId };
+        try {
+          const { txId } = await ctx.agent.dids.prism.deactivate(parseDID(input.did));
+          return { txId };
+        } catch (error) {
+          mapDIDStateError(error);
+        }
       },
     });
 }

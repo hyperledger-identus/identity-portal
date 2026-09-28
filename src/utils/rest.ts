@@ -105,6 +105,10 @@ export class HttpError extends Error {
     return new HttpError(404, message);
   }
 
+  static Conflict(message: string) {
+    return new HttpError(409, message);
+  }
+
   static Gone(message: string) {
     return new HttpError(410, message);
   }
