@@ -16,6 +16,7 @@ import type {
   CredentialOfferRole,
   CredentialProtocolState,
 } from '../types';
+import { claimsToSubject } from './claims';
 import type { MultiTenantPluto } from './database';
 
 /**
@@ -87,24 +88,6 @@ function asIssueCredential(value: unknown): IssueCredential | undefined {
     return IssueCredential.fromMessage(value);
   }
   return undefined;
-}
-
-function claimsObject(
-  claims: CollectionMap['issuance']['claims'],
-): Record<string, unknown> {
-  const subject: Record<string, unknown> = {};
-  for (const claim of claims) {
-    if (claim.type === 'number') {
-      subject[claim.name] = Number(claim.value);
-    } else if (claim.type === 'boolean') {
-      subject[claim.name] = claim.value === 'true';
-    } else if (claim.type === 'date') {
-      subject[claim.name] = new Date(claim.value);
-    } else {
-      subject[claim.name] = claim.value;
-    }
-  }
-  return subject;
 }
 
 async function sentIssueExists(
@@ -218,7 +201,7 @@ async function issueCredentialFallback(
       type: ['VerifiableCredential'],
       credentialSubject: {
         id: subjectDid,
-        ...claimsObject(issuance.claims),
+        ...claimsToSubject(issuance.claims),
       },
     },
   } as never);
