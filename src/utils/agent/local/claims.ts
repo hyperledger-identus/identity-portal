@@ -51,23 +51,46 @@ function parseStoredClaimValue(value: string): unknown {
 }
 
 /**
- * Reverse of `toStoredClaims`. Numbers and booleans are restored from the
- * stored `type`, the way `claimsObject` in the inbox restores them for the
- * issued credential; everything else goes through `parseStoredClaimValue`.
+ * One stored claim row back to its JSON value. Numbers and booleans are
+ * restored from the stored `type`; everything else goes through
+ * `parseStoredClaimValue`.
  */
+function restoreClaimValue(
+  claim: CollectionMap['issuance']['claims'][number],
+): unknown {
+  if (claim.type === 'number') {
+    const value = Number(claim.value);
+    return Number.isFinite(value) ? value : claim.value;
+  }
+  if (claim.type === 'boolean') {
+    return claim.value === 'true';
+  }
+  return parseStoredClaimValue(claim.value);
+}
+
+/** Reverse of `toStoredClaims`: the claims object the portal API answers. */
 export function claimsToRecord(
   claims: CollectionMap['issuance']['claims'],
 ): Record<string, unknown> {
   const record: Record<string, unknown> = {};
   for (const claim of claims) {
-    if (claim.type === 'number') {
-      const value = Number(claim.value);
-      record[claim.name] = Number.isFinite(value) ? value : claim.value;
-    } else if (claim.type === 'boolean') {
-      record[claim.name] = claim.value === 'true';
-    } else {
-      record[claim.name] = parseStoredClaimValue(claim.value);
-    }
+    record[claim.name] = restoreClaimValue(claim);
   }
   return record;
+}
+
+/**
+ * The claims the issuer signs into the credential subject. Same values as
+ * `claimsToRecord`, so the credential carries what the offer shows; `date`
+ * rows become `Date` values.
+ */
+export function claimsToSubject(
+  claims: CollectionMap['issuance']['claims'],
+): Record<string, unknown> {
+  const subject: Record<string, unknown> = {};
+  for (const claim of claims) {
+    subject[claim.name] =
+      claim.type === 'date' ? new Date(claim.value) : restoreClaimValue(claim);
+  }
+  return subject;
 }
