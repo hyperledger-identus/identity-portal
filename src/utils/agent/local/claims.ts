@@ -8,10 +8,18 @@ import type { CollectionMap } from '@hyperledger/identus-sdk';
  * tested on their own.
  */
 
+/** Stored `type` of an object, an array or `null`: its value is JSON text. */
+const JSON_CLAIM_TYPE = 'json';
+
 export function stringifyClaimValue(value: unknown): string {
   return typeof value === 'string' ? value : JSON.stringify(value);
 }
 
+/**
+ * Strings, numbers and booleans keep their JSON type. Everything else is
+ * stored as JSON text with its own type, so a string that only looks like
+ * JSON is never parsed by mistake.
+ */
 function claimValueType(value: unknown): string {
   if (
     typeof value === 'string' ||
@@ -20,7 +28,7 @@ function claimValueType(value: unknown): string {
   ) {
     return typeof value;
   }
-  return 'string';
+  return JSON_CLAIM_TYPE;
 }
 
 /** The persist-side map: a JSON object of claims to stored claim rows. */
@@ -35,25 +43,9 @@ export function toStoredClaims(
 }
 
 /**
- * Object/array values were JSON.stringified by `toStoredClaims`; parse those
- * back. Plain strings stay strings.
- */
-function parseStoredClaimValue(value: string): unknown {
-  const trimmed = value.trimStart();
-  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-    try {
-      return JSON.parse(value);
-    } catch {
-      return value;
-    }
-  }
-  return value;
-}
-
-/**
- * One stored claim row back to its JSON value. Numbers and booleans are
- * restored from the stored `type`; everything else goes through
- * `parseStoredClaimValue`.
+ * One stored claim row back to its JSON value, by its stored `type`. A row of
+ * any other type, `string` included, is returned as the stored text. A row
+ * whose text does not parse back keeps the stored text.
  */
 function restoreClaimValue(
   claim: CollectionMap['issuance']['claims'][number],
@@ -65,7 +57,14 @@ function restoreClaimValue(
   if (claim.type === 'boolean') {
     return claim.value === 'true';
   }
-  return parseStoredClaimValue(claim.value);
+  if (claim.type === JSON_CLAIM_TYPE) {
+    try {
+      return JSON.parse(claim.value);
+    } catch {
+      return claim.value;
+    }
+  }
+  return claim.value;
 }
 
 /** Reverse of `toStoredClaims`: the claims object the portal API answers. */
