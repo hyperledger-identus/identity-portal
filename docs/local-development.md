@@ -89,6 +89,13 @@ demo users:
 | `alice`  | `1234`   |
 | `bob`    | `1234`   |
 
+On the local agent, log in with one demo user per stack run. When a second user
+logs in, every request answers `500`
+([#90](https://github.com/hyperledger-identus/identity-portal/issues/90)); restart
+the stack (`npm run local:down`, `npm run local:up`) and the portal to get a clean
+one. To try credential issuance with one user, create an offer as `alice` and
+accept its invitation as `alice` too.
+
 Open `http://localhost:3000`, and unauthenticated page loads are redirected to
 `/login`. Sign in with a demo user (username/password) — the server exchanges the
 credentials with Keycloak and sets an encrypted, `httpOnly` session cookie; tokens
@@ -207,5 +214,9 @@ Read from the environment in `src/config/index.ts` (DID resolvers in
   container restarts. Log in again to re-provision the tenant; the new tenant gets a
   new seed, so DIDs created before the restart cannot be derived again.
 - **Queue jobs don't run** — confirm `redis` is up; the per-tenant tasks need it.
+- **Every request answers `500` after a second user logs in** — a known issue of
+  the local agent
+  ([#90](https://github.com/hyperledger-identus/identity-portal/issues/90)). See
+  [Logging in](#logging-in).
 - **Local data looks empty after a key change** — the store is encrypted with
   `DB_ENCRYPTION_KEY`; data is tied to that key.

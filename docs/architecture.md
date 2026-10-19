@@ -126,10 +126,12 @@ flowchart LR
 ```
 
 The contract covers `start`/`stop`, a `dids` group (`resolveDID` plus a `prism`
-group for the DID lifecycle: `list`, `create`, `publish`, `deactivate`) and a
-`schemas` group for credential schemas (`list`, `get`, `create`, `update`,
-`delete`) — see [Phase 2: DID management](#phase-2-did-management) and
-[Phase 3: Schema management](#phase-3-schema-management). Extending it is a
+group for the DID lifecycle: `list`, `create`, `publish`, `update`, `deactivate`),
+a `schemas` group for credential schemas (`list`, `get`, `create`, `update`,
+`delete`), and `issuer` and `holder` groups for credential offers — see
+[Phase 2: DID management](#phase-2-did-management),
+[Phase 3: Schema management](#phase-3-schema-management) and
+[Phase 4: Credential issuance](#phase-4-credential-issuance). Extending it is a
 deliberate three-step change: update the contract, then both implementations, then
 the endpoint that calls it. TypeScript enforces that neither mode is left behind.
 
@@ -152,13 +154,15 @@ tenant instead of running one agent per user. See
   tenant: it registers the tenant, generates and stores its agent seed, creates a
   host peer DID with the mediator as its service endpoint
   (`agent/local/mediation.ts`), sends a DIDComm mediation request, and schedules
-  its recurring message-fetch task. In cloud mode, `agent/cloud-agent/provisioning.ts`
+  its recurring message tasks. In cloud mode, `agent/cloud-agent/provisioning.ts`
   instead ensures the user owns a Cloud Agent wallet (probe → create → grant UMA
   permission). Both are best-effort: a provisioning failure is logged but never
   blocks login.
 - **Per-tenant background work.** A BullMQ + Redis queue (`agent/local/queue`) runs
-  recurring per-tenant jobs. The task wired today polls the mediator for new
-  DIDComm messages (`fetch-messages`). Schedulers are keyed `<jobName>:<tenantId>`
+  recurring per-tenant jobs. Two tasks are wired: `fetch-messages` polls the
+  mediator for new DIDComm messages and stores them, and `process-messages` handles
+  the stored messages of the issuance flow (see
+  [Phase 4](#phase-4-credential-issuance)). Schedulers are keyed `<jobName>:<tenantId>`
   and upserted, so repeated logins never create duplicate jobs and one tenant's
   work never blocks another's.
 
@@ -180,7 +184,7 @@ In development the spec is served as Swagger UI at `/docs` and as raw JSON at
 before the handler runs, and output is checked before it is sent. Schemas live in
 `schemas/` and are the single source of truth for both validation and the OpenAPI
 spec. Handlers throw `HttpError` for expected failures, which maps to the right
-status code.
+status code — for example `409` when a DID that was never published is updated.
 
 ### Encrypted local storage
 
@@ -243,11 +247,16 @@ sequenceDiagram
 | `src/utils/agent/local/database/` | `MultiTenantPluto` over RIDB + MongoDB (tenant-scoped rows).                          |
 | `src/utils/agent/local/neoprism/` | Generated, type-safe client for the neoprism node API.                                |
 | `src/utils/agent/local/queue/`    | BullMQ + Redis per-tenant recurring tasks.                                            |
+| `src/utils/agent/local/issuer.ts` | Issuer side of OOB credential offers: create, list and read offers.                   |
+| `src/utils/agent/local/holder.ts` | Holder side: preview, accept and reject invitations; list held credentials.           |
+| `src/utils/agent/local/inbox.ts`  | Handles stored DIDComm messages of issuance: issues and stores credentials.           |
+| `src/utils/agent/local/claims.ts` | Maps claims between the API's JSON object and the stored claim rows.                  |
 | `src/utils/agent/cloud-agent/`    | Cloud Agent HTTP client and wallet auto-provisioning.                                 |
 | `src/config/index.ts`             | Environment configuration.                                                            |
 | `src/config/resolvers.ts`         | `PRISM_DID_RESOLVERS` (neoprism-backed) used by Castor.                               |
 | `src/schemas/`                    | Zod schemas (request/response shapes).                                                |
 | `src/ui/`                         | React frontend and its typed API client.                                              |
+| `src/ui/pages/<area>/`            | Routed pages per area: DIDs, schemas, offers, invitations, credentials.               |
 
 ## Configuration
 
@@ -273,15 +282,16 @@ The full table with defaults is in
 ## Phase 2: DID management
 
 The `Agent` contract exposes `dids.resolveDID` plus a `dids.prism` group for the
-`did:prism` lifecycle. Current status:
+`did:prism` lifecycle. Every method is implemented in both modes.
 
-| Method            | Purpose                                           | Status                         |
-| ----------------- | ------------------------------------------------- | ------------------------------ |
-| `resolveDID(did)` | Resolve a DID to its DID document.                | Implemented (local and cloud). |
-| `create(keys)`    | Create a Prism DID with the requested key curves. | Implemented (local and cloud). |
-| `list()`          | List the tenant's Prism DIDs.                     | Implemented (local and cloud). |
-| `publish(did)`    | Publish a DID (returns a `txId`).                 | Not implemented yet.           |
-| `deactivate(did)` | Deactivate a published DID.                       | Not implemented yet.           |
+| Method                 | Purpose                                             |
+| ---------------------- | --------------------------------------------------- |
+| `resolveDID(did)`      | Resolve a DID to its DID document.                  |
+| `list(offset, limit)`  | List one page of the tenant's Prism DIDs.           |
+| `create(keys)`         | Create a Prism DID with the requested key curves.   |
+| `publish(did)`         | Publish a DID; returns the transaction id (`txId`). |
+| `update(did, actions)` | Add or remove keys; add, remove or update services. |
+| `deactivate(did)`      | Deactivate a published DID.                         |
 
 `resolveDID` resolves through the SDK's `PrismDIDMethod`, pointed at the neoprism
 node (`config/resolvers.ts`), in local mode, and through the Cloud Agent in cloud
@@ -294,17 +304,28 @@ in Pluto. The stored keys carry the derivation index the next `create` builds on
 so each call yields a distinct DID. In cloud mode `create` posts to the Cloud
 Agent's `/did-registrar/dids` and the agent manages the keys itself.
 
-`list` returns the tenant's DIDs. Local reads them from Pluto, which pairs every
-stored key with its DID, so the result is deduplicated by DID string; cloud walks
-each page of the registrar's `offset`/`limit` pagination. The local side still
-loads every DID at once — paginating it is a separate work item.
+`list` returns one page of the tenant's DIDs. Local reads the page from Pluto, which
+pairs every stored key with its DID, so the page is deduplicated by DID string;
+cloud reads the same page from the registrar's `offset`/`limit` pagination.
 
-`publish` and `deactivate` are still scaffolded (they `throw "Not implemented"`)
-with inline notes on how each maps to the SDK or the Cloud Agent registrar — these
-are the remaining Phase 2 work items.
+`publish` signs the create operation with the DID's master key. In local mode the
+operation is submitted to the neoprism node, and the store keeps the `txId` and the
+operation hash. `update` and `deactivate` chain on that hash: each operation names
+the one it follows, so the ledger applies it to the state the caller has seen. A
+DID that was never published has nothing to chain on, so the local agent refuses
+both, and the API answers `409`. In cloud mode the three calls go to the
+registrar's `publications`, `updates` and `deactivations` endpoints.
 
-Over REST, `GET /api/dids` (list), `POST /api/dids` (create) and
-`GET /api/dids/resolve/:did` are wired to the agent.
+Over REST:
+
+| Route                            | Purpose                   |
+| -------------------------------- | ------------------------- |
+| `GET /api/dids`                  | List, one page at a time. |
+| `POST /api/dids`                 | Create.                   |
+| `GET /api/dids/resolve/:did`     | Resolve.                  |
+| `POST /api/dids/:did/publish`    | Publish.                  |
+| `POST /api/dids/:did/update`     | Update keys and services. |
+| `POST /api/dids/:did/deactivate` | Deactivate.               |
 
 ## Phase 3: Schema management
 
@@ -314,22 +335,113 @@ the SDK's `CollectionMap`; `utils/agent/types.ts` re-exports it as
 `CredentialSchema`, with `CredentialSchemaInput` as the create payload (`uuid` is
 generated on insert and `tenantId` is injected by the tenant-scoped store).
 
-| Method                 | Purpose                             | Status                    |
-| ---------------------- | ----------------------------------- | ------------------------- |
-| `list()`               | List the tenant's schemas.          | Implemented (local only). |
-| `get(uuid)`            | Fetch a single schema by uuid.      | Implemented (local only). |
-| `create(schema)`       | Store a schema and return its uuid. | Implemented (local only). |
-| `update(uuid, schema)` | Update a stored schema.             | Implemented (local only). |
-| `delete(uuid)`         | Delete a stored schema.             | Implemented (local only). |
+| Method                 | Purpose                             | Status                         |
+| ---------------------- | ----------------------------------- | ------------------------------ |
+| `list()`               | List the tenant's schemas.          | Implemented (local and cloud). |
+| `get(uuid)`            | Fetch a single schema by uuid.      | Implemented (local and cloud). |
+| `create(schema)`       | Store a schema and return its uuid. | Implemented (local and cloud). |
+| `update(uuid, schema)` | Update a stored schema.             | Local only.                    |
+| `delete(uuid)`         | Delete a stored schema.             | Local only.                    |
 
 Local delegates each call to `MultiTenantPluto`, so every record stays scoped to
-the caller's tenant. Cloud is scaffolded against the Cloud Agent's schema registry
+the caller's tenant. Cloud uses the Cloud Agent's schema registry
 (`/schema-registry/schemas`), which is shaped differently: it is append-only, so it
 exposes no `DELETE`, and `PUT` publishes a new version instead of editing in place.
 A schema a credential was issued against cannot be removed without making that
-credential impossible to interpret, so deletion stays local-only for now.
+credential impossible to interpret, so cloud `update` and `delete` refuse with an
+error.
 
-No REST endpoints or UI exist for schemas yet.
+Over REST, `GET /api/schemas`, `GET /api/schemas/:uuid` and `POST /api/schemas`
+are wired; update and delete have no endpoint. The pages are under
+`/issuer/schemas` (see [Phase 5](#phase-5-routed-pages)).
+
+## Phase 4: Credential issuance
+
+Credentials are issued through connectionless out-of-band (OOB) offers: the issuer
+creates an offer and gets an invitation URL, and the holder accepts the offer from
+that URL. Only JWT credentials are supported. The contract has an `issuer` and a
+`holder` group for it, implemented in both modes.
+
+| Method                                         | Purpose                                      |
+| ---------------------------------------------- | -------------------------------------------- |
+| `issuer.credentials.createOobOffer(input)`     | Create an offer and its invitation URL.      |
+| `issuer.credentials.listOffers(offset, limit)` | List one page of the tenant's offers.        |
+| `issuer.credentials.getOffer(recordId)`        | One offer with its protocol state.           |
+| `holder.invitations.preview(oob)`              | Decode an invitation without accepting it.   |
+| `holder.invitations.accept(oob, opts)`         | Accept the offer and request the credential. |
+| `holder.invitations.reject(oob)`               | Reject the invitation.                       |
+| `holder.credentials.list(offset, limit)`       | List one page of the holder's credentials.   |
+
+The flow in local mode, with both sides as tenants of the portal:
+
+```mermaid
+sequenceDiagram
+  participant I as Issuer tenant
+  participant M as Mediator
+  participant H as Holder tenant
+
+  I->>I: createOobOffer stores the offer (InvitationGenerated)
+  I-->>H: invitation URL, shared out of band
+  H->>H: preview decodes the offer
+  H->>M: accept sends the credential request (RequestSent)
+  M->>I: fetch-messages picks up the request
+  I->>I: process-messages signs a JWT credential
+  I->>M: the credential is sent (CredentialSent)
+  M->>H: fetch-messages picks up the credential
+  H->>H: process-messages stores it (CredentialReceived)
+```
+
+In local mode `createOobOffer` stores the offer as an issuance row in Pluto and
+returns a relative invitation URL (`/oob?_oob=…`), which the holder pastes into the
+Invitations page. `accept` sends the credential request through the mediator and
+stores a holder row in state `RequestSent`. The rest runs in the background, in the
+two per-tenant tasks: `fetch-messages` pulls new DIDComm messages from the mediator
+into Pluto, and `process-messages` (`agent/local/inbox.ts`) handles them. A request
+makes the issuer sign a JWT credential with the issuing Prism DID and send it back;
+a credential makes the holder store it in its wallet.
+
+The SDK keeps each claim of an issuance row as a text value plus a type.
+`agent/local/claims.ts` maps the API's JSON object to these rows and back, and
+builds the credential subject from the same rows, so the credential carries the
+claims the offer shows.
+
+In cloud mode the calls go to the Cloud Agent's `/issue-credentials` endpoints: an
+offer is created with `credential-offers/invitation`, and `accept` calls
+`credential-offers/accept-invitation`, then `records/{recordId}/accept-offer`. The
+Cloud Agent runs the protocol itself.
+
+Over REST:
+
+| Route                           | Purpose                                            |
+| ------------------------------- | -------------------------------------------------- |
+| `GET /api/offers`               | List the tenant's offers, one page at a time.      |
+| `POST /api/offers`              | Create an offer.                                   |
+| `GET /api/offers/:recordId`     | One offer with its state.                          |
+| `POST /api/invitations/preview` | Decode an invitation.                              |
+| `POST /api/invitations/accept`  | Accept it.                                         |
+| `POST /api/invitations/reject`  | Reject it.                                         |
+| `GET /api/credentials`          | List the holder's credentials, one page at a time. |
+
+On the local agent the flow is tried with one user who accepts their own offer: a
+second user logging in breaks the requests of the stack
+([#90](https://github.com/hyperledger-identus/identity-portal/issues/90)). See
+[local-development.md](./local-development.md#logging-in).
+
+## Phase 5: Routed pages
+
+The React app has one page per task, and the menu groups them by role. Pages live
+in `src/ui/pages/<area>/` and call the API through the typed client.
+
+| Area   | Routes                                                                                                                                |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| DIDs   | `/dids`, `/dids/new`, `/dids/resolve`, `/dids/:did/update`                                                                            |
+| Issuer | `/issuer/schemas`, `/issuer/schemas/new`, `/issuer/schemas/:uuid`, `/issuer/offers`, `/issuer/offers/new`, `/issuer/offers/:recordId` |
+| Holder | `/holder/invitations`, `/holder/credentials`, `/holder/credentials/:key`                                                              |
+
+`/login` and `/logged-out` are public; inside the app an unknown path redirects to
+`/dids`. On the local agent a held credential's id is the whole JWT, too long for a
+URL, so a credential page is keyed by the last 32 characters of an id longer than
+64 characters (`pages/credentials/credentialKey.ts`); a shorter id is used whole.
 
 ## Runtime environments
 
