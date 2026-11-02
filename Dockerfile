@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 #
 # Standalone image for the Identity Portal. It bundles the Express server
-# (dist/main.cjs) and builds the React UI (dist/ui), then serves both from a
+# (dist/main.js) and builds the React UI (dist/ui), then serves both from a
 # single Node process in production mode. Supporting services (MongoDB, Redis,
 # Keycloak, neoprism, mediator) run separately — point the container at them via
 # environment variables (see .env.example).
@@ -21,7 +21,7 @@ RUN apt-get update \
 COPY package.json package-lock.json ./
 RUN npm ci
 
-# Build the UI (vite -> dist/ui) and the server bundle (esbuild -> dist/main.cjs).
+# Build the UI (vite -> dist/ui) and the server bundle (esbuild -> dist/main.js).
 COPY tsconfig.json vite.config.ts tailwind.config.cjs postcss.config.cjs esbuild.config.mjs ./
 COPY src ./src
 RUN NODE_ENV=production npm run build

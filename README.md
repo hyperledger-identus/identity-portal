@@ -75,7 +75,7 @@ And Destroy the env with  ```npm run cloud-agent:down```
 ## Running with Docker
 
 The [Dockerfile](./Dockerfile) builds a standalone production image: it bundles
-the Express server (`dist/main.cjs`) and the pre-built React UI (`dist/ui`) and
+the Express server (`dist/main.js`) and the pre-built React UI (`dist/ui`) and
 runs both from a single Node process on port `3000`.
 
 ```bash
