@@ -15,6 +15,7 @@ import type {
   HolderCredential,
   InvitationPreview,
 } from '../types';
+import { toStoredClaims } from './claims';
 import type { MultiTenantPluto } from './database';
 
 export type LocalHolderDeps = {
@@ -31,31 +32,6 @@ type ParsedInvitation = {
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function stringifyClaimValue(value: unknown): string {
-  return typeof value === 'string' ? value : JSON.stringify(value);
-}
-
-function claimValueType(value: unknown): string {
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-    return typeof value;
-  }
-  return 'string';
-}
-
-/**
- * SDK `IssuanceSchema` stores claims as `{ name, value, type }[]` with string
- * values. The portal API keeps a JSON object; this is the persist-side map.
- */
-function toStoredClaims(
-  claims: Record<string, unknown>,
-): CollectionMap['issuance']['claims'] {
-  return Object.entries(claims).map(([name, value]) => ({
-    name,
-    value: stringifyClaimValue(value),
-    type: claimValueType(value),
-  }));
 }
 
 /**

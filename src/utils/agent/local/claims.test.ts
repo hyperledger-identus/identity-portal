@@ -37,10 +37,35 @@ describe('claims storage', () => {
     });
   });
 
-  it('keeps the stored text when an object row is not valid JSON', () => {
-    expect(claimsToRecord([{ name: 'note', value: '{not json', type: 'string' }])).toEqual({
+  it('keeps the stored text when a json row is not valid JSON', () => {
+    expect(claimsToRecord([{ name: 'note', value: '{not json', type: 'json' }])).toEqual({
       note: '{not json',
     });
+  });
+
+  it('stores objects, arrays and null as JSON text with the json type', () => {
+    expect(
+      toStoredClaims({ address: { city: 'Ashgabat' }, tags: ['a', 'b'], nothing: null }),
+    ).toEqual([
+      { name: 'address', value: '{"city":"Ashgabat"}', type: 'json' },
+      { name: 'tags', value: '["a","b"]', type: 'json' },
+      { name: 'nothing', value: 'null', type: 'json' },
+    ]);
+  });
+
+  it('reads back a string that looks like JSON as a string, and null as null', () => {
+    const claims = { listText: '[1,2]', objectText: '{"a":1}', word: 'null', nothing: null };
+
+    expect(claimsToRecord(toStoredClaims(claims))).toEqual(claims);
+  });
+
+  it('returns a string row as it is, also when its text is JSON', () => {
+    expect(
+      claimsToRecord([
+        { name: 'listText', value: '[1,2]', type: 'string' },
+        { name: 'objectText', value: '{"a":1}', type: 'string' },
+      ]),
+    ).toEqual({ listText: '[1,2]', objectText: '{"a":1}' });
   });
 });
 
@@ -54,6 +79,8 @@ describe('credential subject claims', () => {
       address: { city: 'Ashgabat', zip: '744000' },
       tags: ['a', 'b'],
       code: '007',
+      listText: '[1,2]',
+      nothing: null,
     };
 
     expect(claimsToSubject(toStoredClaims(claims))).toEqual(claims);
@@ -61,21 +88,22 @@ describe('credential subject claims', () => {
 
   it('puts an object and an array into the subject, not their JSON text', () => {
     const subject = claimsToSubject([
-      { name: 'address', value: '{"city":"Ashgabat"}', type: 'string' },
-      { name: 'tags', value: '["a","b"]', type: 'string' },
+      { name: 'address', value: '{"city":"Ashgabat"}', type: 'json' },
+      { name: 'tags', value: '["a","b"]', type: 'json' },
     ]);
 
     expect(subject.address).toEqual({ city: 'Ashgabat' });
     expect(subject.tags).toEqual(['a', 'b']);
   });
 
-  it('keeps a plain string a string', () => {
+  it('keeps a string a string, also when its text is JSON', () => {
     expect(
       claimsToSubject([
         { name: 'code', value: '007', type: 'string' },
         { name: 'note', value: '{not json', type: 'string' },
+        { name: 'listText', value: '[1,2]', type: 'string' },
       ]),
-    ).toEqual({ code: '007', note: '{not json' });
+    ).toEqual({ code: '007', note: '{not json', listText: '[1,2]' });
   });
 
   it('turns a date row into a Date', () => {
