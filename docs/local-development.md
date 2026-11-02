@@ -160,19 +160,19 @@ Read from the environment in `src/config/index.ts` (DID resolvers in
 
 ## Scripts
 
-| Script                                       | What it does                                              |
-| -------------------------------------------- | --------------------------------------------------------- |
-| `npm run dev`                                | Run the portal (Express + React) in watch mode via `tsx`. |
-| `npm run build`                              | Build the UI (`vite` → `dist/ui`) and bundle the server (`esbuild` → `dist/main.cjs`). |
-| `npm run build:ui` / `build:server`          | Build only the UI / only the server bundle.               |
-| `npm start`                                  | Run the built server (`node dist/main.cjs`).              |
-| `npm run typecheck`                          | Type-check (`tsc --noEmit`).                              |
-| `npm run lint`                               | Lint (`eslint`).                                          |
-| `npm run test`                               | Run tests (`vitest`).                                     |
-| `npm run format` / `format:check`            | Prettier write / check.                                   |
-| `npm run docs:api`                           | Generate the TypeDoc API reference.                       |
-| `npm run local:up` / `:down` / `:logs`       | Local-mode docker services.                               |
-| `npm run cloud-agent:up` / `:down` / `:logs` | Cloud-mode docker services.                               |
+| Script                                       | What it does                                                                          |
+| -------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `npm run dev`                                | Run the portal (Express + React) in watch mode via `tsx`.                             |
+| `npm run build`                              | Build the UI (`vite` → `dist/ui`) and bundle the server (`esbuild` → `dist/main.js`). |
+| `npm run build:ui` / `build:server`          | Build only the UI / only the server bundle.                                           |
+| `npm start`                                  | Run the built server (`dist/main.js`).                                                |
+| `npm run typecheck`                          | Type-check (`tsc --noEmit`).                                                          |
+| `npm run lint`                               | Lint (`eslint`).                                                                      |
+| `npm run test`                               | Run tests (`vitest`).                                                                 |
+| `npm run format` / `format:check`            | Prettier write / check.                                                               |
+| `npm run docs:api`                           | Generate the TypeDoc API reference.                                                   |
+| `npm run local:up` / `:down` / `:logs`       | Local-mode docker services.                                                           |
+| `npm run cloud-agent:up` / `:down` / `:logs` | Cloud-mode docker services.                                                           |
 
 ## Adding code
 
@@ -214,9 +214,7 @@ Read from the environment in `src/config/index.ts` (DID resolvers in
   container restarts. Log in again to re-provision the tenant; the new tenant gets a
   new seed, so DIDs created before the restart cannot be derived again.
 - **Queue jobs don't run** — confirm `redis` is up; the per-tenant tasks need it.
-- **Every request answers `500` after a second user logs in** — a known issue of
-  the local agent
-  ([#90](https://github.com/hyperledger-identus/identity-portal/issues/90)). See
+- **Every request answers `500` after a second user logs in** — see
   [Logging in](#logging-in).
 - **Local data looks empty after a key change** — the store is encrypted with
   `DB_ENCRYPTION_KEY`; data is tied to that key.

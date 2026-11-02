@@ -194,6 +194,12 @@ the same key can restore the same data. Each tenant's agent seed is generated
 during provisioning and persisted through the store's settings; it is supplied to
 the agent from there, and a missing seed fails fast.
 
+The claims of an issuance row are stored the SDK's way, as `{ name, value, type }`
+with a text `value`. The portal writes the `type` `string`, `number` or `boolean`,
+or `json` for objects, arrays and `null`, and `agent/local/claims.ts` turns each
+row back into its JSON value. Rows written before the `json` type existed keep
+objects and arrays as `string` rows, so they read back as JSON text.
+
 ## Request lifecycle
 
 An authenticated API request flows through the auth guard and the per-request
@@ -284,14 +290,14 @@ The full table with defaults is in
 The `Agent` contract exposes `dids.resolveDID` plus a `dids.prism` group for the
 `did:prism` lifecycle. Every method is implemented in both modes.
 
-| Method                 | Purpose                                             |
-| ---------------------- | --------------------------------------------------- |
-| `resolveDID(did)`      | Resolve a DID to its DID document.                  |
-| `list(offset, limit)`  | List one page of the tenant's Prism DIDs.           |
-| `create(keys)`         | Create a Prism DID with the requested key curves.   |
-| `publish(did)`         | Publish a DID; returns the transaction id (`txId`). |
-| `update(did, actions)` | Add or remove keys; add, remove or update services. |
-| `deactivate(did)`      | Deactivate a published DID.                         |
+| Method                 | Purpose                                                    |
+| ---------------------- | ---------------------------------------------------------- |
+| `resolveDID(did)`      | Resolve a DID to its DID document.                         |
+| `list(offset, limit)`  | List the tenant's Prism DIDs; only cloud mode pages them.  |
+| `create(keys)`         | Create a Prism DID with the requested key curves.          |
+| `publish(did)`         | Publish a DID; returns a `txId` (cloud: the operation id). |
+| `update(did, actions)` | Add or remove keys; add, remove or update services.        |
+| `deactivate(did)`      | Deactivate a published DID.                                |
 
 `resolveDID` resolves through the SDK's `PrismDIDMethod`, pointed at the neoprism
 node (`config/resolvers.ts`), in local mode, and through the Cloud Agent in cloud
@@ -304,9 +310,11 @@ in Pluto. The stored keys carry the derivation index the next `create` builds on
 so each call yields a distinct DID. In cloud mode `create` posts to the Cloud
 Agent's `/did-registrar/dids` and the agent manages the keys itself.
 
-`list` returns one page of the tenant's DIDs. Local reads the page from Pluto, which
-pairs every stored key with its DID, so the page is deduplicated by DID string;
-cloud reads the same page from the registrar's `offset`/`limit` pagination.
+`list` takes `offset` and `limit`, but only cloud mode pages: it reads that page
+from the registrar's `offset`/`limit` pagination. Local mode returns every DID of
+the tenant, because the tenant-scoped store passes only the selector to RIDB and
+drops `offset` and `limit`. Pluto pairs every stored key with its DID, so local
+deduplicates the result by DID string.
 
 `publish` signs the create operation with the DID's master key. In local mode the
 operation is submitted to the neoprism node, and the store keeps the `txId` and the
@@ -314,18 +322,24 @@ operation hash. `update` and `deactivate` chain on that hash: each operation nam
 the one it follows, so the ledger applies it to the state the caller has seen. A
 DID that was never published has nothing to chain on, so the local agent refuses
 both, and the API answers `409`. In cloud mode the three calls go to the
-registrar's `publications`, `updates` and `deactivations` endpoints.
+registrar's `publications`, `updates` and `deactivations` endpoints. Cloud
+publishing is asynchronous: the registrar answers with the id of the scheduled
+operation, and `publish` returns that id as `txId`; there is no ledger transaction
+yet.
 
 Over REST:
 
 | Route                            | Purpose                   |
 | -------------------------------- | ------------------------- |
-| `GET /api/dids`                  | List, one page at a time. |
+| `GET /api/dids`                  | List.                     |
 | `POST /api/dids`                 | Create.                   |
 | `GET /api/dids/resolve/:did`     | Resolve.                  |
 | `POST /api/dids/:did/publish`    | Publish.                  |
 | `POST /api/dids/:did/update`     | Update keys and services. |
 | `POST /api/dids/:did/deactivate` | Deactivate.               |
+
+Every list route of the API, here and below, requires `offset` and `limit` in the
+query and answers `400` without them.
 
 ## Phase 3: Schema management
 
@@ -362,15 +376,15 @@ creates an offer and gets an invitation URL, and the holder accepts the offer fr
 that URL. Only JWT credentials are supported. The contract has an `issuer` and a
 `holder` group for it, implemented in both modes.
 
-| Method                                         | Purpose                                      |
-| ---------------------------------------------- | -------------------------------------------- |
-| `issuer.credentials.createOobOffer(input)`     | Create an offer and its invitation URL.      |
-| `issuer.credentials.listOffers(offset, limit)` | List one page of the tenant's offers.        |
-| `issuer.credentials.getOffer(recordId)`        | One offer with its protocol state.           |
-| `holder.invitations.preview(oob)`              | Decode an invitation without accepting it.   |
-| `holder.invitations.accept(oob, opts)`         | Accept the offer and request the credential. |
-| `holder.invitations.reject(oob)`               | Reject the invitation.                       |
-| `holder.credentials.list(offset, limit)`       | List one page of the holder's credentials.   |
+| Method                                         | Purpose                                                      |
+| ---------------------------------------------- | ------------------------------------------------------------ |
+| `issuer.credentials.createOobOffer(input)`     | Create an offer and its invitation URL.                      |
+| `issuer.credentials.listOffers(offset, limit)` | List the tenant's offers; only cloud mode pages them.        |
+| `issuer.credentials.getOffer(recordId)`        | One offer with its protocol state.                           |
+| `holder.invitations.preview(oob)`              | Decode an invitation without accepting it.                   |
+| `holder.invitations.accept(oob, opts)`         | Accept the offer and request the credential.                 |
+| `holder.invitations.reject(oob)`               | Check the invitation and drop it; nothing is sent or stored. |
+| `holder.credentials.list(offset, limit)`       | List one page of the holder's credentials.                   |
 
 The flow in local mode, with both sides as tenants of the portal:
 
@@ -400,32 +414,32 @@ into Pluto, and `process-messages` (`agent/local/inbox.ts`) handles them. A requ
 makes the issuer sign a JWT credential with the issuing Prism DID and send it back;
 a credential makes the holder store it in its wallet.
 
-The SDK keeps each claim of an issuance row as a text value plus a type.
+The SDK keeps each claim of an issuance row as a text value plus a type (see
+[Encrypted local storage](#encrypted-local-storage)).
 `agent/local/claims.ts` maps the API's JSON object to these rows and back, and
 builds the credential subject from the same rows, so the credential carries the
 claims the offer shows.
 
 In cloud mode the calls go to the Cloud Agent's `/issue-credentials` endpoints: an
 offer is created with `credential-offers/invitation`, and `accept` calls
-`credential-offers/accept-invitation`, then `records/{recordId}/accept-offer`. The
-Cloud Agent runs the protocol itself.
+`credential-offers/accept-invitation`, then `records/{recordId}/accept-offer`.
+Offers are listed with `records` and read with `records/{recordId}`. The Cloud
+Agent runs the protocol itself.
 
 Over REST:
 
-| Route                           | Purpose                                            |
-| ------------------------------- | -------------------------------------------------- |
-| `GET /api/offers`               | List the tenant's offers, one page at a time.      |
-| `POST /api/offers`              | Create an offer.                                   |
-| `GET /api/offers/:recordId`     | One offer with its state.                          |
-| `POST /api/invitations/preview` | Decode an invitation.                              |
-| `POST /api/invitations/accept`  | Accept it.                                         |
-| `POST /api/invitations/reject`  | Reject it.                                         |
-| `GET /api/credentials`          | List the holder's credentials, one page at a time. |
+| Route                           | Purpose                                    |
+| ------------------------------- | ------------------------------------------ |
+| `GET /api/offers`               | List the tenant's offers.                  |
+| `POST /api/offers`              | Create an offer.                           |
+| `GET /api/offers/:recordId`     | One offer with its state.                  |
+| `POST /api/invitations/preview` | Decode an invitation.                      |
+| `POST /api/invitations/accept`  | Accept it.                                 |
+| `POST /api/invitations/reject`  | Reject it; nothing is sent or stored.      |
+| `GET /api/credentials`          | List one page of the holder's credentials. |
 
-On the local agent the flow is tried with one user who accepts their own offer: a
-second user logging in breaks the requests of the stack
-([#90](https://github.com/hyperledger-identus/identity-portal/issues/90)). See
-[local-development.md](./local-development.md#logging-in).
+To try the flow on the local agent, see
+[Logging in](./local-development.md#logging-in).
 
 ## Phase 5: Routed pages
 
