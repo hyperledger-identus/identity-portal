@@ -1,3 +1,4 @@
+import type { PageOptions } from "./paging";
 import { RIDB } from "@trust0/ridb";
 import { schemas } from "./schemas";
 
@@ -9,7 +10,7 @@ export type ExtendedStartOptions = Pick<
 >;
 
 export type RIDBCollection = {
-    find(query: unknown): Promise<unknown[]>;
+    find(query: unknown, options?: PageOptions): Promise<unknown[]>;
     create(doc: unknown): Promise<unknown>;
     update(doc: unknown): Promise<void>;
     delete(id: string): Promise<void>;
