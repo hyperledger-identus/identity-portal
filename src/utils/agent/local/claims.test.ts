@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { claimsToRecord, claimsToSubject, toStoredClaims } from './claims';
+import {
+  claimsToRecord,
+  claimsToSubject,
+  storedClaimType,
+  toStoredClaims,
+} from './claims';
 
 describe('claims storage', () => {
   it('reads every claim back with the JSON type it was stored with', () => {
@@ -66,6 +71,24 @@ describe('claims storage', () => {
         { name: 'objectText', value: '{"a":1}', type: 'string' },
       ]),
     ).toEqual({ listText: '[1,2]', objectText: '{"a":1}' });
+  });
+});
+
+describe('stored claim types', () => {
+  it('knows every type the portal writes or reads', () => {
+    for (const type of ['string', 'number', 'boolean', 'json', 'date']) {
+      expect(storedClaimType({ name: 'x', value: '1', type })).toBe(type);
+    }
+  });
+
+  it('gives undefined for a type the portal does not know', () => {
+    expect(storedClaimType({ name: 'x', value: '1', type: 'uuid' })).toBeUndefined();
+  });
+
+  it('reads a row of an unknown type back as its text', () => {
+    expect(claimsToRecord([{ name: 'id', value: '{"a":1}', type: 'uuid' }])).toEqual({
+      id: '{"a":1}',
+    });
   });
 });
 
