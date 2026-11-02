@@ -2,6 +2,7 @@ import { RIDB, WasmInternal } from "@trust0/ridb";
 import type { Doc } from "@trust0/ridb-core";
 import { TableName, Settings, Apollo, Pluto, CollectionMap } from "@hyperledger/identus-sdk";
 import { RIDBCollection, AppRIDB, PlutoOptions } from "./types";
+import { pageOptions } from "./paging";
 import { schemas } from "./schemas";
 import { migrations } from "./migrations";
 import { randomUUID } from "node:crypto";
@@ -78,7 +79,7 @@ export class MultiTenantPluto extends Pluto {
         } else {
           querySelector.tenantId = tenantId;
         }
-        const results = await collection.find(querySelector);
+        const results = await collection.find(querySelector, pageOptions(query));
         return this.#getModel(results);
         } catch (error) {
           console.error("Failed to query collection:", error, querySelector);
@@ -162,6 +163,12 @@ export class MultiTenantPluto extends Pluto {
 
   async getPaginatedPrismDIDs(offset: number = 0, limit: number = PAGINATION_LIMIT): Promise<CollectionMap['dids'][]> {
     const results = await this.store.query("dids", { selector: {method: 'prism'}, offset, limit });
+    return results as CollectionMap['dids'][];
+  }
+
+  /** Every Prism DID of the tenant, without paging. */
+  async getPrismDIDRows(): Promise<CollectionMap['dids'][]> {
+    const results = await this.store.query("dids", { selector: {method: 'prism'} });
     return results as CollectionMap['dids'][];
   }
 
