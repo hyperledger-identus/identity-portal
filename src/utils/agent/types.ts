@@ -222,6 +222,80 @@ export type InvitationPreview = {
     schemaId?: string;
 };
 
+/**
+ * Present Proof 3.0 states as Cloud Agent reports them (`PresentationStatus`).
+ * Local mode will map SDK events onto the same strings, like the offers.
+ */
+export const PRESENTATION_STATES = [
+    'RequestPending',
+    'RequestSent',
+    'RequestReceived',
+    'RequestRejected',
+    'PresentationPending',
+    'PresentationGenerated',
+    'PresentationSent',
+    'PresentationReceived',
+    'PresentationVerified',
+    'PresentationVerificationFailed',
+    'PresentationAccepted',
+    'PresentationRejected',
+    'ProblemReportPending',
+    'ProblemReportSent',
+    'ProblemReportReceived',
+    'InvitationGenerated',
+    'InvitationReceived',
+] as const;
+
+export type PresentationState = (typeof PRESENTATION_STATES)[number];
+
+/** Cloud Agent calls the holder side of a presentation the prover. */
+export type PresentationRole = 'Verifier' | 'Prover';
+
+/**
+ * Body for creating a connectionless OOB presentation request. JWT only, like
+ * the offers. `claims` names the claims the credential must have: the request
+ * does not compare values (see #108), the verifier reads them from the proof.
+ */
+export type CreateOobPresentationRequestInput = {
+    claims?: string[];
+    trustIssuers?: string[];
+    schemaId?: string;
+    credentialFormat?: 'JWT';
+    goalCode?: string;
+    goal?: string;
+};
+
+/**
+ * An OOB presentation request and its result as the portal presents it.
+ * Mapped from Cloud Agent `PresentationStatus` or from the local store.
+ */
+export type PresentationRecord = {
+    presentationId: string;
+    thid: string;
+    role: PresentationRole;
+    state: PresentationState;
+    credentialFormat: 'JWT';
+    claims?: string[];
+    trustIssuers?: string[];
+    schemaId?: string;
+    /** Claim values from the received proof. */
+    presentedClaims?: Record<string, unknown>;
+    invitationUrl?: string;
+    createdAt: string;
+    updatedAt?: string;
+};
+
+/** Decoded OOB presentation request, before the holder accepts or rejects it. */
+export type PresentationRequestPreview = {
+    from?: string;
+    goalCode?: string;
+    goal?: string;
+    credentialFormat: string;
+    claims: string[];
+    trustIssuers?: string[];
+    schemaId?: string;
+};
+
 export type Agent = {
     start: () => Promise<void>;
     stop: () => Promise<void>;
@@ -232,6 +306,14 @@ export type Agent = {
             getOffer: (recordId: string) => Promise<CredentialOfferRecord | undefined>;
         };
     };
+    /** Phase 6 (#108): ask for a proof out of band and read the result. */
+    verifier: {
+        presentations: {
+            createOobRequest: (input: CreateOobPresentationRequestInput) => Promise<PresentationRecord>;
+            listRequests: (offset: number, limit: number) => Promise<PresentationRecord[]>;
+            getRequest: (presentationId: string) => Promise<PresentationRecord | undefined>;
+        };
+    };
     holder: {
         credentials: {
             list: (offset: number, limit: number) => Promise<HolderCredential[]>;
@@ -239,6 +321,12 @@ export type Agent = {
         invitations: {
             preview: (oob: string) => Promise<InvitationPreview>;
             accept: (oob: string, opts?: { subjectId?: string }) => Promise<CredentialOfferRecord>;
+            reject: (oob: string) => Promise<void>;
+        };
+        /** Phase 6 (#108): answer an OOB presentation request with one credential. */
+        presentations: {
+            preview: (oob: string) => Promise<PresentationRequestPreview>;
+            accept: (oob: string, credentialId: string) => Promise<PresentationRecord>;
             reject: (oob: string) => Promise<void>;
         };
     };

@@ -15,6 +15,7 @@ import type {
   HolderCredential,
   InvitationPreview,
 } from '../types';
+import { notImplementedHolderPresentations } from '../not-implemented';
 import { toStoredClaims } from './claims';
 import type { MultiTenantPluto } from './database';
 
@@ -460,5 +461,6 @@ export function createLocalHolder(deps: LocalHolderDeps): Agent['holder'] {
         await parseOobInvitation(agent, oob);
       },
     },
+    presentations: notImplementedHolderPresentations(),
   };
 }

@@ -1,4 +1,5 @@
 import type { Agent, HolderCredential, InvitationPreview } from '../types';
+import { notImplementedHolderPresentations } from '../not-implemented';
 import type { CloudAgentClient } from './client';
 import { toCredentialOfferRecord } from './issuer';
 import type { components } from './spec';
@@ -340,5 +341,6 @@ export function createCloudHolder({
         parseInvitation(oob);
       },
     },
+    presentations: notImplementedHolderPresentations(),
   };
 }
