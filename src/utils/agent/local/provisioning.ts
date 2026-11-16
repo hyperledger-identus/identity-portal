@@ -41,6 +41,7 @@ export async function provisionTenant(options: { subject: string, accessToken: s
             tenantId: options.subject,
             castor,
             pluto,
+            mediatorDID: MEDIATOR_DID,
         })
      
 
@@ -58,7 +59,8 @@ export async function provisionTenant(options: { subject: string, accessToken: s
         )
 
         connection.state = Connection.State.REQUESTED;
-       
+        await pluto.storeMediator(connection.asMediator());
+
 
         const mediationRequest = new DIDComm.MediationRequest(
             host,
@@ -68,7 +70,6 @@ export async function provisionTenant(options: { subject: string, accessToken: s
             mediationRequest.makeMessage(), agent.runtimeContext
         );
         
-        await pluto.storeMediator(connection.asMediator());
         await startFetchingMessages(options.subject);
     }
 

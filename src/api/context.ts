@@ -16,6 +16,7 @@ import type { Request, Response } from 'express';
 import type { Context } from '../utils/rest';
 import { getSession } from '../utils/auth';
 import { getRequestAgent } from '../utils/agent';
+import { MEDIATOR_DID } from '../config';
 
 export async function createRequestContext(
   req: Request,
@@ -26,7 +27,8 @@ export async function createRequestContext(
   //With CloudAgent, we just use the accessToken.
   const agent = await getRequestAgent({ 
     tenantId: session.sub!, 
-    accessToken: session.accessToken 
+    accessToken: session.accessToken,
+    mediatorDID: MEDIATOR_DID
   });
   await agent.start();
   return { agent };
