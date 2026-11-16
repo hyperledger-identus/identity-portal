@@ -33,7 +33,8 @@ type AgentOptions = {
     tenantId: string,
     castor: Castor;
     pluto: MultiTenantPluto;
-    mediatorDID: string;
+    /** Optional: `start()` reads the tenant's mediator from the store. */
+    mediatorDID?: string;
 }
 
 export async function createTenantAgent(options: AgentOptions): Promise<LocalAgent> {

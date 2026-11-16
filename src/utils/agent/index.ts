@@ -11,7 +11,8 @@ process.env.MONGODB_URL = MONGODB_URI;
 /** The session data the agent needs to authenticate a request. */
 export type AgentSession = {
   tenantId: string;
-  mediatorDID: string;
+  /** No caller sets it yet: the local agent reads the tenant's mediator from the store on start. */
+  mediatorDID?: string;
   accessToken?: string;
 };
 
