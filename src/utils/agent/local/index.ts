@@ -44,6 +44,7 @@ export async function createTenantAgent(options: AgentOptions): Promise<LocalAge
             if (this.pluto.state === Domain.Startable.State.STOPPED) {
                 await this.pluto.start();
             }
+
             const mediators = await this.pluto.getAllMediators();
             for (const mediator of mediators) {
                 const connection = new MediatorConnection(

@@ -12,7 +12,7 @@
 import { Apollo, Castor } from '@hyperledger/identus-sdk';
 import { scheduleTask, unscheduleTask } from '../runtime';
 import type { TenantJobData, TenantTask } from './types';
-import { TENANT_MESSAGE_FETCH_INTERVAL_MS } from '../../../../../config';
+import { MEDIATOR_DID, TENANT_MESSAGE_FETCH_INTERVAL_MS } from '../../../../../config';
 import { createTenantAgent } from '../..';
 import { MultiTenantPluto } from '../../database';
 import { PRISM_DID_RESOLVERS } from '../../../../../config/resolvers';
@@ -33,6 +33,7 @@ export const processMessagesTask: TenantTask<TenantJobData> = {
       tenantId,
       castor,
       pluto,
+      mediatorDID: MEDIATOR_DID,
     });
     await agent.start();
     await processTenantMessages(agent, pluto);

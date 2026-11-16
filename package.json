@@ -11,7 +11,7 @@
     "dev": "tsx watch src/main.ts",
     "build": "npm run build:ui && npm run build:server",
     "build:ui": "vite build",
-    "build:server": "node esbuild.config.mjs",
+    "build:server": "node esbuild.config.mjs",                
     "start": "node --import ./dist/require-shim.js dist/main.js",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit -p tsconfig.json",

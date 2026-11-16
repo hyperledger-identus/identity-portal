@@ -29,6 +29,11 @@ export const schemas = {
         description:
           "Hex of the SHA-256 of the last Atala operation submitted for the DID, which the next one chains on.",
       },
+      tenantId: {
+        required: false,
+        type: SchemaFieldType.string,
+        description: "The tenant that owns this DID row.",
+      },
     },
   },
   keys: KeySchema,
