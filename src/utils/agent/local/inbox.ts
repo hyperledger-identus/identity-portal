@@ -124,7 +124,8 @@ async function signingDidFromIssuance(
   issuingDID: string,
 ): Promise<Domain.DID> {
   const canonical = canonicalPrismDid(issuingDID);
-  const rows = await pluto.getPaginatedPrismDIDs(0, 100);
+  // Every row, not one page: the issuing DID can be any of the tenant's DIDs.
+  const rows = await pluto.getPrismDIDRows();
   const match = rows.find((row) => canonicalPrismDid(row.uuid) === canonical);
   if (match?.uuid) {
     return Domain.DID.fromString(match.uuid);
