@@ -9,6 +9,7 @@ import {
   PrismDIDUpdateAction,
   toPrismDIDStatus,
 } from '../types';
+import { notImplementedVerifier } from '../not-implemented';
 import { createClient } from './client';
 import { createCloudHolder } from './holder';
 import { createCloudIssuer } from './issuer';
@@ -233,6 +234,7 @@ export async function createCloudAgentClient(
       console.log('Stopping Cloud Agent');
     },
     issuer: createCloudIssuer({ client, tenantId }),
+    verifier: notImplementedVerifier(),
     holder: createCloudHolder({ client, tenantId }),
     dids: {
       resolveDID: async (did: string) => {
