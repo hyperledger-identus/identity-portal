@@ -8,8 +8,26 @@ import type { CollectionMap } from '@hyperledger/identus-sdk';
  * tested on their own.
  */
 
-/** Stored `type` of an object, an array or `null`: its value is JSON text. */
-const JSON_CLAIM_TYPE = 'json';
+/**
+ * Every `type` a stored claim row can have. The portal writes `string`,
+ * `number` and `boolean`, and `json` for an object, an array or `null`, whose
+ * value is JSON text. `date` is never written by the portal but is read.
+ */
+export const CLAIM_TYPES = ['string', 'number', 'boolean', 'json', 'date'] as const;
+
+export type ClaimType = (typeof CLAIM_TYPES)[number];
+
+/**
+ * The stored `type` of a row as a `ClaimType`, or `undefined` for a type the
+ * portal does not know. The SDK types the field as a plain `string`.
+ */
+export function storedClaimType(
+  claim: CollectionMap['issuance']['claims'][number],
+): ClaimType | undefined {
+  return (CLAIM_TYPES as readonly string[]).includes(claim.type)
+    ? (claim.type as ClaimType)
+    : undefined;
+}
 
 export function stringifyClaimValue(value: unknown): string {
   return typeof value === 'string' ? value : JSON.stringify(value);
@@ -20,15 +38,17 @@ export function stringifyClaimValue(value: unknown): string {
  * stored as JSON text with its own type, so a string that only looks like
  * JSON is never parsed by mistake.
  */
-function claimValueType(value: unknown): string {
-  if (
-    typeof value === 'string' ||
-    typeof value === 'number' ||
-    typeof value === 'boolean'
-  ) {
-    return typeof value;
+function claimValueType(value: unknown): ClaimType {
+  if (typeof value === 'string') {
+    return 'string';
   }
-  return JSON_CLAIM_TYPE;
+  if (typeof value === 'number') {
+    return 'number';
+  }
+  if (typeof value === 'boolean') {
+    return 'boolean';
+  }
+  return 'json';
 }
 
 /** The persist-side map: a JSON object of claims to stored claim rows. */
@@ -50,21 +70,22 @@ export function toStoredClaims(
 function restoreClaimValue(
   claim: CollectionMap['issuance']['claims'][number],
 ): unknown {
-  if (claim.type === 'number') {
-    const value = Number(claim.value);
-    return Number.isFinite(value) ? value : claim.value;
-  }
-  if (claim.type === 'boolean') {
-    return claim.value === 'true';
-  }
-  if (claim.type === JSON_CLAIM_TYPE) {
-    try {
-      return JSON.parse(claim.value);
-    } catch {
-      return claim.value;
+  switch (storedClaimType(claim)) {
+    case 'number': {
+      const value = Number(claim.value);
+      return Number.isFinite(value) ? value : claim.value;
     }
+    case 'boolean':
+      return claim.value === 'true';
+    case 'json':
+      try {
+        return JSON.parse(claim.value);
+      } catch {
+        return claim.value;
+      }
+    default:
+      return claim.value;
   }
-  return claim.value;
 }
 
 /** Reverse of `toStoredClaims`: the claims object the portal API answers. */
@@ -89,7 +110,9 @@ export function claimsToSubject(
   const subject: Record<string, unknown> = {};
   for (const claim of claims) {
     subject[claim.name] =
-      claim.type === 'date' ? new Date(claim.value) : restoreClaimValue(claim);
+      storedClaimType(claim) === 'date'
+        ? new Date(claim.value)
+        : restoreClaimValue(claim);
   }
   return subject;
 }
