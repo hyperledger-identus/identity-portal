@@ -297,7 +297,7 @@ The `Agent` contract exposes `dids.resolveDID` plus a `dids.prism` group for the
 | Method                 | Purpose                                                    |
 | ---------------------- | ---------------------------------------------------------- |
 | `resolveDID(did)`      | Resolve a DID to its DID document.                         |
-| `list(offset, limit)`  | List the tenant's Prism DIDs; only cloud mode pages them.  |
+| `list(offset, limit)`  | List one page of the tenant's Prism DIDs.                  |
 | `create(keys)`         | Create a Prism DID with the requested key curves.          |
 | `publish(did)`         | Publish a DID; returns a `txId` (cloud: the operation id). |
 | `update(did, actions)` | Add or remove keys; add, remove or update services.        |
@@ -314,10 +314,9 @@ in Pluto. The stored keys carry the derivation index the next `create` builds on
 so each call yields a distinct DID. In cloud mode `create` posts to the Cloud
 Agent's `/did-registrar/dids` and the agent manages the keys itself.
 
-`list` takes `offset` and `limit`, but only cloud mode pages: it reads that page
-from the registrar's `offset`/`limit` pagination. Local mode returns every DID of
-the tenant, because the tenant-scoped store passes only the selector to RIDB and
-drops `offset` and `limit`. Pluto pairs every stored key with its DID, so local
+`list` takes `offset` and `limit` in both modes. Cloud mode reads that page from
+the registrar's `offset`/`limit` pagination, and local mode passes them to RIDB
+through the tenant-scoped store. Pluto pairs every stored key with its DID, so local
 deduplicates the result by DID string.
 
 `publish` signs the create operation with the DID's master key. In local mode the
@@ -383,7 +382,7 @@ that URL. Only JWT credentials are supported. The contract has an `issuer` and a
 | Method                                         | Purpose                                                      |
 | ---------------------------------------------- | ------------------------------------------------------------ |
 | `issuer.credentials.createOobOffer(input)`     | Create an offer and its invitation URL.                      |
-| `issuer.credentials.listOffers(offset, limit)` | List the tenant's offers; only cloud mode pages them.        |
+| `issuer.credentials.listOffers(offset, limit)` | List one page of the tenant's offers.                        |
 | `issuer.credentials.getOffer(recordId)`        | One offer with its protocol state.                           |
 | `holder.invitations.preview(oob)`              | Decode an invitation without accepting it.                   |
 | `holder.invitations.accept(oob, opts)`         | Accept the offer and request the credential.                 |
