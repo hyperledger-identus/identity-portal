@@ -17,4 +17,5 @@ export const migrations = {
   issuance: {},
   tenants: {},
   schemas: {},
+  presentations: {},
 };

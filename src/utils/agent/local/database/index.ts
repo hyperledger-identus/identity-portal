@@ -15,6 +15,7 @@ declare module "@hyperledger/identus-sdk" {
   interface CollectionMap {
     tenants: Doc<(typeof schemas)["tenants"]>;
     schemas: Doc<(typeof schemas)["schemas"]>;
+    presentations: Doc<(typeof schemas)["presentations"]>;
   }
   interface DID {
     transactionId?: string;
@@ -455,6 +456,27 @@ export class MultiTenantPluto extends Pluto {
       throw new Error(`Issuance record ${id} not found`);
     }
     await this.store.update("issuance", { ...existing, ...patch, id });
+  }
+
+  /** Stores a presentation record (phase 6). RIDB sets `createdAt` and `updatedAt`. */
+  async insertPresentation(record: Omit<CollectionMap['presentations'], 'createdAt' | 'updatedAt'>): Promise<void> {
+    await this.store.insert("presentations", record as CollectionMap['presentations']);
+  }
+
+  async getPresentation(uuid: string): Promise<CollectionMap['presentations'] | undefined> {
+    const selector = { uuid } as Record<string, unknown>;
+    const rows = await this.store.query("presentations", { selector });
+    return rows[0] as CollectionMap['presentations'] | undefined;
+  }
+
+  async listPresentations(
+    offset: number = 0,
+    limit: number = PAGINATION_LIMIT,
+    role?: 'Verifier' | 'Prover',
+  ): Promise<CollectionMap['presentations'][]> {
+    const selector = (role ? { role } : {}) as Record<string, unknown>;
+    const results = await this.store.query("presentations", { selector, offset, limit });
+    return results as CollectionMap['presentations'][];
   }
 }
 
