@@ -21,9 +21,9 @@ import {
     typedEntries,
 } from "../types";
 import { MultiTenantPluto } from "./database";
-import { notImplementedVerifier } from "../not-implemented";
 import { createLocalHolder } from "./holder";
 import { createLocalIssuer } from "./issuer";
+import { createLocalVerifier } from "./verifier";
 import { createNeoPrismClient } from "./neoprism";
 import { PRISM_DID_RESOLVERS } from "../../../config/resolvers";
 
@@ -289,7 +289,11 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
             agent,
             tenantId: session.tenantId,
         }),
-        verifier: notImplementedVerifier(),
+        verifier: createLocalVerifier({
+            pluto,
+            agent,
+            tenantId: session.tenantId,
+        }),
         holder: createLocalHolder({
             pluto,
             agent,

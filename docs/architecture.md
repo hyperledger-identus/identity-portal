@@ -128,10 +128,12 @@ flowchart LR
 The contract covers `start`/`stop`, a `dids` group (`resolveDID` plus a `prism`
 group for the DID lifecycle: `list`, `create`, `publish`, `update`, `deactivate`),
 a `schemas` group for credential schemas (`list`, `get`, `create`, `update`,
-`delete`), and `issuer` and `holder` groups for credential offers — see
+`delete`), `issuer` and `holder` groups for credential offers, and a `verifier`
+group plus `holder.presentations` for verification — see
 [Phase 2: DID management](#phase-2-did-management),
-[Phase 3: Schema management](#phase-3-schema-management) and
-[Phase 4: Credential issuance](#phase-4-credential-issuance). Extending it is a
+[Phase 3: Schema management](#phase-3-schema-management),
+[Phase 4: Credential issuance](#phase-4-credential-issuance) and
+[Phase 6: Verification](#phase-6-verification). Extending it is a
 deliberate three-step change: update the contract, then both implementations, then
 the endpoint that calls it. TypeScript enforces that neither mode is left behind.
 
@@ -235,34 +237,36 @@ sequenceDiagram
 
 ## Components
 
-| Path                              | Responsibility                                                                        |
-| --------------------------------- | ------------------------------------------------------------------------------------- |
-| `src/main.ts`                     | Entry point: `startAgent()` (store + queue), start `HttpServer`.                      |
-| `src/require-shim.ts`             | Global `require` shim so the SDK's ESM build can load Node built-ins.                 |
-| `src/utils/http.ts`               | `HttpServer`: Express app, auth middleware, API + UI routers.                         |
-| `src/utils/auth.ts`               | Keycloak BFF: login (ROPC + OIDC/PKCE), session cookie, `requireApiAuth` / `guardUi`. |
-| `src/api/index.ts`                | Builds the API router from the registry; serves Swagger / OpenAPI in dev.             |
-| `src/api/registry.ts`             | Route-group registry (single source of truth) and typed `AppRouter`.                  |
-| `src/api/context.ts`              | Per-request `Context`: resolves the tenant-scoped, authenticated agent.               |
-| `src/api/<name>/index.ts`         | A route group (endpoints only), e.g. `api/dids`.                                      |
-| `src/utils/rest.ts`               | Route builder with Zod input/output validation, `HttpError`.                          |
-| `src/utils/openapi.ts`            | OpenAPI 3.1 generation from the route registry.                                       |
-| `src/utils/ui.ts`                 | Serves the React app (Vite in dev, static in prod).                                   |
-| `src/utils/agent/`                | `Agent` contract and `getRequestAgent` mode switch.                                   |
-| `src/utils/agent/local/`          | Edge agent: SDK (Apollo/Castor/Pluto), provisioning, mediation, queue.                |
-| `src/utils/agent/local/database/` | `MultiTenantPluto` over RIDB + MongoDB (tenant-scoped rows).                          |
-| `src/utils/agent/local/neoprism/` | Generated, type-safe client for the neoprism node API.                                |
-| `src/utils/agent/local/queue/`    | BullMQ + Redis per-tenant recurring tasks.                                            |
-| `src/utils/agent/local/issuer.ts` | Issuer side of OOB credential offers: create, list and read offers.                   |
-| `src/utils/agent/local/holder.ts` | Holder side: preview, accept and reject invitations; list held credentials.           |
-| `src/utils/agent/local/inbox.ts`  | Handles stored DIDComm messages of issuance: issues and stores credentials.           |
-| `src/utils/agent/local/claims.ts` | Maps claims between the API's JSON object and the stored claim rows.                  |
-| `src/utils/agent/cloud-agent/`    | Cloud Agent HTTP client and wallet auto-provisioning.                                 |
-| `src/config/index.ts`             | Environment configuration.                                                            |
-| `src/config/resolvers.ts`         | `PRISM_DID_RESOLVERS` (neoprism-backed) used by Castor.                               |
-| `src/schemas/`                    | Zod schemas (request/response shapes).                                                |
-| `src/ui/`                         | React frontend and its typed API client.                                              |
-| `src/ui/pages/<area>/`            | Routed pages per area: DIDs, schemas, offers, invitations, credentials.               |
+| Path                                            | Responsibility                                                                        |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `src/main.ts`                                   | Entry point: `startAgent()` (store + queue), start `HttpServer`.                      |
+| `src/require-shim.ts`                           | Global `require` shim so the SDK's ESM build can load Node built-ins.                 |
+| `src/utils/http.ts`                             | `HttpServer`: Express app, auth middleware, API + UI routers.                         |
+| `src/utils/auth.ts`                             | Keycloak BFF: login (ROPC + OIDC/PKCE), session cookie, `requireApiAuth` / `guardUi`. |
+| `src/api/index.ts`                              | Builds the API router from the registry; serves Swagger / OpenAPI in dev.             |
+| `src/api/registry.ts`                           | Route-group registry (single source of truth) and typed `AppRouter`.                  |
+| `src/api/context.ts`                            | Per-request `Context`: resolves the tenant-scoped, authenticated agent.               |
+| `src/api/<name>/index.ts`                       | A route group (endpoints only), e.g. `api/dids`.                                      |
+| `src/utils/rest.ts`                             | Route builder with Zod input/output validation, `HttpError`.                          |
+| `src/utils/openapi.ts`                          | OpenAPI 3.1 generation from the route registry.                                       |
+| `src/utils/ui.ts`                               | Serves the React app (Vite in dev, static in prod).                                   |
+| `src/utils/agent/`                              | `Agent` contract and `getRequestAgent` mode switch.                                   |
+| `src/utils/agent/local/`                        | Edge agent: SDK (Apollo/Castor/Pluto), provisioning, mediation, queue.                |
+| `src/utils/agent/local/database/`               | `MultiTenantPluto` over RIDB + MongoDB (tenant-scoped rows).                          |
+| `src/utils/agent/local/neoprism/`               | Generated, type-safe client for the neoprism node API.                                |
+| `src/utils/agent/local/queue/`                  | BullMQ + Redis per-tenant recurring tasks.                                            |
+| `src/utils/agent/local/issuer.ts`               | Issuer side of OOB credential offers: create, list and read offers.                   |
+| `src/utils/agent/local/holder.ts`               | Holder side: preview, accept and reject invitations; list held credentials.           |
+| `src/utils/agent/local/verifier.ts`             | Verifier side of OOB presentation requests: create, list and read requests.           |
+| `src/utils/agent/local/presentation-request.ts` | Builds the DIF presentation request the verifier sends.                               |
+| `src/utils/agent/local/inbox.ts`                | Handles stored DIDComm messages of issuance: issues and stores credentials.           |
+| `src/utils/agent/local/claims.ts`               | Maps claims between the API's JSON object and the stored claim rows.                  |
+| `src/utils/agent/cloud-agent/`                  | Cloud Agent HTTP client and wallet auto-provisioning.                                 |
+| `src/config/index.ts`                           | Environment configuration.                                                            |
+| `src/config/resolvers.ts`                       | `PRISM_DID_RESOLVERS` (neoprism-backed) used by Castor.                               |
+| `src/schemas/`                                  | Zod schemas (request/response shapes).                                                |
+| `src/ui/`                                       | React frontend and its typed API client.                                              |
+| `src/ui/pages/<area>/`                          | Routed pages per area: DIDs, schemas, offers, invitations, credentials.               |
 
 ## Configuration
 
@@ -456,6 +460,49 @@ in `src/ui/pages/<area>/` and call the API through the typed client.
 `/dids`. On the local agent a held credential's id is the whole JWT, too long for a
 URL, so a credential page is keyed by the last 32 characters of an id longer than
 64 characters (`pages/credentials/credentialKey.ts`); a shorter id is used whole.
+
+## Phase 6: Verification
+
+A verifier asks a holder to prove that they hold a credential, out of band like the
+offers of phase 4: the verifier creates a presentation request and gets an
+invitation URL, and the holder answers from that URL with one of its credentials
+([#108](https://github.com/hyperledger-identus/identity-portal/issues/108)). Only
+JWT credentials are supported. The contract has a `verifier` group and a
+`presentations` part in the `holder` group.
+
+| Method                                               | Purpose                                               | Status     |
+| ---------------------------------------------------- | ----------------------------------------------------- | ---------- |
+| `verifier.presentations.createOobRequest(input)`     | Create a presentation request and its invitation URL. | local mode |
+| `verifier.presentations.listRequests(offset, limit)` | List one page of the tenant's requests.               | local mode |
+| `verifier.presentations.getRequest(presentationId)`  | One request with its state.                           | local mode |
+| `holder.presentations.preview` / `accept` / `reject` | Answer a request with one credential.                 | not yet    |
+
+A method marked "not yet" throws "not implemented yet" in both modes
+(`agent/not-implemented.ts`), and in cloud mode the verifier methods throw it too.
+
+In local mode `createOobRequest` builds a DIF Presentation Exchange request
+(`agent/local/presentation-request.ts`) with the same paths and format the SDK uses.
+Every claim in `claims` must be in the credential, with any value, and when
+`trustIssuers` is not empty the issuer must be one of them; a short Prism DID also
+matches its long form. The request does not compare values: for JWT the filters
+have no "greater than", so the verifier reads the values from the proof. A claim's
+filter is `pattern: ".*"`, because the SDK check accepts a field only when its
+filter has a `pattern` or an `enum`.
+
+The request goes into a Present Proof `RequestPresentation` from the tenant host
+peer DID, and the SDK's `CreateOOBPresentationRequest` packs it into a relative
+invitation URL (`/oob?_oob=…`). `to` stays empty: when the holder accepts the
+invitation, the SDK sets it to the holder's new peer DID. The request is stored as a
+`presentations` row in state `InvitationGenerated`, with the request JSON, to check
+the proof against it later.
+
+Over REST:
+
+| Route                                    | Purpose                                                              |
+| ---------------------------------------- | -------------------------------------------------------------------- |
+| `GET /api/presentations`                 | List one page of the tenant's presentation requests.                 |
+| `POST /api/presentations`                | Create a request. It needs at least one claim or one trusted issuer. |
+| `GET /api/presentations/:presentationId` | One request with its state.                                          |
 
 ## Runtime environments
 
