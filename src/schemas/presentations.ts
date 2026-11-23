@@ -72,3 +72,22 @@ export type PresentationRecordDto = z.infer<typeof presentationRecordSchema>;
 export type CreateOobPresentationRequestInputDto = z.infer<
   typeof createOobPresentationRequestInputSchema
 >;
+
+/** Decoded OOB presentation request, shown before the holder answers or rejects it. */
+export const presentationRequestPreviewSchema = z.object({
+  from: z.string().optional(),
+  goalCode: z.string().optional(),
+  goal: z.string().optional(),
+  credentialFormat: z.string(),
+  claims: z.array(z.string()),
+  trustIssuers: z.array(z.string()).optional(),
+  schemaId: z.string().optional(),
+});
+
+/** Body of `POST /api/proof-requests/accept`: the request and the credential to answer with. */
+export const acceptPresentationRequestInputSchema = z.object({
+  oob: z.string().min(1),
+  credentialId: z.string().min(1),
+});
+
+export type PresentationRequestPreviewDto = z.infer<typeof presentationRequestPreviewSchema>;

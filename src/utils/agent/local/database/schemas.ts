@@ -240,6 +240,11 @@ export const schemas = {
         type: SchemaFieldType.string,
         description: "OOB invitation URL containing _oob=.",
       },
+      presentedClaims: {
+        required: false,
+        type: SchemaFieldType.string,
+        description: "Claim values from the verified proof, as JSON text.",
+      },
     },
     required: ["uuid", "thid", "role", "state", "credentialFormat"],
   },

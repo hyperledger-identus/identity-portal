@@ -11,14 +11,17 @@ import {
   ProblemReport,
   RequestCredential,
 } from '@hyperledger/identus-sdk/plugins/didcomm';
+import { Presentation } from '@hyperledger/identus-sdk/plugins/oea';
 
 import type {
   CredentialOfferRole,
   CredentialProtocolState,
+  PresentationState,
 } from '../types';
 import { claimsToSubject } from './claims';
 import { requesterDid } from './jwt';
 import type { MultiTenantPluto } from './database';
+import { presentedClaimsFromSubmission } from './presentation-request';
 
 /**
  * Portal columns on the RIDB `issuance` collection. SDK `CollectionMap['issuance']`
@@ -423,6 +426,53 @@ async function handleProblemReport(
   await setProtocolState(pluto, issuance, 'ProblemReportReceived');
 }
 
+/**
+ * A presentation came for one of the verifier's requests. The SDK plugin
+ * checks it against the request the verifier stored, not against a message
+ * in Pluto, so it works when the verifier and the holder are different
+ * tenants. The result is the record's state, and on success the requested
+ * claim values.
+ */
+async function handlePresentation(
+  agent: LocalAgent,
+  pluto: MultiTenantPluto,
+  message: Domain.Message,
+): Promise<void> {
+  const thid = message.thid ?? message.id;
+  const row = await pluto.getPresentationByThid(thid, 'Verifier');
+  if (!row || row.state === 'PresentationVerified' || row.state === 'PresentationVerificationFailed') {
+    return;
+  }
+
+  const attachment = message.attachments.at(0);
+  const format = attachment?.format;
+  const Handler = format ? agent.plugins.findProtocol('presentation-verify', format) : null;
+  let state: PresentationState = 'PresentationVerificationFailed';
+  let presentedClaims: string | undefined;
+  if (Handler && attachment && row.request) {
+    try {
+      await agent.runTask(
+        new Handler({
+          presentation: attachment.payload,
+          presentationRequest: JSON.parse(row.request),
+          thid,
+        }),
+      );
+      state = 'PresentationVerified';
+      presentedClaims = JSON.stringify(
+        presentedClaimsFromSubmission(attachment.payload, row.claims ?? []),
+      );
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      console.error(`[process-messages] presentation ${thid} failed verification: ${detail}`);
+    }
+  }
+  await pluto.updatePresentation(row.uuid, {
+    state,
+    ...(presentedClaims ? { presentedClaims } : {}),
+  });
+}
+
 function isProblemReport(piuri: string): boolean {
   return piuri === ProblemReport.type || piuri.includes('report-problem');
 }
@@ -446,6 +496,10 @@ async function shouldProcessSentLoopback(
     const issuance = asPortalIssuance(await pluto.getIssuanceByThid(thid, 'Holder'));
     return issuance?.role === 'Holder';
   }
+  if (message.piuri === Presentation.type) {
+    const presentation = await pluto.getPresentationByThid(thid, 'Verifier');
+    return presentation?.role === 'Verifier';
+  }
   return false;
 }
 
@@ -461,6 +515,10 @@ async function dispatchMessage(
   }
   if (piuri === IssueCredential.type) {
     await handleIssueCredential(agent, pluto, message);
+    return;
+  }
+  if (piuri === Presentation.type) {
+    await handlePresentation(agent, pluto, message);
     return;
   }
   if (piuri === OfferCredential.type) {

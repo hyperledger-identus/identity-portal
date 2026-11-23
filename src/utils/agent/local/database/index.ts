@@ -469,6 +469,26 @@ export class MultiTenantPluto extends Pluto {
     return rows[0] as CollectionMap['presentations'] | undefined;
   }
 
+  async getPresentationByThid(
+    thid: string,
+    role: 'Verifier' | 'Prover',
+  ): Promise<CollectionMap['presentations'] | undefined> {
+    const selector = { thid, role } as Record<string, unknown>;
+    const rows = await this.store.query("presentations", { selector });
+    return rows[0] as CollectionMap['presentations'] | undefined;
+  }
+
+  async updatePresentation(
+    uuid: string,
+    patch: Partial<Omit<CollectionMap['presentations'], 'createdAt' | 'updatedAt'>>,
+  ): Promise<void> {
+    const existing = await this.getPresentation(uuid);
+    if (!existing) {
+      throw new Error(`Presentation record ${uuid} not found`);
+    }
+    await this.store.update("presentations", { ...existing, ...patch, uuid } as CollectionMap['presentations']);
+  }
+
   async listPresentations(
     offset: number = 0,
     limit: number = PAGINATION_LIMIT,

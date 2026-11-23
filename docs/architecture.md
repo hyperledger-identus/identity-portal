@@ -257,10 +257,12 @@ sequenceDiagram
 | `src/utils/agent/local/queue/`                  | BullMQ + Redis per-tenant recurring tasks.                                            |
 | `src/utils/agent/local/issuer.ts`               | Issuer side of OOB credential offers: create, list and read offers.                   |
 | `src/utils/agent/local/holder.ts`               | Holder side: preview, accept and reject invitations; list held credentials.           |
+| `src/utils/agent/local/holder-presentations.ts` | Holder side of OOB presentation requests: preview, accept and reject.                 |
 | `src/utils/agent/local/verifier.ts`             | Verifier side of OOB presentation requests: create, list and read requests.           |
 | `src/utils/agent/local/presentation-request.ts` | Builds the DIF presentation request the verifier sends.                               |
 | `src/utils/agent/local/inbox.ts`                | Handles stored DIDComm messages of issuance: issues and stores credentials.           |
 | `src/utils/agent/local/claims.ts`               | Maps claims between the API's JSON object and the stored claim rows.                  |
+| `src/utils/agent/local/jwt.ts`                  | Reads JWT fields, such as the DID that signed a credential request.                   |
 | `src/utils/agent/cloud-agent/`                  | Cloud Agent HTTP client and wallet auto-provisioning.                                 |
 | `src/config/index.ts`                           | Environment configuration.                                                            |
 | `src/config/resolvers.ts`                       | `PRISM_DID_RESOLVERS` (neoprism-backed) used by Castor.                               |
@@ -471,15 +473,17 @@ invitation URL, and the holder answers from that URL with one of its credentials
 JWT credentials are supported. The contract has a `verifier` group and a
 `presentations` part in the `holder` group.
 
-| Method                                               | Purpose                                               | Status     |
-| ---------------------------------------------------- | ----------------------------------------------------- | ---------- |
-| `verifier.presentations.createOobRequest(input)`     | Create a presentation request and its invitation URL. | local mode |
-| `verifier.presentations.listRequests(offset, limit)` | List one page of the tenant's requests.               | local mode |
-| `verifier.presentations.getRequest(presentationId)`  | One request with its state.                           | local mode |
-| `holder.presentations.preview` / `accept` / `reject` | Answer a request with one credential.                 | not yet    |
+| Method                                               | Purpose                                                   | Status     |
+| ---------------------------------------------------- | --------------------------------------------------------- | ---------- |
+| `verifier.presentations.createOobRequest(input)`     | Create a presentation request and its invitation URL.     | local mode |
+| `verifier.presentations.listRequests(offset, limit)` | List one page of the tenant's requests.                   | local mode |
+| `verifier.presentations.getRequest(presentationId)`  | One request with its state.                               | local mode |
+| `holder.presentations.preview(oob)`                  | Decode a request without answering it.                    | local mode |
+| `holder.presentations.accept(oob, credentialId)`     | Answer the request with one held credential.              | local mode |
+| `holder.presentations.reject(oob)`                   | Check the request and drop it; nothing is sent or stored. | local mode |
 
-A method marked "not yet" throws "not implemented yet" in both modes
-(`agent/not-implemented.ts`), and in cloud mode the verifier methods throw it too.
+In cloud mode every phase 6 method still throws "not implemented yet"
+(`agent/not-implemented.ts`).
 
 In local mode `createOobRequest` builds a DIF Presentation Exchange request
 (`agent/local/presentation-request.ts`) with the same paths and format the SDK uses.
@@ -497,6 +501,38 @@ invitation, the SDK sets it to the holder's new peer DID. The request is stored 
 `presentations` row in state `InvitationGenerated`, with the request JSON, to check
 the proof against it later.
 
+The flow in local mode:
+
+```mermaid
+sequenceDiagram
+  participant V as Verifier tenant
+  participant M as Mediator
+  participant H as Holder tenant
+
+  V->>V: createOobRequest stores the request (InvitationGenerated)
+  V-->>H: invitation URL, shared out of band
+  H->>H: preview reads the claims and the trusted issuers
+  H->>M: accept sends a presentation of one credential (PresentationSent)
+  M->>V: fetch-messages picks up the presentation
+  V->>V: process-messages checks it (PresentationVerified or PresentationVerificationFailed)
+```
+
+`accept` (`agent/local/holder-presentations.ts`) lets the SDK accept the invitation,
+which stores the request with `to` set to a new peer DID of the holder, and then
+answers with the SDK's `createPresentationForRequestProof` and the chosen credential.
+The SDK signs the presentation with a key of the credential's subject, which is the
+Prism DID that signed the credential request (see
+[Phase 4](#phase-4-credential-issuance)). The holder keeps a `presentations` row in
+state `PresentationSent`.
+
+On the verifier, `process-messages` (`agent/local/inbox.ts`) passes the presentation
+and the stored request to the SDK's `presentation-verify` plugin. It checks the
+signatures, the claims and the issuer. The row gets `PresentationVerified` with the
+values of the requested claims in `presentedClaims`, or `PresentationVerificationFailed`;
+the reason goes to the server log. When the verifier and the holder are the same
+tenant, the sent presentation is handled as the inbox event, like a credential
+request in phase 4.
+
 Over REST:
 
 | Route                                    | Purpose                                                              |
@@ -504,6 +540,9 @@ Over REST:
 | `GET /api/presentations`                 | List one page of the tenant's presentation requests.                 |
 | `POST /api/presentations`                | Create a request. It needs at least one claim or one trusted issuer. |
 | `GET /api/presentations/:presentationId` | One request with its state.                                          |
+| `POST /api/proof-requests/preview`       | Decode a request (holder).                                           |
+| `POST /api/proof-requests/accept`        | Answer it with `credentialId`, the `id` from `GET /api/credentials`. |
+| `POST /api/proof-requests/reject`        | Reject it; nothing is sent or stored.                                |
 
 ## Runtime environments
 
