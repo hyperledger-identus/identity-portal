@@ -17,6 +17,7 @@ import type {
   CredentialProtocolState,
 } from '../types';
 import { claimsToSubject } from './claims';
+import { requesterDid } from './jwt';
 import type { MultiTenantPluto } from './database';
 
 /**
@@ -149,10 +150,7 @@ async function issueViaJwtPlugin(
     return undefined;
   }
   const issuerDID = await signingDidFromIssuance(pluto, issuance.issuingDID);
-  const holderDID =
-    issuance.subjectId != null && issuance.subjectId !== ''
-      ? Domain.DID.fromString(issuance.subjectId)
-      : message.from;
+  const holderDID = Domain.DID.fromString(credentialSubjectDid(message, issuance));
   try {
     const result: unknown = await agent.runTask(
       new Handler({
@@ -167,6 +165,27 @@ async function issueViaJwtPlugin(
   } catch {
     return undefined;
   }
+}
+
+/**
+ * The subject of the credential: the `subjectId` of the offer when it has one,
+ * else the Prism DID that signed the holder's JWT request. The holder's SDK
+ * makes that DID for the request and keeps its keys, so it can prove the
+ * credential later. `message.from` is only the holder's DIDComm peer DID,
+ * whose first key cannot sign a presentation; it is the last fallback.
+ */
+function credentialSubjectDid(message: Domain.Message, issuance: PortalIssuance): string {
+  if (issuance.subjectId != null && issuance.subjectId !== '') {
+    return issuance.subjectId;
+  }
+  const requester = requesterDid(message.attachments.at(0)?.data);
+  if (requester) {
+    return requester;
+  }
+  if (!message.from) {
+    throw new Error('request-credential has no holder DID');
+  }
+  return message.from.toString();
 }
 
 /**
@@ -185,10 +204,7 @@ async function issueCredentialFallback(
   // Sign with the stored long-form Prism DID so Castor need not hit the ledger.
   // JWT `iss` stays the canonical issuing DID. DIDComm `from` is the host peer.
   const issuerDID = await signingDidFromIssuance(pluto, issuance.issuingDID);
-  const subjectDid =
-    issuance.subjectId != null && issuance.subjectId !== ''
-      ? issuance.subjectId
-      : message.from.toString();
+  const subjectDid = credentialSubjectDid(message, issuance);
   const now = Math.floor(Date.now() / 1000);
   const jwt = await agent.runtimeContext.JWT.signWithDID(issuerDID, {
     iss: canonicalPrismDid(issuance.issuingDID),

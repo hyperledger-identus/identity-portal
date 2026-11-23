@@ -415,7 +415,9 @@ stores a holder row in state `RequestSent`. The rest runs in the background, in 
 two per-tenant tasks: `fetch-messages` pulls new DIDComm messages from the mediator
 into Pluto, and `process-messages` (`agent/local/inbox.ts`) handles them. A request
 makes the issuer sign a JWT credential with the issuing Prism DID and send it back;
-a credential makes the holder store it in its wallet.
+a credential makes the holder store it in its wallet. The credential's subject is the
+Prism DID the holder's SDK signed the request with, so the holder has its keys and can
+present the credential later.
 
 The SDK keeps each claim of an issuance row as a text value plus a type (see
 [Encrypted local storage](#encrypted-local-storage)).
