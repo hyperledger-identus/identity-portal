@@ -183,4 +183,64 @@ export const schemas = {
     },
     required: ["uuid", "name", "version", "type", "schema", "author"],
   },
+  presentations: {
+    version: 0,
+    primaryKey: "uuid",
+    type: SchemaFieldType.object,
+    properties: {
+      uuid: {
+        type: SchemaFieldType.string,
+        description: "The presentation record id.",
+      },
+      tenantId: {
+        required: false,
+        type: SchemaFieldType.string,
+        description: "The tenant that owns this presentation record.",
+      },
+      thid: {
+        type: SchemaFieldType.string,
+        description: "Present Proof thread id, shared by the verifier and the holder.",
+      },
+      role: {
+        type: SchemaFieldType.string,
+        description: "Verifier or Prover.",
+      },
+      state: {
+        type: SchemaFieldType.string,
+        description: "Present Proof state, with the same strings as Cloud Agent.",
+      },
+      credentialFormat: {
+        type: SchemaFieldType.string,
+        description: "The credential format. JWT for now.",
+      },
+      claims: {
+        required: false,
+        type: SchemaFieldType.array,
+        items: { type: SchemaFieldType.string },
+        description: "Names of the claims the credential must have.",
+      },
+      trustIssuers: {
+        required: false,
+        type: SchemaFieldType.array,
+        items: { type: SchemaFieldType.string },
+        description: "Issuer DIDs the verifier trusts.",
+      },
+      schemaId: {
+        required: false,
+        type: SchemaFieldType.string,
+        description: "Optional credential schema id or URL.",
+      },
+      request: {
+        required: false,
+        type: SchemaFieldType.string,
+        description: "The DIF presentation request as JSON text, to check the proof against.",
+      },
+      invitationUrl: {
+        required: false,
+        type: SchemaFieldType.string,
+        description: "OOB invitation URL containing _oob=.",
+      },
+    },
+    required: ["uuid", "thid", "role", "state", "credentialFormat"],
+  },
 };

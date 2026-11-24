@@ -50,7 +50,7 @@ type PortalIssuance = CollectionMap['issuance'] & {
  * RIDB stamps `createdAt` / `updatedAt` as unix seconds on every collection.
  * The portal offer DTO is ISO-8601, which is what Cloud Agent returns.
  */
-function ridbTimestampToIso(value: unknown): string {
+export function ridbTimestampToIso(value: unknown): string {
   if (typeof value === 'number' && Number.isFinite(value)) {
     const ms = value < 1e12 ? value * 1000 : value;
     return new Date(ms).toISOString();
