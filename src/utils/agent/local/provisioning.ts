@@ -26,10 +26,12 @@ export async function provisionTenant(options: { subject: string, accessToken: s
 
     const tenants = await pluto.listTenants();
 
-    if (!tenants.includes(options.subject)) {
-        await pluto.createTenant(options.subject);
+    if (!tenants.includes(subject)) {
+        await pluto.createTenant(subject);
+    }
 
-
+    let mediators = await pluto.getAllMediators();
+    if (mediators.length === 0) {
         let seedHex = await pluto.getSetting("seed");
         if (!seedHex) {
             const seed = apollo.createSeed(apollo.createRandomMnemonics(), "");
@@ -38,7 +40,7 @@ export async function provisionTenant(options: { subject: string, accessToken: s
         }
 
         const agent = await createTenantAgent({
-            tenantId: options.subject,
+            tenantId: subject,
             castor,
             pluto,
             mediatorDID: MEDIATOR_DID,
@@ -46,7 +48,7 @@ export async function provisionTenant(options: { subject: string, accessToken: s
      
 
         const host = await createHostPeerDID({
-            tenantId: options.subject,
+            tenantId: subject,
             mediatorDID: MEDIATOR_DID,
             apollo,
             castor,
@@ -59,8 +61,7 @@ export async function provisionTenant(options: { subject: string, accessToken: s
         )
 
         connection.state = Connection.State.REQUESTED;
-        await pluto.storeMediator(connection.asMediator());
-
+        agent.connections.addMediator(connection);
 
         const mediationRequest = new DIDComm.MediationRequest(
             host,
@@ -69,11 +70,31 @@ export async function provisionTenant(options: { subject: string, accessToken: s
         await connection.send(
             mediationRequest.makeMessage(), agent.runtimeContext
         );
-        
-        await startFetchingMessages(options.subject);
+        if ((connection.state as Connection.State) !== Connection.State.GRANTED) {
+            throw new Error(`Mediator did not grant mediation for tenant ${subject}`);
+        }
+        mediators = await pluto.getAllMediators();
     }
 
-    // Existing tenants were provisioned before this scheduler existed.
-    // scheduleTask is idempotent, so repeating on every login is safe.
-    await startProcessMessages(options.subject);
+    // A grant creates a mailbox, while keylist-update tells the mediator
+    // which tenant host DID should route into it. Repeating this also repairs
+    // accounts provisioned before host DID registration was added.
+    const agent = await createTenantAgent({ tenantId: subject, castor, pluto, mediatorDID: MEDIATOR_DID });
+    await agent.start();
+    for (const mediator of mediators) {
+        const connection = agent.connections.find(mediator.mediatorDID.toString());
+        if (!connection) {
+            throw new Error(`Missing mediator connection for tenant ${subject}`);
+        }
+        const update = new DIDComm.MediationKeysUpdateList(
+            mediator.hostDID,
+            mediator.mediatorDID,
+            [mediator.hostDID],
+        );
+        await connection.send(update.makeMessage(), agent.runtimeContext);
+    }
+
+    // Both schedules are idempotent and must be restored on later logins too.
+    await startFetchingMessages(subject);
+    await startProcessMessages(subject);
 }

@@ -12,7 +12,7 @@
 import { Apollo, Castor} from "@hyperledger/identus-sdk";
 import { scheduleTask, unscheduleTask } from "../runtime";
 import type { TenantJobData, TenantTask } from "./types";
-import { StartFetchingMessages } from "@hyperledger/identus-sdk/plugins/didcomm";
+import { PickupRequest } from "@hyperledger/identus-sdk/plugins/didcomm";
 import { MEDIATOR_DID, TENANT_MESSAGE_FETCH_INTERVAL_MS } from "../../../../../config";
 import { createTenantAgent } from "../..";
 import { MultiTenantPluto } from "../../database";
@@ -35,8 +35,18 @@ export const fetchMessagesTask: TenantTask<TenantJobData> = {
         pluto,
         mediatorDID: MEDIATOR_DID,
     })
-    const fetchMessages = new StartFetchingMessages({})
-    await agent.runTask(fetchMessages);
+    await agent.start();
+    const connection = agent.connections.mediator;
+    if (!connection) {
+      throw new Error(`No mediator connection for tenant ${tenantId}`);
+    }
+    const mediator = connection.asMediator();
+    const pickup = new PickupRequest(
+      { limit: 10 },
+      mediator.hostDID,
+      mediator.mediatorDID,
+    );
+    await connection.send(pickup.makeMessage(), agent.runtimeContext);
     console.log(
       `[fetch-messages] tenant=${tenantId} job=${job.id} at ${new Date().toISOString()}`,
     );
