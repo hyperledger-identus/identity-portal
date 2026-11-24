@@ -22,6 +22,7 @@ import {
 } from "../types";
 import { MultiTenantPluto } from "./database";
 import { createLocalHolder } from "./holder";
+import { createLocalHolderPresentations } from "./holder-presentations";
 import { createLocalIssuer } from "./issuer";
 import { createLocalVerifier } from "./verifier";
 import { createNeoPrismClient } from "./neoprism";
@@ -294,11 +295,18 @@ export async function createLocalAgent(session: AgentSession): Promise<Agent> {
             agent,
             tenantId: session.tenantId,
         }),
-        holder: createLocalHolder({
-            pluto,
-            agent,
-            tenantId: session.tenantId,
-        }),
+        holder: {
+            ...createLocalHolder({
+                pluto,
+                agent,
+                tenantId: session.tenantId,
+            }),
+            presentations: createLocalHolderPresentations({
+                pluto,
+                agent,
+                tenantId: session.tenantId,
+            }),
+        },
         dids: {
             resolveDID: async (did: string) => {
                 const didDocument = await castor.resolveDID(did);

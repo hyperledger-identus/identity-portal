@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildPresentationRequest, trustedIssuerPattern } from './presentation-request';
+import {
+  buildPresentationRequest,
+  presentedClaimsFromSubmission,
+  readPresentationRequest,
+  trustedIssuerPattern,
+} from './presentation-request';
 
 const SHORT_DID = 'did:prism:1111111111111111111111111111111111111111111111111111111111111111';
 const LONG_DID = `${SHORT_DID}:CmEKXxJdCghtYXN0ZXItMBABQk8KCXNlY3AyNTZrMRIg`;
@@ -92,5 +97,65 @@ describe('trustedIssuerPattern', () => {
     const pattern = new RegExp(trustedIssuerPattern(['did:example:a.b+c']));
     expect(pattern.test('did:example:a.b+c')).toBe(true);
     expect(pattern.test('did:example:aXbbc')).toBe(false);
+  });
+});
+
+describe('readPresentationRequest', () => {
+  it('reads back the claims and the trusted issuers of a built request', () => {
+    const request = buildPresentationRequest(
+      { claims: ['name', 'age'], trustIssuers: [SHORT_DID, 'did:example:a.b+c|d'], domain: 'd' },
+      ids(),
+    );
+    expect(readPresentationRequest(request)).toEqual({
+      claims: ['name', 'age'],
+      trustIssuers: [SHORT_DID, 'did:example:a.b+c|d'],
+    });
+  });
+
+  it('gives no issuers when the request has none', () => {
+    const request = buildPresentationRequest({ claims: ['name'], trustIssuers: [], domain: 'd' }, ids());
+    expect(readPresentationRequest(request)).toEqual({ claims: ['name'], trustIssuers: [] });
+  });
+
+  it('reads the issuer of a request built by the SDK, where the pattern is the DID itself', () => {
+    const request = buildPresentationRequest({ claims: ['name'], trustIssuers: [SHORT_DID], domain: 'd' }, ids());
+    request.presentation_definition.input_descriptors[0].constraints.fields[1].filter.pattern = LONG_DID;
+    expect(readPresentationRequest(request).trustIssuers).toEqual([LONG_DID]);
+  });
+
+  it('rejects a request without a presentation definition', () => {
+    expect(() => readPresentationRequest({ options: {} })).toThrow('Malformed OOB invitation');
+  });
+});
+
+function fakeJwt(payload: unknown): string {
+  const part = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
+  return `${part({ alg: 'ES256K' })}.${part(payload)}.signature`;
+}
+
+describe('presentedClaimsFromSubmission', () => {
+  const credential = fakeJwt({
+    vc: { credentialSubject: { id: 'did:prism:holder', name: 'Alice', age: 20, adult: false } },
+  });
+  const submission = {
+    presentation_submission: { id: 'p', definition_id: 'd', descriptor_map: [] },
+    verifiablePresentation: [fakeJwt({ vp: { verifiableCredential: [credential] } })],
+  };
+
+  it('returns the requested claims with their values and types', () => {
+    expect(presentedClaimsFromSubmission(submission, ['name', 'age', 'adult'])).toEqual({
+      name: 'Alice',
+      age: 20,
+      adult: false,
+    });
+  });
+
+  it('leaves out claims that are not in the credential, and claims nobody asked for', () => {
+    expect(presentedClaimsFromSubmission(submission, ['name', 'email'])).toEqual({ name: 'Alice' });
+  });
+
+  it('returns nothing for a malformed presentation', () => {
+    expect(presentedClaimsFromSubmission({ verifiablePresentation: ['not-a-jwt'] }, ['name'])).toEqual({});
+    expect(presentedClaimsFromSubmission(undefined, ['name'])).toEqual({});
   });
 });

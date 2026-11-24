@@ -15,7 +15,6 @@ import type {
   HolderCredential,
   InvitationPreview,
 } from '../types';
-import { notImplementedHolderPresentations } from '../not-implemented';
 import { toStoredClaims } from './claims';
 import type { MultiTenantPluto } from './database';
 
@@ -40,7 +39,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
  * are `/oob?_oob=…`, and a paste may also be a full URL. Strip down to the
  * base64 payload so both shapes hit the same SDK path.
  */
-function extractOobValue(oob: string): string {
+export function extractOobValue(oob: string): string {
   const trimmed = oob.trim();
   if (!trimmed) {
     throw new Error('Malformed OOB invitation: empty');
@@ -70,7 +69,7 @@ function extractOobValue(oob: string): string {
   return trimmed;
 }
 
-function invitationUrlFromOob(oob: string): string | undefined {
+export function invitationUrlFromOob(oob: string): string | undefined {
   const trimmed = oob.trim();
   if (/^https?:\/\//i.test(trimmed) || trimmed.includes('_oob=')) {
     return trimmed;
@@ -259,7 +258,7 @@ function toInvitationPreview(
  * `to` to the peer DID it mints. Without this, local offers store `from` as a
  * DID object and acceptInvitation throws before the offer is stored.
  */
-function coerceInvitationPayloads(
+export function coerceInvitationPayloads(
   invitation: OutOfBandInvitation,
   fallbackFrom: string,
 ): void {
@@ -383,7 +382,10 @@ function toHolderCredential(credential: Domain.Credential): HolderCredential {
  * and records the holder issuance in `RequestSent`. The VC itself arrives later
  * on mediator pickup (ticket 004).
  */
-export function createLocalHolder(deps: LocalHolderDeps): Agent['holder'] {
+/** Offers and credentials; `presentations` comes from `holder-presentations.ts`. */
+export function createLocalHolder(
+  deps: LocalHolderDeps,
+): Omit<Agent['holder'], 'presentations'> {
   const { pluto, agent, tenantId } = deps;
 
   return {
@@ -461,6 +463,5 @@ export function createLocalHolder(deps: LocalHolderDeps): Agent['holder'] {
         await parseOobInvitation(agent, oob);
       },
     },
-    presentations: notImplementedHolderPresentations(),
   };
 }

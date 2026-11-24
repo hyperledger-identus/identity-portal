@@ -31,6 +31,7 @@ import createOffersRouter from './offers';
 import createCredentialsRouter from './credentials';
 import createInvitationsRouter from './invitations';
 import createPresentationsRouter from './presentations';
+import createProofRequestsRouter from './proof-requests';
 
 /** A factory that builds a validated router bound to a per-request context. */
 export type RouteGroupFactory = (createContext: ContextFactory) => RestRouter;
@@ -46,6 +47,7 @@ export const routeGroups = {
   '/credentials': createCredentialsRouter,
   '/invitations': createInvitationsRouter,
   '/presentations': createPresentationsRouter,
+  '/proof-requests': createProofRequestsRouter,
 } satisfies Record<string, RouteGroupFactory>;
 
 export type RouteGroups = typeof routeGroups;

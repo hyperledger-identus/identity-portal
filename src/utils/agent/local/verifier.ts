@@ -27,6 +27,17 @@ export type LocalVerifierDeps = {
   tenantId: string;
 };
 
+function parseClaims(text: string): Record<string, unknown> | undefined {
+  try {
+    const value: unknown = JSON.parse(text);
+    return typeof value === 'object' && value !== null && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * Verifier-only view of a stored presentation row. Holder rows will share the
  * collection, so they must not come back from `listRequests` / `getRequest`.
@@ -47,6 +58,7 @@ function toVerifierRecord(
     trustIssuers: row.trustIssuers?.length ? row.trustIssuers : undefined,
     schemaId: row.schemaId,
     invitationUrl: row.invitationUrl,
+    presentedClaims: row.presentedClaims ? parseClaims(row.presentedClaims) : undefined,
     createdAt: ridbTimestampToIso(row.createdAt),
     updatedAt: row.updatedAt !== undefined ? ridbTimestampToIso(row.updatedAt) : undefined,
   };

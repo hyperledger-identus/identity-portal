@@ -11,13 +11,17 @@ import {
   ProblemReport,
   RequestCredential,
 } from '@hyperledger/identus-sdk/plugins/didcomm';
+import { Presentation } from '@hyperledger/identus-sdk/plugins/oea';
 
 import type {
   CredentialOfferRole,
   CredentialProtocolState,
+  PresentationState,
 } from '../types';
 import { claimsToSubject } from './claims';
+import { requesterDid } from './jwt';
 import type { MultiTenantPluto } from './database';
+import { presentedClaimsFromSubmission } from './presentation-request';
 
 /**
  * Portal columns on the RIDB `issuance` collection. SDK `CollectionMap['issuance']`
@@ -149,10 +153,7 @@ async function issueViaJwtPlugin(
     return undefined;
   }
   const issuerDID = await signingDidFromIssuance(pluto, issuance.issuingDID);
-  const holderDID =
-    issuance.subjectId != null && issuance.subjectId !== ''
-      ? Domain.DID.fromString(issuance.subjectId)
-      : message.from;
+  const holderDID = Domain.DID.fromString(credentialSubjectDid(message, issuance));
   try {
     const result: unknown = await agent.runTask(
       new Handler({
@@ -167,6 +168,27 @@ async function issueViaJwtPlugin(
   } catch {
     return undefined;
   }
+}
+
+/**
+ * The subject of the credential: the `subjectId` of the offer when it has one,
+ * else the Prism DID that signed the holder's JWT request. The holder's SDK
+ * makes that DID for the request and keeps its keys, so it can prove the
+ * credential later. `message.from` is only the holder's DIDComm peer DID,
+ * whose first key cannot sign a presentation; it is the last fallback.
+ */
+function credentialSubjectDid(message: Domain.Message, issuance: PortalIssuance): string {
+  if (issuance.subjectId != null && issuance.subjectId !== '') {
+    return issuance.subjectId;
+  }
+  const requester = requesterDid(message.attachments.at(0)?.data);
+  if (requester) {
+    return requester;
+  }
+  if (!message.from) {
+    throw new Error('request-credential has no holder DID');
+  }
+  return message.from.toString();
 }
 
 /**
@@ -185,10 +207,7 @@ async function issueCredentialFallback(
   // Sign with the stored long-form Prism DID so Castor need not hit the ledger.
   // JWT `iss` stays the canonical issuing DID. DIDComm `from` is the host peer.
   const issuerDID = await signingDidFromIssuance(pluto, issuance.issuingDID);
-  const subjectDid =
-    issuance.subjectId != null && issuance.subjectId !== ''
-      ? issuance.subjectId
-      : message.from.toString();
+  const subjectDid = credentialSubjectDid(message, issuance);
   const now = Math.floor(Date.now() / 1000);
   const jwt = await agent.runtimeContext.JWT.signWithDID(issuerDID, {
     iss: canonicalPrismDid(issuance.issuingDID),
@@ -407,6 +426,53 @@ async function handleProblemReport(
   await setProtocolState(pluto, issuance, 'ProblemReportReceived');
 }
 
+/**
+ * A presentation came for one of the verifier's requests. The SDK plugin
+ * checks it against the request the verifier stored, not against a message
+ * in Pluto, so it works when the verifier and the holder are different
+ * tenants. The result is the record's state, and on success the requested
+ * claim values.
+ */
+async function handlePresentation(
+  agent: LocalAgent,
+  pluto: MultiTenantPluto,
+  message: Domain.Message,
+): Promise<void> {
+  const thid = message.thid ?? message.id;
+  const row = await pluto.getPresentationByThid(thid, 'Verifier');
+  if (!row || row.state === 'PresentationVerified' || row.state === 'PresentationVerificationFailed') {
+    return;
+  }
+
+  const attachment = message.attachments.at(0);
+  const format = attachment?.format;
+  const Handler = format ? agent.plugins.findProtocol('presentation-verify', format) : null;
+  let state: PresentationState = 'PresentationVerificationFailed';
+  let presentedClaims: string | undefined;
+  if (Handler && attachment && row.request) {
+    try {
+      await agent.runTask(
+        new Handler({
+          presentation: attachment.payload,
+          presentationRequest: JSON.parse(row.request),
+          thid,
+        }),
+      );
+      state = 'PresentationVerified';
+      presentedClaims = JSON.stringify(
+        presentedClaimsFromSubmission(attachment.payload, row.claims ?? []),
+      );
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      console.error(`[process-messages] presentation ${thid} failed verification: ${detail}`);
+    }
+  }
+  await pluto.updatePresentation(row.uuid, {
+    state,
+    ...(presentedClaims ? { presentedClaims } : {}),
+  });
+}
+
 function isProblemReport(piuri: string): boolean {
   return piuri === ProblemReport.type || piuri.includes('report-problem');
 }
@@ -430,6 +496,10 @@ async function shouldProcessSentLoopback(
     const issuance = asPortalIssuance(await pluto.getIssuanceByThid(thid, 'Holder'));
     return issuance?.role === 'Holder';
   }
+  if (message.piuri === Presentation.type) {
+    const presentation = await pluto.getPresentationByThid(thid, 'Verifier');
+    return presentation?.role === 'Verifier';
+  }
   return false;
 }
 
@@ -445,6 +515,10 @@ async function dispatchMessage(
   }
   if (piuri === IssueCredential.type) {
     await handleIssueCredential(agent, pluto, message);
+    return;
+  }
+  if (piuri === Presentation.type) {
+    await handlePresentation(agent, pluto, message);
     return;
   }
   if (piuri === OfferCredential.type) {
