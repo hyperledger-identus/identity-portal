@@ -289,8 +289,10 @@ export class MultiTenantPluto extends Pluto {
   }
 
   async listTenants(): Promise<string[]> {
-    const results = await this.store.query("tenants", { });
-    return results.map((a) => a.tenantId) as string[];
+    // tenantId is encrypted in this collection, so a scoped selector on it
+    // cannot find an existing row. Read and decrypt before comparing IDs.
+    const results = await MultiTenantPluto.#collection("tenants").find({}) as Array<{ tenantId: string }>;
+    return results.map((row) => row.tenantId);
   }
 
   async createTenant(tenantId: string): Promise<void> {
