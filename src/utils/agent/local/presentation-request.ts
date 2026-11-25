@@ -55,6 +55,9 @@ export type PresentationRequestInput = {
  */
 const ANY_VALUE: FieldFilter = { type: 'string', pattern: '.*' };
 
+/** Paths of the trusted-issuer field, the same as in the SDK's requests. */
+const ISSUER_PATHS = ['$.vc.issuer', '$.issuer', '$.iss', '$.vc.iss'];
+
 function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -93,7 +96,7 @@ export function buildPresentationRequest(
     fields.push({
       id: newId(),
       name: 'issuer',
-      path: ['$.vc.issuer', '$.issuer', '$.iss', '$.vc.iss'],
+      path: [...ISSUER_PATHS],
       optional: false,
       filter: { type: 'string', pattern: trustedIssuerPattern(input.trustIssuers) },
     });
@@ -137,6 +140,16 @@ function issuersFromPattern(pattern: string): string[] {
 }
 
 /**
+ * The trusted-issuer field reads the issuer of the credential. A claim field
+ * reads the credential subject, also when the claim is named `issuer`, so the
+ * paths tell them apart and the name does not.
+ */
+function isIssuerField(field: Record<string, unknown>): boolean {
+  const paths = field.path;
+  return Array.isArray(paths) && paths.length > 0 && paths.every((path) => ISSUER_PATHS.includes(path));
+}
+
+/**
  * Reads the claim names and the trusted issuers back from a request, for the
  * holder's preview. A request from another tool may use other filters: then
  * the issuers it cannot read are left out.
@@ -161,7 +174,7 @@ export function readPresentationRequest(request: unknown): {
       continue;
     }
     const filter = isRecord(field.filter) ? field.filter : undefined;
-    if (field.name === 'issuer') {
+    if (isIssuerField(field)) {
       if (typeof filter?.pattern === 'string') {
         trustIssuers.push(...issuersFromPattern(filter.pattern));
       }

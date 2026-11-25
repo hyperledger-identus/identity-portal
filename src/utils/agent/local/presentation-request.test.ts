@@ -141,6 +141,22 @@ describe('readPresentationRequest', () => {
     expect(readPresentationRequest(request).trustIssuers).toEqual([LONG_DID]);
   });
 
+  it('keeps a claim named issuer apart from the trusted issuers', () => {
+    const request = buildPresentationRequest(
+      { claims: ['issuer', 'name'], trustIssuers: [SHORT_DID], domain: 'd' },
+      ids(),
+    );
+    expect(readPresentationRequest(request)).toEqual({
+      claims: ['issuer', 'name'],
+      trustIssuers: [SHORT_DID],
+    });
+  });
+
+  it('keeps a claim named issuer when the request has no trusted issuers', () => {
+    const request = buildPresentationRequest({ claims: ['issuer'], trustIssuers: [], domain: 'd' }, ids());
+    expect(readPresentationRequest(request)).toEqual({ claims: ['issuer'], trustIssuers: [] });
+  });
+
   it('rejects a request without a presentation definition', () => {
     expect(() => readPresentationRequest({ options: {} })).toThrow('Malformed OOB invitation');
   });

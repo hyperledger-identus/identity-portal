@@ -489,10 +489,12 @@ In local mode `createOobRequest` builds a DIF Presentation Exchange request
 (`agent/local/presentation-request.ts`) with the same paths and format the SDK uses.
 Every claim in `claims` must be in the credential, with any value, and when
 `trustIssuers` is not empty the issuer must be one of them; a short Prism DID also
-matches its long form. The request does not compare values: for JWT the filters
-have no "greater than", so the verifier reads the values from the proof. A claim's
-filter is `pattern: ".*"`, because the SDK check accepts a field only when its
-filter has a `pattern` or an `enum`.
+matches its long form, and any other DID must match exactly. The holder's preview
+reads the trusted issuers from the field with the issuer paths (`$.vc.issuer`,
+`$.iss`, …), so a claim named `issuer` stays a claim. The request does not compare
+values: for JWT the filters have no "greater than", so the verifier reads the values
+from the proof. A claim's filter is `pattern: ".*"`, because the SDK check accepts a
+field only when its filter has a `pattern` or an `enum`.
 
 The request goes into a Present Proof `RequestPresentation` from the tenant host
 peer DID, and the SDK's `CreateOOBPresentationRequest` packs it into a relative
