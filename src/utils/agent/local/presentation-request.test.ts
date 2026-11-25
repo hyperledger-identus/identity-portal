@@ -98,6 +98,24 @@ describe('trustedIssuerPattern', () => {
     expect(pattern.test('did:example:a.b+c')).toBe(true);
     expect(pattern.test('did:example:aXbbc')).toBe(false);
   });
+
+  it('matches a DID of another method exactly', () => {
+    const pattern = new RegExp(trustedIssuerPattern(['did:example:issuer']));
+    expect(pattern.test('did:example:issuer')).toBe(true);
+    expect(pattern.test('did:example:issuer:other')).toBe(false);
+  });
+
+  it('allows only the encoded state after a short Prism DID', () => {
+    const pattern = new RegExp(trustedIssuerPattern([SHORT_DID]));
+    expect(pattern.test(`${LONG_DID}:more`)).toBe(false);
+    expect(pattern.test(`${SHORT_DID}:`)).toBe(false);
+  });
+
+  it('matches a long-form Prism DID exactly', () => {
+    const pattern = new RegExp(trustedIssuerPattern([LONG_DID]));
+    expect(pattern.test(LONG_DID)).toBe(true);
+    expect(pattern.test(`${LONG_DID}:more`)).toBe(false);
+  });
 });
 
 describe('readPresentationRequest', () => {
