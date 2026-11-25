@@ -55,17 +55,29 @@ export type PresentationRequestInput = {
  */
 const ANY_VALUE: FieldFilter = { type: 'string', pattern: '.*' };
 
+/** Paths of the trusted-issuer field, the same as in the SDK's requests. */
+const ISSUER_PATHS = ['$.vc.issuer', '$.issuer', '$.iss', '$.vc.iss'];
+
 function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+const SHORT_PRISM_DID = /^did:prism:[0-9a-f]{64}$/;
+
+/** A Prism long-form DID is the short form plus `:` and the encoded state. */
+const LONG_FORM_STATE = '(?::[A-Za-z0-9_-]+)?';
+
+function issuerAlternative(did: string): string {
+  const exact = escapeRegExp(did);
+  return SHORT_PRISM_DID.test(did) ? exact + LONG_FORM_STATE : exact;
+}
+
 /**
- * Matches one of the trusted issuer DIDs. A Prism long-form DID is the short
- * form plus `:` and the encoded state, so a short form also matches the long
- * form of the same DID, and no other DID.
+ * Matches one of the trusted issuer DIDs exactly. A short Prism DID also
+ * matches its long form; a DID of any other kind matches only itself.
  */
 export function trustedIssuerPattern(issuers: string[]): string {
-  return `^(?:${issuers.map(escapeRegExp).join('|')})(?::|$)`;
+  return `^(?:${issuers.map(issuerAlternative).join('|')})$`;
 }
 
 /** Builds the request. `newId` makes every id and the challenge. */
@@ -84,7 +96,7 @@ export function buildPresentationRequest(
     fields.push({
       id: newId(),
       name: 'issuer',
-      path: ['$.vc.issuer', '$.issuer', '$.iss', '$.vc.iss'],
+      path: [...ISSUER_PATHS],
       optional: false,
       filter: { type: 'string', pattern: trustedIssuerPattern(input.trustIssuers) },
     });
@@ -115,15 +127,26 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 /** Turns a pattern made by `trustedIssuerPattern` back into the DIDs. */
 function issuersFromPattern(pattern: string): string[] {
-  const match = /^\^\(\?:(.*)\)\(\?::\|\$\)$/.exec(pattern);
+  const match = /^\^\(\?:(.*)\)\$$/.exec(pattern);
   if (!match) {
     // The SDK's own requests use the issuer DID itself as the pattern.
     return pattern.startsWith('did:') ? [pattern] : [];
   }
   return match[1]
     .split(/(?<!\\)\|/)
+    .map((part) => (part.endsWith(LONG_FORM_STATE) ? part.slice(0, -LONG_FORM_STATE.length) : part))
     .map((part) => part.replace(/\\(.)/g, '$1'))
     .filter((did) => did !== '');
+}
+
+/**
+ * The trusted-issuer field reads the issuer of the credential. A claim field
+ * reads the credential subject, also when the claim is named `issuer`, so the
+ * paths tell them apart and the name does not.
+ */
+function isIssuerField(field: Record<string, unknown>): boolean {
+  const paths = field.path;
+  return Array.isArray(paths) && paths.length > 0 && paths.every((path) => ISSUER_PATHS.includes(path));
 }
 
 /**
@@ -151,7 +174,7 @@ export function readPresentationRequest(request: unknown): {
       continue;
     }
     const filter = isRecord(field.filter) ? field.filter : undefined;
-    if (field.name === 'issuer') {
+    if (isIssuerField(field)) {
       if (typeof filter?.pattern === 'string') {
         trustIssuers.push(...issuersFromPattern(filter.pattern));
       }

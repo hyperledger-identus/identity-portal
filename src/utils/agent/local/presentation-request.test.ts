@@ -98,6 +98,24 @@ describe('trustedIssuerPattern', () => {
     expect(pattern.test('did:example:a.b+c')).toBe(true);
     expect(pattern.test('did:example:aXbbc')).toBe(false);
   });
+
+  it('matches a DID of another method exactly', () => {
+    const pattern = new RegExp(trustedIssuerPattern(['did:example:issuer']));
+    expect(pattern.test('did:example:issuer')).toBe(true);
+    expect(pattern.test('did:example:issuer:other')).toBe(false);
+  });
+
+  it('allows only the encoded state after a short Prism DID', () => {
+    const pattern = new RegExp(trustedIssuerPattern([SHORT_DID]));
+    expect(pattern.test(`${LONG_DID}:more`)).toBe(false);
+    expect(pattern.test(`${SHORT_DID}:`)).toBe(false);
+  });
+
+  it('matches a long-form Prism DID exactly', () => {
+    const pattern = new RegExp(trustedIssuerPattern([LONG_DID]));
+    expect(pattern.test(LONG_DID)).toBe(true);
+    expect(pattern.test(`${LONG_DID}:more`)).toBe(false);
+  });
 });
 
 describe('readPresentationRequest', () => {
@@ -121,6 +139,22 @@ describe('readPresentationRequest', () => {
     const request = buildPresentationRequest({ claims: ['name'], trustIssuers: [SHORT_DID], domain: 'd' }, ids());
     request.presentation_definition.input_descriptors[0].constraints.fields[1].filter.pattern = LONG_DID;
     expect(readPresentationRequest(request).trustIssuers).toEqual([LONG_DID]);
+  });
+
+  it('keeps a claim named issuer apart from the trusted issuers', () => {
+    const request = buildPresentationRequest(
+      { claims: ['issuer', 'name'], trustIssuers: [SHORT_DID], domain: 'd' },
+      ids(),
+    );
+    expect(readPresentationRequest(request)).toEqual({
+      claims: ['issuer', 'name'],
+      trustIssuers: [SHORT_DID],
+    });
+  });
+
+  it('keeps a claim named issuer when the request has no trusted issuers', () => {
+    const request = buildPresentationRequest({ claims: ['issuer'], trustIssuers: [], domain: 'd' }, ids());
+    expect(readPresentationRequest(request)).toEqual({ claims: ['issuer'], trustIssuers: [] });
   });
 
   it('rejects a request without a presentation definition', () => {
